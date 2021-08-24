@@ -1,0 +1,19 @@
+import { ApiPromise, WsProvider } from "@polkadot/api"
+
+export const getApi = async () => {
+  const wsNodeUri = process.env.WS_NODE_URI || "ws://127.0.0.1:9944/"
+  const wsProvider = new WsProvider(wsNodeUri)
+  //const httpProvider = new HttpProvider(process.env.HTTP_NODE_URI)
+  const api = await ApiPromise.create({ provider: wsProvider })
+  Promise.all([
+    api.rpc.system.chain(),
+    api.rpc.system.name(),
+    api.rpc.system.version(),
+  ]).then(data => {
+    console.log(
+      new Date(),
+      `You are connected to chain ${data[0]} using ${data[1]} v${data[2]}`
+    )
+  })
+  return api
+}

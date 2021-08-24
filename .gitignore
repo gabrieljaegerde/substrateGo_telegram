@@ -1,0 +1,6 @@
+.env
+node_modules/
+todo.js
+db/*
+.DS_Store
+metrics.js
