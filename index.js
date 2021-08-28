@@ -1,4 +1,3 @@
-//import { startBot } from "./bot.js"
 import { botParams, getDb, getLocalStorage, getRemarkStorage } from "./config.js"
 import { newHeaderHandler } from "./src/network/blockHandler.js"
 import { alreadyReceived } from "./src/network/accountHandler.js"
@@ -8,16 +7,10 @@ import { getApi } from "./src/api.js"
 import { initAccount } from "./src/account.js"
 import prom from "./metrics.js"
 import { fetchRemarks, getRemarksFromBlocks, getLatestFinalizedBlock, Consolidator, RemarkListener, NFT } from 'rmrk-tools';
-//import pkg from 'rmrk-tools';
-//const { fetchRemarks, getRemarksFromBlocks, getLatestFinalizedBlock, Consolidator, RemarkListener, NFT } = pkg;
 import { LocalStorageProvider } from "./helpers/localStorageProvider.js"
 import { RemarkStorageAdapter } from "./src/network/remarkStorageAdapter.js"
 import pinataSDK from "@pinata/sdk"
-import IPFS from "ipfs-core"
 import _ from "lodash"
-
-//import * as IPFS from 'ipfs';
-
 import dotenv from "dotenv"
 
 import * as bot from "./bot.js"
@@ -100,7 +93,6 @@ class SubstrateBot {
     startListening()
 
     botParams.pinata = pinataSDK(process.env.PINATA_API, process.env.PINATA_SECRET)
-    //botParams.ipfs = await IPFS.create()
 
     try {
       let result = await botParams.pinata.testAuthentication()
