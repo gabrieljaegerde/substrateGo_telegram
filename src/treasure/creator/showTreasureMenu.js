@@ -5,6 +5,7 @@ import { listCreatedMiddleware } from "./listCreated.js"
 import QRCode from "qrcode"
 import { Markup } from "telegraf"
 import fetch from 'node-fetch'
+import { decorateQr } from "../helpers.js"
 
 const showTreasureMenu = new MenuTemplate(async ctx => {
     botParams.db.read()
@@ -32,7 +33,7 @@ showTreasureMenu.interact("Show NFT", "sN", {
             Markup.keyboard(getKeyboard(ctx)).resize()
         )
         let treasureDb = botParams.db.chain.get("qrs").find({ id: ctx.session.treasureId, creator: ctx.chat.id }).value()
-        
+
         var response = await fetch(`http://ipfs.io/ipfs/${treasureDb.nft}`)
         let buffer = await response.buffer()
         await botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
@@ -57,13 +58,13 @@ showTreasureMenu.interact("Show QR", "sQ", {
         if (treasureDb) {
             let code = `https://t.me/${botParams.settings.botUsername}?start=` + treasureDb.id
             let url = await QRCode.toDataURL(code)
+            let qrImage = await decorateQr(Buffer.from(url.split(',')[1], 'base64'))
             ctx.replyWithMarkdown(
                 `Treasure '${treasureDb.name}' QR Code:`,
                 Markup.keyboard(getKeyboard(ctx)).resize()
             )
             await botParams.bot.telegram
-                .sendPhoto(ctx.chat.id, { source: Buffer.from(url.split(',')[1], 'base64') })//, {caption: caption })
-
+                .sendPhoto(ctx.chat.id, { source: qrImage })
         }
         listCreatedMiddleware.replyToContext(ctx, `lC/b:${ctx.session.treasureId}/`)
         return true

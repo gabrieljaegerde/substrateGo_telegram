@@ -21,7 +21,9 @@ function fastTrackGet(ctx, qrId) {
     if (!qrDb) {
         //exit
         message = "The QR Code you tried to scan, either does not belong to this bot, " +
-            "or has not been activated yet."
+            "or has not been activated yet. If you think that I am mistaken, then please try again.\n\n" +
+            "It is likely that I was not able to correctly read the QR code in the last picture. So " +
+            "maybe just try sending a new one."
     }
     else if (qrDb && !qrDb.active) {
         //exit
@@ -32,18 +34,21 @@ function fastTrackGet(ctx, qrId) {
         ctx.session.remark = qrDb.remark
         ctx.session.qrId = qrId
         ctx.session.user = user
-        var scannedDb = botParams.db.chain.get("scanned").find({ id: qrId, finder: user.chatid }).value()
+        var scannedDb = botParams.db.chain.get("scanned").find({ qrId: qrId, finder: user.chatid }).value()
         const now = new Date()
         const thirtyAfter = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000))
         if (!scannedDb) {
             var new_scanned = {
-                id: qrId,
+                id: qrId.substring(0,10) + ctx.chat.id + now.getTime(),
+                qrId: qrId,
                 finder: ctx.chat.id,
                 collected: false,
                 name: qrDb.name,
-                timestamp: new Date(),
+                timestamp: now,
                 expiry: thirtyAfter,
-                timestampCollected: null
+                timestampCollected: null,
+                txHash: null,
+                nft: qrDb.nft
             }
             botParams.db.chain.get("scanned").push(new_scanned).value()
             botParams.db.write()
@@ -65,7 +70,7 @@ function fastTrackGet(ctx, qrId) {
             }
             // not collected yet, but rescanned -> move back expiry
             else {
-                botParams.db.chain.get("scanned").find({ id: qrId, finder: user.chatid }).assign({ expiry: thirtyAfter }).value()
+                botParams.db.chain.get("scanned").find({ qrId: qrId, finder: user.chatid }).assign({ expiry: thirtyAfter }).value()
                 botParams.db.write()
                 if (!user.wallet.address) {
                     return ctx.replyWithMarkdown(
@@ -83,11 +88,11 @@ function fastTrackGet(ctx, qrId) {
         ctx.session.remark = null
         ctx.session.qrId = null
         ctx.session.user = null
-        ctx.replyWithMarkdown(
-            message,
-            Markup.keyboard(getKeyboard(ctx)).resize()
-        )
     }
+    ctx.replyWithMarkdown(
+        message,
+        Markup.keyboard(getKeyboard(ctx)).resize()
+    )
 }
 
 //very similar to uploadQR. refactor?

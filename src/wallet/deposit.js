@@ -1,7 +1,7 @@
 import { MenuTemplate, MenuMiddleware, replyMenuToContext, deleteMenuFromContext } from "telegraf-inline-menu"
 import { botParams, getKeyboard } from "../../config.js"
 import { Markup } from "telegraf"
-import { getAccountDetails, setSessionWallet } from "./helpers.js"
+import { amountToHuman, getAccountDetails, setSessionWallet } from "./helpers.js"
 import _ from "lodash"
 import { balanceToString } from "../../tools/typeParser.js"
 import randomNumber from "random-number-csprng"
@@ -40,18 +40,19 @@ async function linkAddress(ctx) {
   user.wallet.password = await randomNumber(botParams.settings.pwordLower, botParams.settings.pwordUpper)
   user.wallet.expiry = quarterAfter
   botParams.db.write()
-  let value = user.wallet.password / 10 ** botParams.settings.network.decimals
-  let tokenString = botParams.settings.network.token
+  let { value, tokenString } = amountToHuman(user.wallet.password, botParams.settings.network.decimals)
+  //let value = user.wallet.password / 10 ** botParams.settings.network.decimals
+  //let tokenString = botParams.settings.network.token
   //let { value, tokenString } = await balanceToString(user.wallet.password)
   var reply = "Please make a *transfer* of exactly \n\n`" + value + "` " + tokenString +
     ` (This amount was randomly generated and thus acts as a *password* to ensure you ` +
-    `are the rightful owner of it. Do NOT share this amount with anyone!)` +
+    `are the rightful owner of the wallet. Do NOT share this amount with anyone!)` +
     "\n\n*FROM* the address you registered:" +
     `*\n\n${user.wallet.address}\n\n*` +
     "*TO* this address: \n\n`" + botParams.settings.depositAddress + "`\n\n" +
     "As soon as a transfer comes in, I will credit your account.\n\n" +
     "Please note that the password expires in 15 minutes! After which you will have to generate " +
-    "a new one by clicking on '\u26A0 Deposit \u26A0' in the menu again." +
+    "a new one by clicking on 'Link address' in the menu again." +
     `\n\nThe purpose of this transfer is to link your wallet with your account ` +
     `and allow for safe transfers and withdrawals in the future.`
   ctx.replyWithMarkdown(

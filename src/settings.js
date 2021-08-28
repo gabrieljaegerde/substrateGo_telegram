@@ -10,14 +10,28 @@ function getEventLinks(network, index, block) {
   return links
 }
 
-function getExtrinsicLinks(network, index, block) {
+function getExtrinsicLinks(network, txHash) {
   var links = []
   links.push([
-    ["subscan", `https://${network.toLowerCase()}.subscan.io/extrinsic/${block}-${index}`],
-    [
-      "polkascan",
-      `https://polkascan.io/${network.toLowerCase()}/transaction/${block}-${index}`,
-    ],
+    ["subscan", `https://${network.toLowerCase()}.subscan.io/extrinsic/${txHash}`]
+    // ,
+    // [
+    //   "polkascan",
+    //   `https://polkascan.io/${network.toLowerCase()}/transaction/${block}-${index}`,
+    // ],
+  ])
+  return links
+}
+
+function getExtrinsicLinksBlock(network, index, block) {
+  var links = []
+  links.push([
+    ["subscan", `https://${network.toLowerCase()}.subscan.io/extrinsic/${block}-${index}`]
+    // ,
+    // [
+    //   "polkascan",
+    //   `https://polkascan.io/${network.toLowerCase()}/transaction/${block}-${index}`,
+    // ],
   ])
   return links
 }
@@ -36,6 +50,7 @@ export const getSettings = () => {
       'To tip me:\n\nThank you!',
     getEventLinks: getEventLinks,
     getExtrinsicLinks: getExtrinsicLinks,
+    getExtrinsicLinksBlock: getExtrinsicLinksBlock,
     keyboard: {
       addqr: "Add new QR Code",
       genqr: "Generate QR Code",
@@ -53,6 +68,7 @@ export const getSettings = () => {
     codeLength: 20,
     pwordLower: 100000000000, //0.1wmd
     pwordUpper: 110000000000,
+    defaultNft: "QmaQCd7pS56AbgbdA8eqZQZqRwhWD8cjDUbAdni9UQ8yEA",
     depositAddress: process.env.DEPOSIT_ADDRESS.toString(),
     callback: (data, isExtrinsic) => {},
   }

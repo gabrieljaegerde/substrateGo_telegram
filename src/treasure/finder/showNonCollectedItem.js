@@ -4,11 +4,11 @@ import { fastTrackGet } from "./collectTreasure.js"
 import _ from "lodash"
 
 const showNonCollectedItem = new MenuTemplate(async ctx => {
-  ctx.session.qrToClaim = ctx.match[1]
   botParams.db.read()
   botParams.db.chain = _.chain(botParams.db.data)
-  var scannedDb = botParams.db.chain.get("scanned").find({ finder: ctx.chat.id, id: ctx.session.qrToClaim }).value()
-  let info = `This treasure will expire on ${scannedDb.expiry}. Claim it before then!`
+  var scannedDb = botParams.db.chain.get("scanned").find({ finder: ctx.chat.id, id: ctx.match[1] }).value()
+  ctx.session.qrToClaim = scannedDb.qrId
+  let info = `This treasure will expire on ${new Date(scannedDb.expiry).toDateString()}. Claim it before then!`
 	return info
 })
 

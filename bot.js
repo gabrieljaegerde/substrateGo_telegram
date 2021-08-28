@@ -18,6 +18,7 @@ import { listCollectedMiddleware } from "./src/treasure/finder/listCollected.js"
 import { listNonCollectedMiddleware } from "./src/treasure/finder/listNonCollected.js"
 import prom from "./metrics.js"
 import _ from "lodash"
+import { fastTrackGet } from "./src/treasure/finder/collectTreasure.js"
 import LocalSession from 'telegraf-session-local'
 import { editNFT } from "./src/nft/editNFT.js"
 import { createTreasureGuideMiddleware } from "./src/treasure/creator/createTreasureGuide.js"
@@ -84,11 +85,6 @@ export const run = async function (params) {
         }
         botParams.db.chain.get("users").push(user).value()
         botParams.db.write()
-        //todo: commence with nft generation process
-        //save treasure and let user claim unclaimed later
-        //ctx.session.qr = code
-        //getTreasure.replyWithMarkdown(ctx, "")
-        //getTreasure(code)
         fastTrackGet(ctx, qrId)
       }
       //if new user -> add to db

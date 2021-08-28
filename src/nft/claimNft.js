@@ -5,6 +5,7 @@ import _ from "lodash"
 import jsQR from "jsqr"
 import { getTransactionCost, mintAndSend } from "../network/accountHandler.js"
 import { NFT } from 'rmrk-tools';
+import { amountToHumanString } from "../wallet/helpers.js"
 
 const claimNft = new MenuTemplate(async ctx => {
     ctx.session.remarks = null
@@ -12,7 +13,7 @@ const claimNft = new MenuTemplate(async ctx => {
         `Loading...`,
         Markup.keyboard(getKeyboard(ctx)).resize()
     )
-    
+
     let treasure = botParams.db.chain.get("qrs").find({ id: ctx.session.qrId }).value()
     let nftProps = {
         "block": 0,
@@ -33,7 +34,7 @@ const claimNft = new MenuTemplate(async ctx => {
     let info = await getTransactionCost("nft", ctx.session.user.wallet.address, remarks)
     botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
     let reply = `Receiving the NFT in your wallet will incur a ` +
-        `fee of ${info.partialFee}. Do you wish to proceed?`
+        `fee of ${amountToHumanString(info.partialFee)}. Do you wish to proceed?`
     //format to human
     return reply
 })
@@ -72,18 +73,50 @@ claimNft.interact("Proceed", "sp", {
             let user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
             user.wallet.balance -= fee
             //check if scanned has an entry
-            botParams.db.chain.get("scanned").find({ finder: ctx.session.user.chatid, id: ctx.session.qrId }).assign({ collected: true, timestampCollected: new Date() }).value()
+            botParams.db.chain.get("scanned")
+                .find({ finder: ctx.session.user.chatid, qrId: ctx.session.qrId })
+                .assign({ collected: true, timestampCollected: new Date(), txHash: response }).value()
             botParams.db.write()
             let treasure = botParams.db.chain.get("qrs").find({ id: ctx.session.qrId }).value()
             await deleteMenuFromContext(ctx)
-            await ctx.replyWithMarkdown(
-                "Success. The NFT has been minted and sent to your wallet.\n" +
-                `You can find it in 'My treasures' under the name: ${treasure.name}`,
-                Markup.keyboard(getKeyboard(ctx)).resize()
-            )
-            if (treasure.content && treasure.content != "") {
+            var links = botParams.settings
+                .getExtrinsicLinks(
+                    botParams.settings.network.name,
+                    response
+                )
+                .map(row => {
+                    return row.map(link => {
+                        return Markup.button.url(link[0], link[1])
+                    })
+                })
+            let message = "Success. The NFT has been minted and sent to your wallet.\n" +
+                `You can find it in 'My treasures' under the name: ${treasure.name}`
+            await botParams.bot.telegram
+                .sendMessage(ctx.chat.id, message, Markup.inlineKeyboard(links))
+            // await ctx.replyWithMarkdown(
+            //     ,
+            //     Markup.keyboard(getKeyboard(ctx)).resize()
+            // )
+            if (treasure.nft != botParams.settings.defaultNft) {
+                var loadMessage = await ctx.replyWithMarkdown(
+                    `Loading... \n\nThis can take up to a minute since I am getting your file from a decentralized storage network`,
+                    Markup.keyboard(getKeyboard(ctx)).resize()
+                  )
+                  let treasureDb = botParams.db.chain.get("qrs").find({ id: ctx.session.scannedDb.qrId }).value()
+              
+                  var response = await fetch(`http://ipfs.io/ipfs/${treasureDb.nft}`)
+                  let buffer = await response.buffer()
+                  await botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
+                  ctx.replyWithMarkdown(
+                    `Treasure '${treasureDb.name}' NFT:`,
+                    Markup.keyboard(getKeyboard(ctx)).resize()
+                  )
+                  await botParams.bot.telegram
+                    .sendPhoto(ctx.chat.id, { source: buffer })
+            }
+            if (treasure.message && treasure.message != "") {
                 ctx.replyWithMarkdown(
-                    `A message from the creator of this treasure:\n\n${treasure.content}`,
+                    `A message from the creator of this treasure:\n\n${treasure.message}`,
                     Markup.keyboard(getKeyboard(ctx)).resize()
                 )
             }

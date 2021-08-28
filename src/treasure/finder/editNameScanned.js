@@ -3,16 +3,18 @@ import { botParams, getKeyboard } from "../../../config.js"
 import _ from "lodash"
 import { Markup } from "telegraf"
 import { listScannedMiddleware } from "./listScanned.js"
+import { deleteMenuFromContext } from "telegraf-inline-menu"
+
 
 const editNameScanned = new TelegrafStatelessQuestion("en", async ctx => {
-    await deleteMenuFromContext(ctx)
+    //await deleteMenuFromContext(ctx)
     var reply = ""
     if (ctx.message.text) {
         botParams.db.read()
         botParams.db.chain = _.chain(botParams.db.data)
         botParams.db.chain
             .get("scanned")
-            .find({ id: ctx.session.treasureId, finder: ctx.chat.id })
+            .find({ id: ctx.session.scannedId })
             .assign({ name: ctx.message.text })
             .value()
         botParams.db.write()
@@ -27,7 +29,7 @@ const editNameScanned = new TelegrafStatelessQuestion("en", async ctx => {
         reply,
         Markup.keyboard(getKeyboard(ctx)).resize()
     )
-    listScannedMiddleware.replyToContext(ctx, `lS/lCo/a:${ctx.session.treasureId}/`)
+    listScannedMiddleware.replyToContext(ctx, `lS/lCo/a:${ctx.session.scannedId}/`)
 })
 
 export {

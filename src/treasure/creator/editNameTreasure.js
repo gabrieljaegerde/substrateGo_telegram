@@ -2,9 +2,9 @@ import TelegrafStatelessQuestion from "telegraf-stateless-question"
 import { botParams, getKeyboard } from "../../../config.js"
 import _ from "lodash"
 import { Markup } from "telegraf"
-import { listScannedMiddleware } from "../finder/listScanned.js"
+import { listCreatedMiddleware } from "./listCreated.js"
 
-const editNameTreasure = new TelegrafStatelessQuestion("en", async ctx => {
+const editNameTreasure = new TelegrafStatelessQuestion("eNT", async ctx => {
     var reply = ""
     if (ctx.message.text) {
         botParams.db.read()
@@ -26,7 +26,7 @@ const editNameTreasure = new TelegrafStatelessQuestion("en", async ctx => {
         reply,
         Markup.keyboard(getKeyboard(ctx)).resize()
     )
-    listScannedMiddleware.replyToContext(ctx, `lS/lCo/a:${ctx.session.treasureId}/`)
+    listCreatedMiddleware.replyToContext(ctx, `lC/b:${ctx.session.treasureId}/`)
 })
 
 export {

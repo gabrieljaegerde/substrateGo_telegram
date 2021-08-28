@@ -4,7 +4,7 @@ import _ from "lodash"
 import { showNonCollectedItem } from "./showNonCollectedItem.js"
 
 const listNonCollected = new MenuTemplate(async ctx => {
-  return `Here are all your non-collected treasures... Claim them now before they expire!`
+  return `Here are all your non-collected treasures... Claim them now before they expire (30 days after scan)!`
 })
 
 listNonCollected.chooseIntoSubmenu(
@@ -30,10 +30,10 @@ listNonCollected.chooseIntoSubmenu(
       let item = ctx.session.userNonCollected.find(item => item.id === key)
       let dayInMs = 1000 * 60 * 60 * 24
       if ((new Date(item.expiry) - new Date()) < (3 * dayInMs)){
-        text = `\u26A0 ${item.timestamp} \u26A0`
+        text = `\u26A0 ${new Date(item.timestamp).toDateString()} \u26A0`
       }
       else {
-        text = item.timestamp
+        text = new Date(item.timestamp).toDateString() 
       }
       return text
     },

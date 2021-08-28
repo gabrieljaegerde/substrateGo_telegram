@@ -19,7 +19,14 @@ const showCreatedItem = new MenuTemplate(async ctx => {
     else {
         info += `\nStatus: \uD83D\uDEAB (Treasure NOT shown publicly)`
     }
-    info += `\nMessage to treasure finders: ${treasureDb.message}`
+    info += `\nMessage to treasure finders: ${treasureDb.message}\n\n`
+    var allScannedDb = botParams.db.chain.get("scanned").filter({ qrId: qrId }).value()
+    if (allScannedDb) {
+        info += `Treasure has been collected ${allScannedDb.length} time(s).`
+    }
+    else {
+        info += `This treasure has not been collected yet`
+    }
     //info += `\nLocation Coordinates: \n   lat: ${treasureDb.location.latitude}\n   long: ${treasureDb.location.longitude}`
     return info
 })
