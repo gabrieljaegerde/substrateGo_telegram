@@ -16,7 +16,7 @@ import { collectTreasure, getTreasure } from "./src/treasure/finder/collectTreas
 import { createTreasureMiddleware } from "./src/treasure/creator/createTreasure.js"
 import { listCollectedMiddleware } from "./src/treasure/finder/listCollected.js"
 import { listNonCollectedMiddleware } from "./src/treasure/finder/listNonCollected.js"
-import prom from "./metrics.js"
+//import prom from "./metrics.js"
 import _ from "lodash"
 import { fastTrackGet } from "./src/treasure/finder/collectTreasure.js"
 import LocalSession from 'telegraf-session-local'

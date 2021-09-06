@@ -1,5 +1,5 @@
 import { botParams } from "../config.js"
-import prom from "../metrics.js"
+//import prom from "../metrics.js"
 import { Markup } from "telegraf"
 
 const sentMessagesSuccessCounter = new prom.Counter({

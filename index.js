@@ -5,7 +5,7 @@ import { mintNFT } from "./src/nft/nft.js"
 import { getSettings } from "./src/settings.js"
 import { getApi } from "./src/api.js"
 import { initAccount } from "./src/account.js"
-import prom from "./metrics.js"
+//import prom from "./metrics.js"
 import { fetchRemarks, getRemarksFromBlocks, getLatestFinalizedBlock, Consolidator, RemarkListener, NFT } from 'rmrk-tools';
 import { LocalStorageProvider } from "./helpers/localStorageProvider.js"
 import { RemarkStorageAdapter } from "./src/network/remarkStorageAdapter.js"

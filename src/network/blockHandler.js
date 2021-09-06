@@ -1,7 +1,7 @@
 import { botParams } from "../../config.js"
 import _ from "lodash"
 import { deposit } from "./accountHandler.js"
-import prom from "../../metrics.js"
+//import prom from "../../metrics.js"
 
 const lastBlockGauge = new prom.Gauge({
   name: "substrate_bot_last_block",
