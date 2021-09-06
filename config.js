@@ -1,5 +1,6 @@
 import { LowSync, JSONFileSync } from 'lowdb'
 import _ from "lodash"
+import { amountToHumanString } from './src/wallet/helpers.js'
 
 const botParams = {
   api: {},
@@ -16,41 +17,6 @@ const botParams = {
 const startKeyboard = [
   ["Add address"]
 ]
-
-/*
-const keyboardHunter = [
-  ["\uD83D\uDCF7 Scan QR Code", "\uD83D\uDD0D Find treasures"],
-  ["\uD83C\uDF81 My treasures"],
-  ["Edit address", "\u26A0 Deposit \u26A0", "Withdraw"],
-  ["\u2B05 Switch to creator mode"],
-]*/
-
-/*
-const keyboardHunter = [
-  ["\uD83D\uDCF7 Scan QR Code", "\uD83D\uDD0D Find treasures"],
-  ["\uD83C\uDF81 My treasures"],
-  ["\u2B05 Switch to creator mode", "\u2699 Account Settings"],
-]*/
-/*
-const keyboardHunter = [
-  ["Creator Mode"],
-  ["Finder Mode"],
-  ["\u2699 Account Settings"],
-]
-
-const keyboardHunted = [
-  ["Create Treasure"],
-  ["Edit treasures", "View stats"], //should be in submenu: list of existing collections, "Add new collection", sub-submenu: "Add/edit deposit address", "Edit Collection Name"
-  ["\u2699 Account Settings", "Switch to finder mode \u27A1"],
-]*/
-
-/*
-const keyboardHunted = [
-  ["1. Generate QR Code", "2. Add New Treasure"],
-  ["Edit treasures", "View stats"], //should be in submenu: list of existing collections, "Add new collection", sub-submenu: "Add/edit deposit address", "Edit Collection Name"
-  
-  ["Switch to finder mode \u27A1"],
-]*/
 
 const creatorKeyboard = [
   ["\uD83D\uDC8E Create treasure \uD83D\uDC8E"],
@@ -90,6 +56,25 @@ const mainKeyboard = [
   ["\uD83D\uDEE0 Account Settings"],
 ]
 
+function getMainLinkedKeyboard(userBalance)
+{
+  return [
+    ["\uD83E\uDDD9\uD83C\uDFFB\u200D\u2640 Creator Mode"],
+    ["\uD83D\uDD75\uD83C\uDFFE\u200D\u2642 Finder Mode"],
+    [`\uD83D\uDEE0 Account Settings   \u2705 (${userBalance})`],
+  ]
+}
+
+function getMainNoLinkedKeyboard(userBalance) 
+{
+  return [
+    ["\uD83E\uDDD9\uD83C\uDFFB\u200D\u2640 Creator Mode"],
+    ["\uD83D\uDD75\uD83C\uDFFE\u200D\u2642 Finder Mode"],
+    [`\uD83D\uDEE0 Account Settings   \u274C (${userBalance})`],
+  ]
+}
+
+
 function getKeyboard(ctx) {
   if (ctx.session.menu) {
     switch (ctx.session.menu) {
@@ -111,6 +96,17 @@ function getKeyboard(ctx) {
           return accountNoLinkedBalanceKeyboard
         }
         return accountNoAddressKeyboard
+      case "main":
+        botParams.db.read()
+        botParams.db.chain = _.chain(botParams.db.data)
+        var user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
+        if (user.wallet.address && user.wallet.linked) {
+          return getMainLinkedKeyboard(amountToHumanString(user.wallet.balance, 2))
+        }
+        else if (user.wallet.address && !user.wallet.linked) {
+          return getMainNoLinkedKeyboard(amountToHumanString(user.wallet.balance, 2))
+        }
+        return mainKeyboard
     }
   }
   return mainKeyboard

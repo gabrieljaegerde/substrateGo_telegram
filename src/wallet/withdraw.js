@@ -16,6 +16,8 @@ import { amountToHuman } from "./helpers.js"
 const withdrawBalance = new MenuTemplate(async ctx => {
   botParams.db.read()
   botParams.db.chain = _.chain(botParams.db.data)
+  var loadMessage = await botParams.bot.telegram
+    .sendMessage(ctx.chat.id, "Loading...")
   var user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
   await setSessionWallet(ctx)
   var reply
@@ -34,6 +36,7 @@ const withdrawBalance = new MenuTemplate(async ctx => {
   else {
     reply = `You have nothing to withdraw... Your balance is 0.`
   }
+  botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
   return reply
 })
 
@@ -43,18 +46,23 @@ withdrawBalance.interact("Proceed", "pr", {
     if (!ctx.session.wallet || ctx.session.wallet.balance === 0){
       return "/"
     }*/
+    var loadMessage = await botParams.bot.telegram
+      .sendMessage(ctx.chat.id, "Loading...")
     let success = await withdrawFunds(ctx)
     if (success) {
       setSessionWallet(ctx)
       await deleteMenuFromContext(ctx)
+
       if (ctx.session.addressChange) {
         editWalletMiddleware.replyToContext(ctx)
       }
+      botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
       return false
       //show a certain menu or non...
     }
     else {
       //await deleteMenuFromContext(ctx)
+      botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
       return "withdraw/"
       //show a certain menu
     }
@@ -120,7 +128,7 @@ async function withdrawFunds(ctx) {
   var new_user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id })
     .get("wallet").assign({ balance: 0 }).value()
   botParams.db.write()
-  var reply = "Funds were sent back to you. You can now go ahead and change your address."
+  var reply = "Funds were sent back to you."
   var links = botParams.settings
     .getExtrinsicLinks(
       botParams.settings.network.name,

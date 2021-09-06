@@ -67,7 +67,6 @@ export const run = async function (params) {
             "your account first. \n\nClick here -> \/setup <- to get instructions " +
             "on how to do just that. Come and join the hunt!"
         }
-
         //the QR code id is sent in with the /start command.
         //seperate the id out
         var qrId = ctx.message.text.replace("/start", "").replace(/\s/g, "")
@@ -79,13 +78,11 @@ export const run = async function (params) {
           wallet: {},
           oldWallets: [],
           maxLimit: 100,
-          hunter: true,
           blocked: false,
           timestamp: new Date()
         }
         botParams.db.chain.get("users").push(user).value()
         botParams.db.write()
-        fastTrackGet(ctx, qrId)
       }
       //if new user -> add to db
       if (!user) {
@@ -97,17 +94,19 @@ export const run = async function (params) {
           wallet: {},
           oldWallets: [],
           maxLimit: 100,
-          hunter: true,
           blocked: false,
           timestamp: new Date()
         }
         botParams.db.chain.get("users").push(user).value()
-        botParams.db.write()
+        await botParams.db.write()
       }
-      ctx.replyWithMarkdown(
+      await ctx.replyWithMarkdown(
         message,
         Markup.keyboard(getKeyboard(ctx)).resize()
-      )
+      )      
+      if (ctx.message.text !== "/start"){
+        fastTrackGet(ctx, qrId)
+      }
       return
     }
   })
@@ -143,6 +142,48 @@ export const run = async function (params) {
   })
 
   /*
+   *   React bot on 'View stats' message
+   */
+
+  bot.hears("\uD83D\uDCCA View stats", ctx => {
+    if (ctx.chat.type == "private") {
+      botParams.db.read()
+      botParams.db.chain = _.chain(botParams.db.data)
+      var user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
+      var userTreasures = botParams.db.chain.get("treasures").filter({ creator: ctx.chat.id }).value()
+      var userTreasuresScanned = botParams.db.chain.get("scanned").each((item) => userTreasures.some(treasure => treasure.id === item.qrId)).value()
+      var groupedScanned = _.groupBy(userTreasuresScanned, 'qrId')
+      var groupedScannedLengths = []
+      for (var treasure in groupedScanned) {
+        console.log("treasure", treasure)
+        console.log("userTreasures", userTreasures)
+        console.log("userTreasures.find(treas => treas.id === treasure)", userTreasures.find(treas => treas.id === treasure))
+        groupedScannedLengths.push({ name: userTreasures.find(treas => treas.id === treasure).name, length: groupedScanned[treasure].length })
+      }
+      console.log("gS", groupedScannedLengths)
+      var message = "";
+      if (userTreasuresScanned.length > 0) {
+        message = `Your treasures have already been collected ${userTreasuresScanned.length} times.\n\n`
+        groupedScannedLengths.forEach(function (item) {
+          console.log(item)
+          message += `Treasure ${item.name} was collected ${item.length} times.\n`
+        })
+      }
+      else if (userTreasuresScanned.length == 0 && userTreasures.length > 0) {
+        message = `Your treasures have not been collected yet.`
+      }
+      else {
+        message = `You do not have any treasures yet. Go and create some today!`
+      }
+      ctx.replyWithMarkdown(
+        message,
+        Markup.keyboard(getKeyboard(ctx)).resize()
+      )
+      return
+    }
+  })
+
+  /*
    *   React bot on 'Collect treasure' message
    */
 
@@ -165,7 +206,7 @@ export const run = async function (params) {
   /*
    *   React bot on 'Edit address' message
    */
-  
+
   bot.hears("\uD83D\uDCEA Edit address", ctx => {
     if (ctx.chat.type == "private") {
       addWallet(ctx)
@@ -269,8 +310,8 @@ export const run = async function (params) {
   /*
    *   React bot on 'Account Settings' message
    */
-
-  bot.hears("\uD83D\uDEE0 Account Settings", async ctx => {
+  var regex = new RegExp(/.*Account Settings.*/i)
+  bot.hears(regex, async ctx => {
     if (ctx.chat.type == "private") {
       ctx.session.menu = "account"
       await ctx.reply(
@@ -290,6 +331,16 @@ export const run = async function (params) {
       ctx.session.menu = "main"
       ctx.reply(
         "Welcome home",
+        Markup.keyboard(getKeyboard(ctx)).resize()
+      )
+    }
+  })
+
+  bot.hears("\uD83D\uDD0D Find treasures", ctx => {
+    if (ctx.chat.type == "private") {
+      ctx.reply(
+        "In the future, clicking that button will bring you to a website that " +
+        "shows a world map with markers of all the treasures. todo...",
         Markup.keyboard(getKeyboard(ctx)).resize()
       )
     }

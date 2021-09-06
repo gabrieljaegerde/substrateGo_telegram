@@ -75,7 +75,7 @@ class SubstrateBot {
 
     const consolidateFunction = async (remarks) => {
       console.log("remarks: ", remarks)
-      const consolidator = new Consolidator(null, new RemarkStorageAdapter())
+      const consolidator = new Consolidator(2, new RemarkStorageAdapter())
       return consolidator.consolidate(remarks)
     }
 
@@ -103,7 +103,7 @@ class SubstrateBot {
       console.log(err)
     }
     //console.log("here2")
-    //await mintNFT()
+    await mintNFT()
     /*
         const to = await getLatestFinalizedBlock(this.api);
     

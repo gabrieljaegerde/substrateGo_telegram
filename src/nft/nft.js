@@ -21,7 +21,7 @@ async function mintNFT(){
   const collectionSymbol = "GONOW1";
   const collectionId = Collection.generateId(
     u8aToHex(botParams.account.publicKey),
-    "GONOW1"
+    "GONOW2"
   );
   let mintingAccount = botParams.account;
   let decoded = decodeAddress(mintingAccount.address);
@@ -43,7 +43,7 @@ async function mintNFT(){
       `ipfs://ipfs/${collMdHash}`
     );
   console.log("eggCollection: ", eggCollection)
-  //remarks.push(eggCollection.create())
+  remarks.push(eggCollection.create())
   const txs = [];
   let nftProps = {
     "block": 0,

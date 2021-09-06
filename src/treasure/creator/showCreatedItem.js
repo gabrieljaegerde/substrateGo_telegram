@@ -9,7 +9,7 @@ const showCreatedItem = new MenuTemplate(async ctx => {
     const qrId = ctx.match[1]
     botParams.db.read()
     botParams.db.chain = _.chain(botParams.db.data)
-    var treasureDb = botParams.db.chain.get("qrs").find({ id: qrId, creator: ctx.chat.id }).value()
+    var treasureDb = botParams.db.chain.get("treasures").find({ id: qrId, creator: ctx.chat.id }).value()
     ctx.session.treasureId = qrId
     var info = `Created on: ${treasureDb.timestamp}. `
     info += treasureDb.name ? `\nName: ${treasureDb.name}` : ""
@@ -63,7 +63,7 @@ showCreatedItem.interact("Show Treasure Details", "sTD", {
 showCreatedItem.toggle(ctx => {
     botParams.db.read()
     botParams.db.chain = _.chain(botParams.db.data)
-    let treasureDb = botParams.db.chain.get("qrs").find({ id: ctx.session.treasureId, creator: ctx.chat.id }).value()
+    let treasureDb = botParams.db.chain.get("treasures").find({ id: ctx.session.treasureId, creator: ctx.chat.id }).value()
     return treasureDb.active ? "Activated" : "Deactivated"
 },
     'a',
@@ -72,7 +72,7 @@ showCreatedItem.toggle(ctx => {
             const qrId = ctx.match[1]
             botParams.db.read()
             botParams.db.chain = _.chain(botParams.db.data)
-            botParams.db.chain.get("qrs").find({ id: qrId, creator: ctx.chat.id }).assign({ active: choice }).value()
+            botParams.db.chain.get("treasures").find({ id: qrId, creator: ctx.chat.id }).assign({ active: choice }).value()
             botParams.db.write()
             return true
         },
@@ -80,7 +80,7 @@ showCreatedItem.toggle(ctx => {
             const qrId = ctx.match[1]
             botParams.db.read()
             botParams.db.chain = _.chain(botParams.db.data)
-            let treasureDb = botParams.db.chain.get("qrs").find({ id: qrId, creator: ctx.chat.id }).value()
+            let treasureDb = botParams.db.chain.get("treasures").find({ id: qrId, creator: ctx.chat.id }).value()
             return treasureDb.active === true
         }
     })

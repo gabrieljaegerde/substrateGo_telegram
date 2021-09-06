@@ -30,7 +30,7 @@ function amountToHumanString(amount, afterCommas) {
   var token = botParams.settings.network.token
   var value = new BigNumber(amount.toString())
     .dividedBy(new BigNumber("1e" + decimals))
-    .toFixed(afterCommas ? parseInt(afterCommas) : 4)
+    .toFixed(afterCommas ? parseInt(afterCommas) : 4, 1)
   var tokenString = token ? " " + token : ""
   return value + " " + tokenString
 }

@@ -9,8 +9,8 @@ import randomNumber from "random-number-csprng"
 const deposit = new MenuTemplate(async ctx => {
   await setSessionWallet(ctx)
   if (!ctx.session.wallet.address) {
-    return `Please first link your account to a ${botParams.settings.network.name} wallet ` +
-      `by clicking on 'Edit Address' in the menu below.`
+    return `Please first add a ${botParams.settings.network.name} wallet to your account ` +
+      `by clicking on 'Add Address' in the menu below.`
   }
   var text = await getAccountDetails(ctx.session.wallet)
   var shortAddr = ctx.session.wallet.address.substring(0, 3) +

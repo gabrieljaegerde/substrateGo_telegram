@@ -10,7 +10,7 @@ const editNameTreasure = new TelegrafStatelessQuestion("eNT", async ctx => {
         botParams.db.read()
         botParams.db.chain = _.chain(botParams.db.data)
         botParams.db.chain
-            .get("qrs")
+            .get("treasures")
             .find({ id: ctx.session.treasureId, creator: ctx.chat.id })
             .assign({ name: ctx.message.text })
             .value()

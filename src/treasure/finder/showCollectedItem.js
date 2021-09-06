@@ -31,11 +31,9 @@ showCollectedItem.interact("Show NFT", "sN", {
     botParams.db.read()
     botParams.db.chain = _.chain(botParams.db.data)
     await deleteMenuFromContext(ctx)
-    var loadMessage = await ctx.replyWithMarkdown(
-      `Loading... \n\nThis can take up to a minute since I am getting your file from a decentralized storage network`,
-      Markup.keyboard(getKeyboard(ctx)).resize()
-    )
-    let treasureDb = botParams.db.chain.get("qrs").find({ id: ctx.session.scannedDb.qrId }).value()
+    var loadMessage = await botParams.bot.telegram
+      .sendMessage(ctx.chat.id, "Loading...")
+    let treasureDb = botParams.db.chain.get("treasures").find({ id: ctx.session.scannedDb.qrId }).value()
 
     var response = await fetch(`http://ipfs.io/ipfs/${treasureDb.nft}`)
     let buffer = await response.buffer()

@@ -10,7 +10,7 @@ import { decorateQr } from "../helpers.js"
 const showTreasureMenu = new MenuTemplate(async ctx => {
     botParams.db.read()
     botParams.db.chain = _.chain(botParams.db.data)
-    var treasureDb = botParams.db.chain.get("qrs").find({ id: ctx.session.treasureId, creator: ctx.chat.id }).value()
+    var treasureDb = botParams.db.chain.get("treasures").find({ id: ctx.session.treasureId, creator: ctx.chat.id }).value()
     var info = `Created on: ${treasureDb.timestamp}. `
     info += treasureDb.name ? `\nName: ${treasureDb.name}` : ""
     if (treasureDb.active) {
@@ -28,11 +28,9 @@ showTreasureMenu.interact("Show NFT", "sN", {
         botParams.db.read()
         botParams.db.chain = _.chain(botParams.db.data)
         await deleteMenuFromContext(ctx)
-        var loadMessage = await ctx.replyWithMarkdown(
-            `Loading... \n\nThis can take up to a minute since I am getting your file from a decentralized storage network`,
-            Markup.keyboard(getKeyboard(ctx)).resize()
-        )
-        let treasureDb = botParams.db.chain.get("qrs").find({ id: ctx.session.treasureId, creator: ctx.chat.id }).value()
+        var loadMessage = await botParams.bot.telegram
+            .sendMessage(ctx.chat.id, "Loading...")
+        let treasureDb = botParams.db.chain.get("treasures").find({ id: ctx.session.treasureId, creator: ctx.chat.id }).value()
 
         var response = await fetch(`http://ipfs.io/ipfs/${treasureDb.nft}`)
         let buffer = await response.buffer()
@@ -53,7 +51,7 @@ showTreasureMenu.interact("Show QR", "sQ", {
     do: async ctx => {
         botParams.db.read()
         botParams.db.chain = _.chain(botParams.db.data)
-        let treasureDb = botParams.db.chain.get("qrs").find({ id: ctx.session.treasureId, creator: ctx.chat.id }).value()
+        let treasureDb = botParams.db.chain.get("treasures").find({ id: ctx.session.treasureId, creator: ctx.chat.id }).value()
         await deleteMenuFromContext(ctx)
         if (treasureDb) {
             let code = `https://t.me/${botParams.settings.botUsername}?start=` + treasureDb.id
@@ -77,7 +75,7 @@ showTreasureMenu.interact("\uD83C\uDF0D Show location", "eP", {
         botParams.db.read()
         botParams.db.chain = _.chain(botParams.db.data)
         await deleteMenuFromContext(ctx)
-        let treasureDb = botParams.db.chain.get("qrs").find({ id: ctx.session.treasureId, creator: ctx.chat.id }).value()
+        let treasureDb = botParams.db.chain.get("treasures").find({ id: ctx.session.treasureId, creator: ctx.chat.id }).value()
         await ctx.replyWithMarkdown(
             `Treasure '${treasureDb.name}' location:`,
             Markup.keyboard(getKeyboard(ctx)).resize()

@@ -16,7 +16,7 @@ function fastTrackGet(ctx, qrId) {
     var user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
     var message
     //see if this qr id is registered in the db
-    var qrDb = botParams.db.chain.get("qrs").find({ id: qrId }).value()
+    var qrDb = botParams.db.chain.get("treasures").find({ id: qrId }).value()
     //qr not registered in db
     if (!qrDb) {
         //exit
@@ -58,7 +58,7 @@ function fastTrackGet(ctx, qrId) {
                     `address to your account. Please go to 'Account settings' ` +
                     `in the main menu. ` +
                     `\n\nI have saved this treasure for you and you can still claim it within the next 30 days. ` +
-                    `To claim it, simply click on '\uD83C\uDF81 My treasures' in the menu below.`,
+                    `To claim it, simply click on '\uD83C\uDF81 My treasures' in the Finder menu.`,
                     Markup.keyboard(getKeyboard(ctx)).resize()
                 )
             }
@@ -78,7 +78,7 @@ function fastTrackGet(ctx, qrId) {
                         `address to your account. Please go to 'Account settings' ` +
                         `in the main menu. ` +
                         `\n\nI have saved this treasure for you and you can still claim it within the next 30 days. ` +
-                        `To claim it, simply click on '\uD83C\uDF81 My treasures' in the menu below.`,
+                        `To claim it, simply click on '\uD83C\uDF81 My treasures' in the Finder menu.`,
                         Markup.keyboard(getKeyboard(ctx)).resize()
                     )
                 }

@@ -8,10 +8,8 @@ import Jimp from "jimp"
 
 const editNFT = new TelegrafStatelessQuestion("eNF", async ctx => {
     var reply = ""
-    var loadMessage = await ctx.replyWithMarkdown(
-        `Loading...`,
-        Markup.keyboard(getKeyboard(ctx)).resize()
-    )
+    var loadMessage = await botParams.bot.telegram
+                .sendMessage(ctx.chat.id, "Loading...")
     console.log(ctx.message)
     if (ctx.message.photo) {
         let photo = ctx.message.photo[ctx.message.photo.length - 1]
@@ -61,7 +59,7 @@ const editNFT = new TelegrafStatelessQuestion("eNF", async ctx => {
 
 
     botParams.db.chain
-        .get("qrs")
+        .get("treasures")
         .find({ id: ctx.session.treasureId, creator: ctx.chat.id })
         .assign({ nft: result.IpfsHash })
         .value()

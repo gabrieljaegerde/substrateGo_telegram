@@ -9,15 +9,17 @@ import { amountToHumanString } from "../wallet/helpers.js"
 
 const claimNft = new MenuTemplate(async ctx => {
     ctx.session.remarks = null
-    var loadMessage = await ctx.replyWithMarkdown(
-        `Loading...`,
-        Markup.keyboard(getKeyboard(ctx)).resize()
-    )
+    var loadMessage = await botParams.bot.telegram
+        .sendMessage(ctx.chat.id, "Loading...")
+    /*
+    var loadMessage = await botParams.bot.telegram
+                .sendMessage(ctx.chat.id, "Loading...")
+    )*/
 
-    let treasure = botParams.db.chain.get("qrs").find({ id: ctx.session.qrId }).value()
+    let treasure = botParams.db.chain.get("treasures").find({ id: ctx.session.qrId }).value()
     let nftProps = {
         "block": 0,
-        "collection": process.env.COLLECTION_ID,
+        "collection": botParams.settings.collectionId,
         "symbol": "string",
         "transferable": 1,
         "sn": new Date().getTime().toString(),
@@ -45,14 +47,12 @@ claimNft.interact("Proceed", "sp", {
         if (!ctx.session.wallet || ctx.session.wallet.balance === 0){
           return "/"
         }*/
-        var loadMessage = await ctx.replyWithMarkdown(
-            `Loading...`,
-            Markup.keyboard(getKeyboard(ctx)).resize()
-        )
+        var loadMessage = await botParams.bot.telegram
+            .sendMessage(ctx.chat.id, "Loading...")
         /*
         let nftProps = {
             "block": 0,
-            "collection": process.env.COLLECTION_ID,
+            "collection": botParams.settings.collectionId,
             "symbol": "string",
             "transferable": 1,
             "sn": new Date().getTime().toString(),
@@ -77,7 +77,7 @@ claimNft.interact("Proceed", "sp", {
                 .find({ finder: ctx.session.user.chatid, qrId: ctx.session.qrId })
                 .assign({ collected: true, timestampCollected: new Date(), txHash: response }).value()
             botParams.db.write()
-            let treasure = botParams.db.chain.get("qrs").find({ id: ctx.session.qrId }).value()
+            let treasure = botParams.db.chain.get("treasures").find({ id: ctx.session.qrId }).value()
             await deleteMenuFromContext(ctx)
             var links = botParams.settings
                 .getExtrinsicLinks(
@@ -98,20 +98,19 @@ claimNft.interact("Proceed", "sp", {
             //     Markup.keyboard(getKeyboard(ctx)).resize()
             // )
             if (treasure.nft != botParams.settings.defaultNft) {
-                var loadMessage = await ctx.replyWithMarkdown(
-                    `Loading... \n\nThis can take up to a minute since I am getting your file from a decentralized storage network`,
-                    Markup.keyboard(getKeyboard(ctx)).resize()
-                  )
-                  let treasureDb = botParams.db.chain.get("qrs").find({ id: ctx.session.scannedDb.qrId }).value()
-              
-                  var response = await fetch(`http://ipfs.io/ipfs/${treasureDb.nft}`)
-                  let buffer = await response.buffer()
-                  await botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
-                  ctx.replyWithMarkdown(
+                var loadMessage = await botParams.bot.telegram
+                    .sendMessage(ctx.chat.id, "Loading...")
+
+                let treasureDb = botParams.db.chain.get("treasures").find({ id: ctx.session.scannedDb.qrId }).value()
+
+                var response = await fetch(`http://ipfs.io/ipfs/${treasureDb.nft}`)
+                let buffer = await response.buffer()
+                await botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
+                ctx.replyWithMarkdown(
                     `Treasure '${treasureDb.name}' NFT:`,
                     Markup.keyboard(getKeyboard(ctx)).resize()
-                  )
-                  await botParams.bot.telegram
+                )
+                await botParams.bot.telegram
                     .sendPhoto(ctx.chat.id, { source: buffer })
             }
             if (treasure.message && treasure.message != "") {
@@ -128,12 +127,12 @@ claimNft.interact("Proceed", "sp", {
         else if (response === "topup") {
             let message = "You do not have enough funds to pay for this transaction. " +
                 "Please top up your balance by going into your account settings and " +
-                "clicking on '\u26A0 Deposit \u26A0'. " +
+                "clicking on 'Account Settings'. " +
                 "I have saved this treasure for you and you can still claim it within the next 30 days. " +
-                "To claim it, simply click on '\uD83C\uDF81 My treasures' in the menu below."
+                "To claim it, simply click on '\uD83C\uDF81 My treasures' in the Finder menu."
             botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
             await deleteMenuFromContext(ctx)
-            await ctx.replyWithMarkdown(
+            ctx.replyWithMarkdown(
                 message,
                 Markup.keyboard(getKeyboard(ctx)).resize()
             )
@@ -170,7 +169,7 @@ claimNft.interact("Cancel", "sc", {
         await deleteMenuFromContext(ctx)
         let message = "You have NOT claimed this treasure. " +
             "But I have saved it for you and you can still claim it within the next 30 days. " +
-            "To claim it, simply click on '\uD83C\uDF81 My treasures' in the menu below."
+            "To claim it, simply click on '\uD83C\uDF81 My treasures' in the Finder menu."
         ctx.replyWithMarkdown(
             message,
             Markup.keyboard(getKeyboard(ctx)).resize()

@@ -37,7 +37,7 @@ const uploadQr = new TelegrafStatelessQuestion("qr", async ctx => {
                 return uploadQr.replyWithMarkdown(ctx, message)
             }
             var qrId = result.replace(`https://t.me/${botParams.settings.botUsername}?start=`, "")
-            let qrDb = botParams.db.chain.get("qrs").find({ id: qrId }).value()
+            let qrDb = botParams.db.chain.get("treasures").find({ id: qrId }).value()
             let genQrDb = botParams.db.chain.get("generated_qrs").find({ id: qrId }).value()
             if (!qrDb && genQrDb) {
                 var newQr = {
@@ -103,7 +103,7 @@ const uploadQr = new TelegrafStatelessQuestion("qr", async ctx => {
     else {
         if (ctx.message.text && ctx.session.guideStep == 3) {
             ctx.session.qr.name = ctx.message.text
-            botParams.db.chain.get("qrs").push(ctx.session.qr).value()
+            botParams.db.chain.get("treasures").push(ctx.session.qr).value()
             botParams.db.write()
             ctx.session.qr = null
             var reply = "Treasure has been successfully added with the BASIC settings.\n\n" +

@@ -158,7 +158,7 @@ const enterAddress = new TelegrafStatelessQuestion("adr", async ctx => {
     "*TO* this address: \n\n`" + botParams.settings.depositAddress + "`\n\n" +
     "As soon as a transfer comes in, I will credit your account.\n\n" +
     "Please note that the password expires in 15 minutes! After which you will have to generate " +
-    "a new one by clicking on '\u26A0 Deposit \u26A0' in the menu again." +
+    "a new one by clicking on 'Link address' in the menu again." +
     `\n\nThe purpose of this transfer is to link your wallet with your account ` +
     `and allow for safe transfers and withdrawals in the future.`
   ctx.replyWithMarkdown(

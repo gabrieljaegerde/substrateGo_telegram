@@ -12,7 +12,7 @@ import fetch from 'node-fetch'
 const editTreasureMenu = new MenuTemplate(async ctx => {
     botParams.db.read()
     botParams.db.chain = _.chain(botParams.db.data)
-    var treasureDb = botParams.db.chain.get("qrs").find({ id: ctx.session.treasureId, creator: ctx.chat.id }).value()
+    var treasureDb = botParams.db.chain.get("treasures").find({ id: ctx.session.treasureId, creator: ctx.chat.id }).value()
     var info = `Created on: ${treasureDb.timestamp}. `
     info += treasureDb.name ? `\nName: ${treasureDb.name}` : ""
     if (treasureDb.active) {
