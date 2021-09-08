@@ -23,10 +23,10 @@ import LocalSession from 'telegraf-session-local'
 import { editNFT } from "./src/nft/editNFT.js"
 import { createTreasureGuideMiddleware } from "./src/treasure/creator/createTreasureGuide.js"
 
-const telegramBotUpdates = new prom.Counter({
-  name: "substrate_bot_telegram_updates",
-  help: "metric_help",
-})
+// const telegramBotUpdates = new prom.Counter({
+//   name: "substrate_bot_telegram_updates",
+//   help: "metric_help",
+// })
 
 export const run = async function (params) {
   /*
