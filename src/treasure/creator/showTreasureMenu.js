@@ -20,6 +20,13 @@ const showTreasureMenu = new MenuTemplate(async ctx => {
         info += `\nStatus: \uD83D\uDEAB (Treasure NOT shown publicly)`
     }
     info += `\nMessage to treasure finders: ${treasureDb.message}`
+    var allScannedDb = botParams.db.chain.get("scanned").filter({ qrId: ctx.session.treasureId }).value()
+    if (allScannedDb) {
+        info += `Treasure has been collected ${allScannedDb.length} time(s).`
+    }
+    else {
+        info += `This treasure has not been collected yet`
+    }
     return info
 })
 

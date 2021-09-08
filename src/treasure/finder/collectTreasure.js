@@ -24,6 +24,7 @@ function fastTrackGet(ctx, qrId) {
             "or has not been activated yet. If you think that I am mistaken, then please try again.\n\n" +
             "It is likely that I was not able to correctly read the QR code in the last picture. So " +
             "maybe just try sending a new one."
+        return getTreasure.replyWithMarkdown(ctx, message)
     }
     else if (qrDb && !qrDb.active) {
         //exit

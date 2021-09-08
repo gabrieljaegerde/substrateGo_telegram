@@ -73,20 +73,20 @@ async function deposit(record, currentBlock) {
       withdraw(from.toString(), value)
       message = "You did not make the deposit on time (15 minutes), neither did you transfer the right amount. " +
         "Your transfer has been sent back to the wallet it came from (minus transaction fees)." +
-        "Click on '\u26A0 Deposit \u26A0' in " +
+        "Click on 'Link address' in " +
         "the menu again to see the requirements."
 
     }
     else if (new Date(users[0].wallet.expiry) < new Date()) {
       withdraw(from.toString(), value)
       message = "You did not make the transfer within the required time of 15 minutes. It has been sent back to you " +
-        "(minus transaction fees).\nClick on '\u26A0 Deposit \u26A0' in " +
+        "(minus transaction fees).\nClick on 'Link address' in " +
         "the menu again to see the requirements."
     }
     else {
       withdraw(from.toString(), value)
       message = "You have transferred the wrong amount. Your transfer has been sent back to you " +
-        "(minus transaction fees).\nClick on '\u26A0 Deposit \u26A0' in " +
+        "(minus transaction fees).\nClick on 'Link address' in " +
         "the menu again to see the requirements."
     }
   }
