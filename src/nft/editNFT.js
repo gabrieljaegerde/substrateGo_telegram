@@ -10,7 +10,6 @@ const editNFT = new TelegrafStatelessQuestion("eNF", async ctx => {
     var reply = ""
     var loadMessage = await botParams.bot.telegram
                 .sendMessage(ctx.chat.id, "Loading...")
-    console.log(ctx.message)
     if (ctx.message.photo) {
         let photo = ctx.message.photo[ctx.message.photo.length - 1]
         var fileId = photo.file_id
@@ -26,16 +25,10 @@ const editNFT = new TelegrafStatelessQuestion("eNF", async ctx => {
     }
 
     let file = await ctx.telegram.getFile(fileId)
-    console.log("file", file)
     let url = await ctx.telegram.getFileLink(file.file_id)
-    console.log("url", url)
     var image = await Jimp.read(url.href)
-    console.log("image", image)
     var buffer = await image.getBufferAsync(image._originalMime)
-    console.log("buffer", buffer)
     var stream = Readable.from(buffer)
-    console.log("stream", stream)
-    //var stream = Readable.from(image.bitmap.data)
     stream.path = "some_filename.png"
     const options = {
         pinataMetadata: {
@@ -51,12 +44,9 @@ const editNFT = new TelegrafStatelessQuestion("eNF", async ctx => {
     }
     try {
         var result = await botParams.pinata.pinFileToIPFS(stream, options)
-        console.log("success", result)
     }
     catch (err) {
-        console.log("error", err)
     }
-
 
     botParams.db.chain
         .get("treasures")
@@ -66,9 +56,7 @@ const editNFT = new TelegrafStatelessQuestion("eNF", async ctx => {
     botParams.db.write()
     console.log(loadMessage)
     botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
-
     reply = "NFT updated"
-
     ctx.replyWithMarkdown(
         reply,
         Markup.keyboard(getKeyboard(ctx)).resize()

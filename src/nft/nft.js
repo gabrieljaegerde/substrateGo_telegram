@@ -1,10 +1,7 @@
 import { botParams } from "../../config.js"
 import { NFT, Collection } from "rmrk-tools"
-//import pkg from 'rmrk-tools';
-//const { NFT, Collection } = pkg;
 import { u8aToHex } from "@polkadot/util"
 import { encodeAddress, decodeAddress } from "@polkadot/util-crypto"
-//check before rendering each nft if enough balance
 
 async function mintNFT(){
   console.log("in")
@@ -14,7 +11,7 @@ async function mintNFT(){
       attributes: [],
       external_url: "random_link",
       image: "non_yet",
-    }; // QmQsMDPAyb9EVkS81jYDDFnKh4E2xA6SkxpjVaQJMBtSrV
+    };
   const collMdHash = "QmQsMDPAyb9EVkS81jYDDFnKh421xA6SrxpjasQJMBtSrV";
   const remarks = [];
   // Create collection

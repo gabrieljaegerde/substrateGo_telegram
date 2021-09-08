@@ -28,7 +28,6 @@ class SubstrateBot {
   constructor({
     settings,
     api,
-    modes,
     account
   }) {
     this.settings = settings
@@ -69,10 +68,12 @@ class SubstrateBot {
     //   network: botParams.settings.network.name,
     // })
 
+    //setup block listener for transaction listener
     await this.api.rpc.chain.subscribeNewHeads(async header =>
       newHeaderHandler(header)
     )
 
+    //setup remark listener for minting listener
     const consolidateFunction = async (remarks) => {
       console.log("remarks: ", remarks)
       const consolidator = new Consolidator(2, new RemarkStorageAdapter())
@@ -91,7 +92,8 @@ class SubstrateBot {
       subscriber.subscribe((val) => console.log("working:", val))
     }
     startListening()
-
+    
+    //setup pinata
     botParams.pinata = pinataSDK(process.env.PINATA_API, process.env.PINATA_SECRET)
 
     try {
@@ -102,21 +104,7 @@ class SubstrateBot {
       //handle error here
       console.log(err)
     }
-    //console.log("here2")
-    await mintNFT()
-    /*
-        const to = await getLatestFinalizedBlock(this.api);
-    
-        const remarkBlocks = await fetchRemarks(this.api, 6431422, to, ['']);
-        if (remarkBlocks && !isEmpty(remarkBlocks)) {
-          const remarks = getRemarksFromBlocks(remarkBlocks);
-          const consolidator = new Consolidator();
-          const { nfts, collections } = consolidator.consolidate(remarks);
-          console.log('Consolidated nfts:', nfts);
-          console.log('Consolidated collections:', collections);
-        }*/
-
-
+    //await mintNFT()
     this.invalidateCacheInterval = setInterval(() => {
       ;[...alreadyReceived.entries()].forEach(key => {
         console.log("in invalidateCacheInterval")

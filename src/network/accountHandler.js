@@ -62,57 +62,57 @@ async function deposit(record, currentBlock) {
     if (users[0].wallet.password.toString() === value && new Date(users[0].wallet.expiry) >= new Date()) {
       user = users[0]
       user.wallet.linked = true
-      message = "Your wallet has been linked to your account and you are now free to deposit any amount you wish. " +
-        "!!Please always check your wallet status BEFORE depositing to ensure your wallet is still linked " +
-        "to your account!! You have now unlocked all of the bots features! Go ahead and create treasures to spread " +
-        "around places near you today! "
+      message = "Your wallet has been successfully linked	\u2705 to your account! " +
+        "Any deposits you make from that wallet to the deposit address of this bot will now automatically " +
+        "be credited to this account. " +
+        "As a precaution, please still always check your wallet's status *BEFORE* depositing to ensure " +
+        "your wallet is still linked to your account!\nYou can now use the bot to create " +
+        "and collect treasures! Have fun.\n\n"
     }
     else if (!users[0].wallet.password.toString() === value && !new Date(users[0].wallet.expiry) >= new Date()) {
       withdraw(from.toString(), value)
       message = "You did not make the deposit on time (15 minutes), neither did you transfer the right amount. " +
-        "It has been sent back to you." +
+        "Your transfer has been sent back to the wallet it came from (minus transaction fees)." +
         "Click on '\u26A0 Deposit \u26A0' in " +
         "the menu again to see the requirements."
 
     }
     else if (new Date(users[0].wallet.expiry) < new Date()) {
       withdraw(from.toString(), value)
-      message = "You did not make the transfer within the required time of 15 minutes. It has been sent back to you." +
-        "Click on '\u26A0 Deposit \u26A0' in " +
+      message = "You did not make the transfer within the required time of 15 minutes. It has been sent back to you " +
+        "(minus transaction fees).\nClick on '\u26A0 Deposit \u26A0' in " +
         "the menu again to see the requirements."
     }
     else {
       withdraw(from.toString(), value)
-
       message = "You have transferred the wrong amount. Your transfer has been sent back to you " +
-        "(as long as it was able to cover the transfer fee). Click on '\u26A0 Deposit \u26A0' in " +
+        "(minus transaction fees).\nClick on '\u26A0 Deposit \u26A0' in " +
         "the menu again to see the requirements."
     }
   }
+  //account was linked with an already linked wallet -> inform affected users.
   else if (users.length > 1) {
-    console.log("5")
     user = checkPasswordMatch(users, value)
-    console.log("user", user)
     if (user) {
-      console.log("verifiedUsers", verifiedUsers)
       for (const vUser of verifiedUsers) {
-        console.log("vUser", vUser)
-        var alert = `!!!Your wallet ${vUser.wallet.address} has just been linked with another account. ` +
-          `It is NO LONGER LINKED to this account. You MUST relink a wallet (different or same) with this account BEFORE ` +
+        var alert = `\u26A0Your wallet ${vUser.wallet.address} has just been linked with another account.\u26A0 ` +
+          `It is *NO LONGER LINKED* to this account. You MUST relink a wallet (different or same) with this account BEFORE ` +
           `depositing. Otherwise your funds will be credited to another account!!!`
         await botParams.bot.telegram.sendMessage(vUser.chatid, alert)
         vUser.wallet.linked = false
       }
       user.wallet.linked = true
-      message = "Your wallet has been verified and you are now free to deposit any amount you wish. " +
-        "!!Please ALWAYS check your wallet status BEFORE depositing to ensure your wallet is still linked " +
-        "to your account!! You have now unlocked all of the bots features! Go ahead and create treasures to spread " +
-        "around places near you today! "
+      message = "Your wallet has been successfully linked	\u2705 to your account! " +
+        "Any deposits you make from that wallet to the deposit address of this bot will now automatically " +
+        "be credited to this account. " +
+        "As a precaution, please still always check your wallet's status *BEFORE* depositing to ensure " +
+        "your wallet is still linked to your account!\nYou can now use the bot to create " +
+        "and collect treasures! Have fun.\n\n"
     }
     else if (!user && verifiedUsers.length > 0) {
       user = findNewlyAdded(verifiedUsers)
     }
-    //multiple users but non verified and non with matching password
+    //multiple users but non verified and non with matching password -> send back
     else {
       withdraw(from.toString(), value)
     }
@@ -121,22 +121,17 @@ async function deposit(record, currentBlock) {
     //send money back
     //no entry found
     withdraw(from.toString(), value)
-    console.log("sent back")
   }
 
   if (user) {
     if (user.wallet.linked) {
       var newBalance = parseInt(user.wallet.balance) + parseInt(value)
       user.wallet.balance = newBalance
-      //botParams.db.chain.get("users").find({ chatid: user.chatid }).get("wallet").assign({ balance: newBalance }).value()
-      //check if user has any pending rewards
       botParams.db.write()
       message += `${humanVal} have been credited to your account.`
     }
     await botParams.bot.telegram
       .sendMessage(user.chatid, message, Markup.inlineKeyboard(links))
-    //await botParams.bot.telegram.sendMessage(user.chatid, message)
-    //telegram.send(user.chatid, message, links)
   }
 }
 
@@ -163,7 +158,6 @@ function checkBalance() {
 async function withdraw(recipient, value) {
   //get estimation of transfer cost
   let info = await getTransactionCost("transfer", recipient, value)
-  console.log("fee:", info.partialFee)
   //deduct fee from amount to be sent back
   var transferAmount = parseInt(value) - parseInt(info.partialFee)
 

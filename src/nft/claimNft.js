@@ -11,10 +11,6 @@ const claimNft = new MenuTemplate(async ctx => {
     ctx.session.remarks = null
     var loadMessage = await botParams.bot.telegram
         .sendMessage(ctx.chat.id, "Loading...")
-    /*
-    var loadMessage = await botParams.bot.telegram
-                .sendMessage(ctx.chat.id, "Loading...")
-    )*/
 
     let treasure = botParams.db.chain.get("treasures").find({ id: ctx.session.qrId }).value()
     let nftProps = {
@@ -30,41 +26,18 @@ const claimNft = new MenuTemplate(async ctx => {
     )
     let remarks = []
     remarks.push(nft.mint(ctx.session.user.wallet.address))
-
     ctx.session.remarks = remarks
-
     let info = await getTransactionCost("nft", ctx.session.user.wallet.address, remarks)
     botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
     let reply = `Receiving the NFT in your wallet will incur a ` +
         `fee of ${amountToHumanString(info.partialFee)}. Do you wish to proceed?`
-    //format to human
     return reply
 })
 
 claimNft.interact("Proceed", "sp", {
     do: async ctx => {
-        /*
-        if (!ctx.session.wallet || ctx.session.wallet.balance === 0){
-          return "/"
-        }*/
         var loadMessage = await botParams.bot.telegram
             .sendMessage(ctx.chat.id, "Loading...")
-        /*
-        let nftProps = {
-            "block": 0,
-            "collection": botParams.settings.collectionId,
-            "symbol": "string",
-            "transferable": 1,
-            "sn": new Date().getTime().toString(),
-            "metadata": `https://ipfs.io/ipfs/{}`
-        }
-        const nft = new NFT(
-            nftProps
-        )
-        let remarks = []
-        remarks.push(nft.mint(ctx.session.user.wallet.address))*/
-        //let sendRemark = `rmrk::SEND::2.0.0::${nft.id}::${ctx.session.user.wallet.address}`
-        //remarks.push(sendRemark)
         var { success, response, fee } = await mintAndSend(ctx.session.remarks, ctx.session.user)
         if (success) {
             botParams.db.read()
@@ -93,16 +66,10 @@ claimNft.interact("Proceed", "sp", {
                 `You can find it in 'My treasures' under the name: ${treasure.name}`
             await botParams.bot.telegram
                 .sendMessage(ctx.chat.id, message, Markup.inlineKeyboard(links))
-            // await ctx.replyWithMarkdown(
-            //     ,
-            //     Markup.keyboard(getKeyboard(ctx)).resize()
-            // )
             if (treasure.nft != botParams.settings.defaultNft) {
                 var loadMessage = await botParams.bot.telegram
                     .sendMessage(ctx.chat.id, "Loading...")
-
                 let treasureDb = botParams.db.chain.get("treasures").find({ id: ctx.session.scannedDb.qrId }).value()
-
                 var response = await fetch(`http://ipfs.io/ipfs/${treasureDb.nft}`)
                 let buffer = await response.buffer()
                 await botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
@@ -120,13 +87,12 @@ claimNft.interact("Proceed", "sp", {
                 )
             }
             ctx.session.remark = null
-
             return false
         }
         //if cannot cover transaction cost
         else if (response === "topup") {
             let message = "You do not have enough funds to pay for this transaction. " +
-                "Please top up your balance by going into your account settings and " +
+                "Please top up your balance by going to the main menu and " +
                 "clicking on 'Account Settings'. " +
                 "I have saved this treasure for you and you can still claim it within the next 30 days. " +
                 "To claim it, simply click on '\uD83C\uDF81 My treasures' in the Finder menu."
@@ -145,26 +111,14 @@ claimNft.interact("Proceed", "sp", {
                 "A problem occured while collecting your NFT. Please try again",
                 Markup.keyboard(getKeyboard(ctx)).resize()
             )
-            //await deleteMenuFromContext(ctx)
-            return false//"withdraw/"
-            //show a certain menu
+            return false
         }
     },
     joinLastRow: true,
-    hide: ctx => {
-        return false
-    },
 })
 
 claimNft.interact("Cancel", "sc", {
     do: async ctx => {
-        /*
-        if (!ctx.session.wallet || ctx.session.wallet.balance === 0){
-          return "/"
-        }*/
-        //await deleteMenuFromContext(ctx)
-
-        //editWalletMiddleware.replyToContext(ctx)
         ctx.session.remark = null
         await deleteMenuFromContext(ctx)
         let message = "You have NOT claimed this treasure. " +
@@ -177,9 +131,6 @@ claimNft.interact("Cancel", "sc", {
         return false
     },
     joinLastRow: true,
-    hide: ctx => {
-        return false
-    },
 })
 
 const claimNftMiddleware = new MenuMiddleware('nft/', claimNft)

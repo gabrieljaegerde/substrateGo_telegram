@@ -46,7 +46,13 @@ export const run = async function (params) {
       var message
       //normal start
       if (ctx.message.text === "/start") {
-        message = `Welcome to the ${botParams.settings.network.name}Go bot.` +
+        message = `Welcome to the ${botParams.settings.network.name}Go bot. This bot is ` +
+          `the central part of the ${botParams.settings.network.name}Go game: a treasure hunt game ` +
+          "running on the blockchain.\nIf you are familiar with geo-caching or PokemonGo, then " +
+          "this game is similar to that.\n\n" +
+          "With this bot you can create treasures and hide them all around the world for others " +
+          "to find.\nYou can of course also collect treasures. Whenever you collect a treasure an " +
+          "NFT gets created that proves your ownership of the treasure.\n\n" +
           "There are no fees to use this bot except the automatic network fees.\n" +
           "Under no circumstances shall the creators of this bot be held responsible " +
           "for lost, stolen or misdirected funds. Please use the bot with caution " +
@@ -62,7 +68,7 @@ export const run = async function (params) {
         //new user
         else {
           message = "Welcome new user! It seems like you have stumbled accross one of our " +
-            "QR Codes. What you just found is a treasure of a world wide treasure hunt!!! A " +
+            "QR Codes. What you just found is a treasure of a world wide treasure hunt game!!! A " +
             "lucky bird you are... To claim this treasure($$$), we need to set up " +
             "your account first. \n\nClick here -> \/setup <- to get instructions " +
             "on how to do just that. Come and join the hunt!"
@@ -77,7 +83,6 @@ export const run = async function (params) {
           type: ctx.chat.type,
           wallet: {},
           oldWallets: [],
-          maxLimit: 100,
           blocked: false,
           timestamp: new Date()
         }
@@ -93,7 +98,6 @@ export const run = async function (params) {
           type: ctx.chat.type,
           wallet: {},
           oldWallets: [],
-          maxLimit: 100,
           blocked: false,
           timestamp: new Date()
         }
@@ -336,6 +340,10 @@ export const run = async function (params) {
     }
   })
 
+  /*
+   *   React bot on 'Find treasures' message
+   */
+
   bot.hears("\uD83D\uDD0D Find treasures", ctx => {
     if (ctx.chat.type == "private") {
       ctx.reply(
@@ -398,12 +406,12 @@ export const run = async function (params) {
 
 
   //Initialization of all menus
-  bot.use((ctx, next) => {
-    if (ctx.callbackQuery) {
-      //console.log('callback data just happened', ctx.callbackQuery.data)
-    }
-    return next()
-  })
+  // bot.use((ctx, next) => {
+  //   if (ctx.callbackQuery) {
+  //     //console.log('callback data just happened', ctx.callbackQuery.data)
+  //   }
+  //   return next()
+  // })
 
   //menu.init()?
   await bot.launch()

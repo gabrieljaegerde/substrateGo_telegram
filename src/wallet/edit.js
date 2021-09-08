@@ -149,7 +149,6 @@ const enterAddress = new TelegrafStatelessQuestion("adr", async ctx => {
   let tokenString = botParams.settings.network.token
   ctx.session.wallet = null
   ctx.session.oldWallet = null
-  //if (db.get('notifications').filter({ chatid: ctx.chat.id }).value().length >= user.value().maxLimit) return;
   reply = reply ? reply : "Please make a *transfer* of exactly \n\n`" + value + "` " + tokenString +
     ` (This amount was randomly generated and thus acts as a password to ensure you ` +
     `are the rightful owner of it. Do NOT share this amount with anyone!)` +

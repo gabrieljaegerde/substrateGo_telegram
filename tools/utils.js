@@ -21,7 +21,6 @@ function getGroupOrCreate(ctx) {
       chatid: ctx.chat.id,
       type: ctx.chat.type,
       wallets: [],
-      maxLimit: 100,
       enabled: false,
       blocked: false,
       price: false,
