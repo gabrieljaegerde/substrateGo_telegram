@@ -36,6 +36,7 @@ function fastTrackGet(ctx, qrId) {
         ctx.session.qrId = qrId
         ctx.session.user = user
         var scannedDb = botParams.db.chain.get("scanned").find({ qrId: qrId, finder: user.chatid }).value()
+        ctx.session.scannedDb = scannedDb
         const now = new Date()
         const thirtyAfter = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000))
         if (!scannedDb) {
