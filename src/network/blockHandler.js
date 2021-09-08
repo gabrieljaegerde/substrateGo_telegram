@@ -13,7 +13,7 @@ async function newHeaderHandler(header) {
   const blockNumber = header.number.toNumber()
   if (currentBlock < blockNumber) currentBlock = blockNumber
   else return
-  lastBlockGauge.set(currentBlock)
+  //lastBlockGauge.set(currentBlock)
   const blockHash = await botParams.api.rpc.chain.getBlockHash(blockNumber)
   const block = await botParams.api.rpc.chain.getBlock(blockHash)
   const events = await botParams.api.query.system.events.at(blockHash)
