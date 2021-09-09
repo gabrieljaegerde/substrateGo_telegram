@@ -5,6 +5,13 @@ import { showCollectedItem } from "./showCollectedItem.js"
 
 const listCollected = new MenuTemplate(async ctx => {
   //ctx.session.collectedPage = null
+  botParams.db.read()
+  botParams.db.chain = _.chain(botParams.db.data)
+  var userScanned = botParams.db.chain.get("scanned").filter({ finder: ctx.chat.id }).value()
+  var userCollected = _.chain(userScanned)
+    .filter(item => item.collected === true)
+    .orderBy(["timestampCollected"],["desc"]).value()
+  ctx.session.userCollected = userCollected
   return `Here are all your collected treasures sorted by newest:`
 })
 

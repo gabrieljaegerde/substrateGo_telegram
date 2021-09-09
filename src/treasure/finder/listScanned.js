@@ -11,8 +11,7 @@ const listScanned = new MenuTemplate(async ctx => {
   var userScanned = botParams.db.chain.get("scanned").filter({ finder: ctx.chat.id }).value()
   var userCollected = _.chain(userScanned)
     .filter(item => item.collected === true)
-    .orderBy(["timestampCollected"],["desc"]).value()
-  ctx.session.userCollected = userCollected
+    .value()
   var userNonCollected = _.chain(userScanned)
     .filter(item => item.collected === false && new Date(item.expiry) > new Date())
     .orderBy(["timestamp"],["asc"]).value()

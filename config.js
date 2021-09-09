@@ -74,7 +74,6 @@ function getMainNoLinkedKeyboard(userBalance)
   ]
 }
 
-
 function getKeyboard(ctx) {
   if (ctx.session.menu) {
     switch (ctx.session.menu) {
@@ -114,19 +113,16 @@ function getKeyboard(ctx) {
 
 function getDb() {
   const db = new LowSync(new JSONFileSync(process.env.DB_FILE_PATH))
-  //db.chain = _.chain(db.data)
   return db
 }
 
 function getLocalStorage() {
   const db = new LowSync(new JSONFileSync(process.env.LOCAL_STORAGE_DB_FILE_PATH))
-  //db.chain = _.chain(db.data)
   return db
 }
 
 function getRemarkStorage() {
   const db = new LowSync(new JSONFileSync(process.env.REMARK_STORAGE_DB_FILE_PATH))
-  //db.chain = _.chain(db.data)
   return db
 }
 

@@ -155,19 +155,15 @@ export const run = async function (params) {
       botParams.db.chain = _.chain(botParams.db.data)
       var user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
       var userTreasures = botParams.db.chain.get("treasures").filter({ creator: ctx.chat.id }).value()
-      var userTreasuresScanned = botParams.db.chain.get("scanned").each((item) => userTreasures.some(treasure => treasure.id === item.qrId)).value()
+      var userTreasuresScanned = botParams.db.chain.get("scanned").filter((item) => userTreasures.some(treasure => treasure.id === item.qrId)).value()
       var groupedScanned = _.groupBy(userTreasuresScanned, 'qrId')
       var groupedScannedLengths = []
       for (var treasure in groupedScanned) {
-        console.log("treasure", treasure)
-        console.log("userTreasures", userTreasures)
-        console.log("userTreasures.find(treas => treas.id === treasure)", userTreasures.find(treas => treas.id === treasure))
         groupedScannedLengths.push({ name: userTreasures.find(treas => treas.id === treasure).name, length: groupedScanned[treasure].length })
       }
-      console.log("gS", groupedScannedLengths)
       var message = "";
       if (userTreasuresScanned.length > 0) {
-        message = `Your treasures have already been collected ${userTreasuresScanned.length} times.\n\n`
+        message = `Your ${userTreasures.length} treasures have already been collected ${userTreasuresScanned.length} times.\n\n`
         groupedScannedLengths.forEach(function (item) {
           console.log(item)
           message += `Treasure ${item.name} was collected ${item.length} times.\n`

@@ -8,7 +8,6 @@ const listCreated = new MenuTemplate(async ctx => {
   ctx.session.showMode = false
   botParams.db.read()
   botParams.db.chain = _.chain(botParams.db.data)
-  var reply
   var userCreated = botParams.db.chain.get("treasures")
     .filter({ creator: ctx.chat.id })
     .orderBy(["timestamp"], ["desc"])
