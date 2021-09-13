@@ -16,7 +16,7 @@ const listCreated = new MenuTemplate(async ctx => {
   if (userCreated.length > 0) {
     return `Here are all your created treasures sorted by newest:`
   }
-  return `You did not create any treasures yet. Click on '\uD83D\uDC8E Create treasure \uD83D\uDC8E' ` +
+  return `You did not create any treasures yet. Click on '💎 Create treasure 💎' ` +
     `to create your first one now!`
 })
 

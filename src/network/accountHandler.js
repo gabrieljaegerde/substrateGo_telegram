@@ -3,7 +3,8 @@ import _ from "lodash"
 import { checkFilter } from "../../tools/utils.js"
 import * as telegram from "../../helpers/telegram.js"
 import { Markup } from "telegraf"
-import { amountToHumanString } from "../wallet/helpers.js"
+import { addBigNumbers, amountToHumanString, compareBigNumbers, subtractBigNumbers } from "../wallet/helpers.js"
+import BigNumber from "bignumber.js"
 
 const alreadyReceived = new Map()
 
@@ -64,7 +65,8 @@ async function deposit(record, currentBlock) {
       user.wallet.linked = true
       message = "Your wallet has been successfully linked	\u2705 to your account! " +
         "Any deposits you make from that wallet to the deposit address of this bot will now automatically " +
-        "be credited to this account. " +
+        "be credited to this account. When collecting treasures, the respective NFTs will also be sent " +
+        "to the linked wallet.\n" +
         "As a precaution, please still always check your wallet's status *BEFORE* depositing to ensure " +
         "your wallet is still linked to your account!\nYou can now use the bot to create " +
         "and collect treasures! Have fun.\n\n"
@@ -73,20 +75,20 @@ async function deposit(record, currentBlock) {
       withdraw(from.toString(), value)
       message = "You did not make the deposit on time (15 minutes), neither did you transfer the right amount. " +
         "Your transfer has been sent back to the wallet it came from (minus transaction fees)." +
-        "Click on 'Link address' in " +
+        "Click on '🔗 Link address' in " +
         "the menu again to see the requirements."
 
     }
     else if (new Date(users[0].wallet.expiry) < new Date()) {
       withdraw(from.toString(), value)
       message = "You did not make the transfer within the required time of 15 minutes. It has been sent back to you " +
-        "(minus transaction fees).\nClick on 'Link address' in " +
+        "(minus transaction fees).\nClick on '🔗 Link address' in " +
         "the menu again to see the requirements."
     }
     else {
       withdraw(from.toString(), value)
       message = "You have transferred the wrong amount. Your transfer has been sent back to you " +
-        "(minus transaction fees).\nClick on 'Link address' in " +
+        "(minus transaction fees).\nClick on '🔗 Link address' in " +
         "the menu again to see the requirements."
     }
   }
@@ -125,8 +127,7 @@ async function deposit(record, currentBlock) {
 
   if (user) {
     if (user.wallet.linked) {
-      var newBalance = parseInt(user.wallet.balance) + parseInt(value)
-      user.wallet.balance = newBalance
+      user.wallet.balance = addBigNumbers(user.wallet.balance, value)
       botParams.db.write()
       message += `${humanVal} have been credited to your account.`
     }
@@ -159,10 +160,10 @@ async function withdraw(recipient, value) {
   //get estimation of transfer cost
   let info = await getTransactionCost("transfer", recipient, value)
   //deduct fee from amount to be sent back
-  var transferAmount = parseInt(value) - parseInt(info.partialFee)
+  var transferAmount = subtractBigNumbers(value, info.partialFee)
 
   //send back if (amount - fee) is +ve
-  if (transferAmount > 0) {
+  if (compareBigNumbers(transferAmount, 0, ">")) {
     try {
       const txHash = await botParams.api.tx.balances
         .transfer(recipient, transferAmount)
@@ -191,7 +192,12 @@ async function mintAndSend(remarks, user) {
     txs.push(botParams.api.tx.system.remark(remark));
   }
   let info = await getTransactionCost("nft", user.wallet.address, remarks)
-  var ableToCover = parseInt(user.wallet.balance) > parseInt(info.partialFee)
+  let userBalance = addBigNumbers(user.wallet.balance, user.rewardBalance)
+  var ableToCover = compareBigNumbers(userBalance, info.partialFee, ">=")
+  console.log("addBigNumbers(user.wallet.balance, user.rewardBalance)", userBalance)
+  console.log("able to cover", ableToCover)
+  console.log("info.partialFee.toString()", info.partialFee.toString())
+  //console.log("parseInt(user.wallet.balance) + parseInt(user.wallet.creatorReward)", parseInt(user.wallet.balance) + parseInt(user.wallet.creatorReward))
   if (!ableToCover) {
     //await botParams.bot.telegram.sendMessage(user.chatid, message)
     return { success: false, response: "topup" }

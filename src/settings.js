@@ -66,6 +66,7 @@ export const getSettings = () => {
     codeLength: 20,
     pwordLower: 100000000000, //0.1wmd
     pwordUpper: 110000000000,
+    creatorReward: 10000000000, //0.01wmd
     defaultNft: "QmaQCd7pS56AbgbdA8eqZQZqRwhWD8cjDUbAdni9UQ8yEA",
     collectionId: "8e9e74b9d29b92c328-GONOW1",
     depositAddress: process.env.DEPOSIT_ADDRESS.toString(),

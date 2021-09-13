@@ -22,7 +22,7 @@ const editMessage = new TelegrafStatelessQuestion("ec", async ctx => {
         return editMessage.replyWithMarkdown(ctx, reply)
     }
     
-    ctx.replyWithMarkdown(
+    await ctx.replyWithMarkdown(
         reply,
         Markup.keyboard(getKeyboard(ctx)).resize()
     )

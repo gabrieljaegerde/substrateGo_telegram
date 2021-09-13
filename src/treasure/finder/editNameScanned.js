@@ -25,7 +25,7 @@ const editNameScanned = new TelegrafStatelessQuestion("en", async ctx => {
         return editNameScanned.replyWithMarkdown(ctx, reply)
     }
 
-    ctx.replyWithMarkdown(
+    await ctx.replyWithMarkdown(
         reply,
         Markup.keyboard(getKeyboard(ctx)).resize()
     )

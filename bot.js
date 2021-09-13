@@ -2,8 +2,8 @@ import { Telegraf, Markup } from "telegraf"
 import { botParams, getKeyboard } from "./config.js"
 import { addWallet } from "./src/wallet/add.js"
 import { editWalletMiddleware, enterAddress } from "./src/wallet/edit.js"
-import { getAccountDetails } from "./src/wallet/helpers.js"
-import { withdrawBalanceMiddleware } from "./src/wallet/withdraw.js"
+import { addBigNumbers, amountToHumanString, getAccountDetails } from "./src/wallet/helpers.js"
+import { enterAmount, withdrawBalanceMiddleware } from "./src/wallet/withdraw.js"
 import { depositMiddleware, linkAddress } from "./src/wallet/deposit.js"
 import { addTreasure, uploadQr } from "./src/treasure/creator/addTreasure.js"
 import { listScannedMiddleware } from "./src/treasure/finder/listScanned.js"
@@ -46,17 +46,15 @@ export const run = async function (params) {
       var message
       //normal start
       if (ctx.message.text === "/start") {
-        message = `Welcome to the ${botParams.settings.network.name}Go bot. This bot is ` +
-          `the central part of the ${botParams.settings.network.name}Go game: a treasure hunt game ` +
-          "running on the blockchain.\nIf you are familiar with geo-caching or PokemonGo, then " +
-          "this game is similar to that.\n\n" +
-          "With this bot you can create treasures and hide them all around the world for others " +
-          "to find.\nYou can of course also collect treasures. Whenever you collect a treasure an " +
-          "NFT gets created that proves your ownership of the treasure.\n\n" +
-          "There are no fees to use this bot except the automatic network fees.\n" +
-          "Under no circumstances shall the creators of this bot be held responsible " +
+        message = `Welcome to *${botParams.settings.network.name}Go*:\nthe global *NFT Treasure Hunt* game 💰.\n\n` +
+          "With this bot you can easily:\n• *create* NFT treasures 💎 _and hide them all around the world 🌏 for others " +
+          "to find._\n• hunt and *collect* NFT treasures 🎁.\n\n" +
+          "There are no fees to use this bot except the automatic network fees.\n\n" +
+          `Please start by connecting a ${botParams.settings.network.name} wallet to this account ` +
+          "by clicking on '🛠️ Account Settings' in the menu below.\n\n" +
+          "_Under no circumstances shall the creators of this bot be held responsible " +
           "for lost, stolen or misdirected funds. Please use the bot with caution " +
-          "and only ever transfer small amounts to the bots deposit wallet."
+          "and only ever transfer small amounts to the bots deposit wallet._"
       }
       //if user arrived at this bot by scannning treasure QR
       else {
@@ -68,10 +66,17 @@ export const run = async function (params) {
         //new user
         else {
           message = "Welcome new user! It seems like you have stumbled accross one of our " +
-            "QR Codes. What you just found is a treasure of a world wide treasure hunt game!!! A " +
-            "lucky bird you are... To claim this treasure($$$), we need to set up " +
-            "your account first. \n\nClick here -> \/setup <- to get instructions " +
-            "on how to do just that. Come and join the hunt!"
+            `QR Codes. What you just found is a *${botParams.settings.network.name}Go* ` +
+            "treasure!!! A lucky bird 🦩 you are...\n\n" +
+            `*${botParams.settings.network.name}Go*: the global *NFT Treasure Hunt* game 💰\n\n` +
+            "With this bot you can easily:\n• *create* NFT treasures 💎 _and hide them all around the world 🌏 for others " +
+            "to find._\n• hunt and *collect* NFT treasures 🎁.\n\n" +
+            "There are no fees to use this bot except the automatic network fees.\n\n" +
+            `Please start by connecting a ${botParams.settings.network.name} wallet to this account ` +
+            "by clicking on '🛠️ Account Settings' in the menu below.\n\n" +
+            "_Under no circumstances shall the creators of this bot be held responsible " +
+            "for lost, stolen or misdirected funds. Please use the bot with caution " +
+            "and only ever transfer small amounts to the bots deposit wallet._"
         }
         //the QR code id is sent in with the /start command.
         //seperate the id out
@@ -81,6 +86,8 @@ export const run = async function (params) {
           username: ctx.chat.username,
           chatid: ctx.chat.id,
           type: ctx.chat.type,
+          totalRewardBalance: "0",
+          rewardBalance: "0",
           wallet: {},
           oldWallets: [],
           blocked: false,
@@ -96,6 +103,8 @@ export const run = async function (params) {
           username: ctx.chat.username,
           chatid: ctx.chat.id,
           type: ctx.chat.type,
+          totalRewardBalance: "0",
+          rewardBalance: "0",
           wallet: {},
           oldWallets: [],
           blocked: false,
@@ -107,8 +116,8 @@ export const run = async function (params) {
       await ctx.replyWithMarkdown(
         message,
         Markup.keyboard(getKeyboard(ctx)).resize()
-      )      
-      if (ctx.message.text !== "/start"){
+      )
+      if (ctx.message.text !== "/start") {
         fastTrackGet(ctx, qrId)
       }
       return
@@ -138,7 +147,6 @@ export const run = async function (params) {
         antispamOn[ctx.chat.id] = true
         setTimeout(() => (antispamOn[ctx.chat.id] = false), 60000)
         //todo: send bot stats
-        //refreshMenuMiddleware.setSpecific(ctx)
       } else {
         ctx.reply("Time limit 1 min for /stats command")
       }
@@ -149,7 +157,7 @@ export const run = async function (params) {
    *   React bot on 'View stats' message
    */
 
-  bot.hears("\uD83D\uDCCA View stats", ctx => {
+  bot.hears("📊 View stats", ctx => {
     if (ctx.chat.type == "private") {
       botParams.db.read()
       botParams.db.chain = _.chain(botParams.db.data)
@@ -165,8 +173,7 @@ export const run = async function (params) {
       if (userTreasuresScanned.length > 0) {
         message = `Your ${userTreasures.length} treasures have already been collected ${userTreasuresScanned.length} times.\n\n`
         groupedScannedLengths.forEach(function (item) {
-          console.log(item)
-          message += `Treasure ${item.name} was collected ${item.length} times.\n`
+          message += `Treasure '${item.name}' was collected ${item.length} time(s).\n`
         })
       }
       else if (userTreasuresScanned.length == 0 && userTreasures.length > 0) {
@@ -187,7 +194,7 @@ export const run = async function (params) {
    *   React bot on 'Collect treasure' message
    */
 
-  bot.hears("\uD83D\uDCF7 Collect treasure", ctx => {
+  bot.hears("📷 Collect treasure", ctx => {
     if (ctx.chat.type == "private") {
       collectTreasure(ctx)
     }
@@ -197,7 +204,7 @@ export const run = async function (params) {
    *   React bot on 'Create treasure' message
    */
 
-  bot.hears("\uD83D\uDC8E Create treasure \uD83D\uDC8E", ctx => {
+  bot.hears("💎 Create treasure 💎", ctx => {
     if (ctx.chat.type == "private") {
       createTreasureMiddleware.replyToContext(ctx)
     }
@@ -209,7 +216,13 @@ export const run = async function (params) {
 
   bot.hears("\uD83D\uDCEA Edit address", ctx => {
     if (ctx.chat.type == "private") {
-      addWallet(ctx)
+      botParams.db.read()
+      botParams.db.chain = _.chain(botParams.db.data)
+      var user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
+      var replyMsg = `Current Address:\n_${user.wallet.address}_\n\n` +
+        `Enter new ${botParams.settings.network.name} address:`
+      enterAddress.replyWithMarkdown(ctx, replyMsg)
+      //addWallet(ctx)
       //addWalletMiddleware.setSpecific(ctx)
     }
   })
@@ -229,28 +242,34 @@ export const run = async function (params) {
    *   React bot on 'My treasures' message
    */
 
-  bot.hears("\uD83C\uDF81 My treasures", ctx => {
+  bot.hears("🎁 My treasures", ctx => {
     if (ctx.chat.type == "private") {
       listScannedMiddleware.replyToContext(ctx)
     }
   })
 
   /*
-   *   React bot on 'Withdraw balance' message
+   *   React bot on 'Withdraw' message
    */
 
-  bot.hears("\uD83E\uDDFE Withdraw balance", ctx => {
+  bot.hears("\uD83E\uDDFE Withdraw", ctx => {
     if (ctx.chat.type == "private") {
-      ctx.session.addressChange = false
-      withdrawBalanceMiddleware.replyToContext(ctx)
+      botParams.db.read()
+      botParams.db.chain = _.chain(botParams.db.data)
+      var user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
+      var userBalance = addBigNumbers(user.wallet.balance ? user.wallet.balance : 0 , user.rewardBalance)
+      let replyMsg = `Your balance: *${amountToHumanString(userBalance)}*\n\nHow much would you ` +
+        `like to withdraw?\n\n_Please use '.' notation instead of commas. e.g. 0.02 or 0.5 or 1.4 etc._`
+      enterAmount.replyWithMarkdown(ctx, replyMsg)
+      //withdrawBalanceMiddleware.replyToContext(ctx)
     }
   })
 
   /*
-   *   React bot on 'Link address' message
+   *   React bot on '🔗 Link address' message
    */
 
-  bot.hears("Link address", ctx => {
+  bot.hears("🔗 Link address", ctx => {
     if (ctx.chat.type == "private") {
       linkAddress(ctx)
     }
@@ -270,7 +289,7 @@ export const run = async function (params) {
    *   React bot on 'Edit treasures' message
    */
 
-  bot.hears("\u270F Edit treasures", async ctx => {
+  bot.hears("✏️ Edit treasures", async ctx => {
     if (ctx.chat.type == "private") {
       listCreatedMiddleware.replyToContext(ctx)
     }
@@ -280,13 +299,15 @@ export const run = async function (params) {
    *   React bot on 'Creator Mode' message
    */
 
-  bot.hears("\uD83E\uDDD9\uD83C\uDFFB\u200D\u2640 Creator Mode", ctx => {
+  bot.hears("🧙🏻‍♀️ Creator Mode", ctx => {
     if (ctx.chat.type == "private") {
       ctx.session.menu = "creator"
-      ctx.reply(
-        "You have entered creator mode. Here you can create new treasures, edit them " +
-        "and track their performance. Each time a user collects your treasures, you receive a " +
-        "small reward. Go create awesome treasures and earn!",
+      ctx.replyWithMarkdown(
+        "You have entered 🧙🏻‍♀️ *creator* mode.\n\nHere you can:\n• *create* new treasures💎\n" +
+        "• *edit* treasures✏️\n" +
+        "• and *track* their performance📊.\n\n_Each time a user collects your treasures, you receive a " +
+        `small reward (${amountToHumanString(botParams.settings.creatorReward)}). The NFT treasure ` +
+        `sent to the finders is customizable by you. Go create awesome treasures and earn!_`,
         Markup.keyboard(getKeyboard(ctx)).resize()
       )
     }
@@ -296,12 +317,14 @@ export const run = async function (params) {
    *   React bot on 'Finder Mode' message
    */
 
-  bot.hears("\uD83D\uDD75\uD83C\uDFFE\u200D\u2642 Finder Mode", async ctx => {
+  bot.hears("🕵🏾‍♂️ Finder Mode", async ctx => {
     if (ctx.chat.type == "private") {
       ctx.session.menu = "finder"
-      ctx.reply(
-        "You have now entered finder mode. Here you can find all the tools to find and claim " +
-        "treasures.",
+      ctx.replyWithMarkdown(
+        "You have entered 🕵🏾‍♂️ *finder* mode.\n\nHere you can:\n• *collect* treasures 📷\n" +
+        "• *find* treasures 🔍\n• and *view* your found treasures 🎁\n\n_Each time you collect a treasure, " +
+        `an NFT gets created on the ${botParams.settings.network.name}. These prove your ownership of ` +
+        "the treasures and can be freely traded on the open market._",
         Markup.keyboard(getKeyboard(ctx)).resize()
       )
     }
@@ -314,8 +337,8 @@ export const run = async function (params) {
   bot.hears(regex, async ctx => {
     if (ctx.chat.type == "private") {
       ctx.session.menu = "account"
-      await ctx.reply(
-        "Welcome to your Account Settings. Let me give you some quick info.",
+      await ctx.replyWithMarkdown(
+        "Welcome to your 🛠️ Account Settings. Let me give you some quick info.",
         Markup.keyboard(getKeyboard(ctx)).resize()
       )
       depositMiddleware.replyToContext(ctx)
@@ -329,8 +352,8 @@ export const run = async function (params) {
   bot.hears("\u2B05 Back to main menu", ctx => {
     if (ctx.chat.type == "private") {
       ctx.session.menu = "main"
-      ctx.reply(
-        "Welcome home",
+      ctx.replyWithMarkdown(
+        "Welcome home 🏠",
         Markup.keyboard(getKeyboard(ctx)).resize()
       )
     }
@@ -340,9 +363,9 @@ export const run = async function (params) {
    *   React bot on 'Find treasures' message
    */
 
-  bot.hears("\uD83D\uDD0D Find treasures", ctx => {
+  bot.hears("🔍 Find treasures", ctx => {
     if (ctx.chat.type == "private") {
-      ctx.reply(
+      ctx.replyWithMarkdown(
         "In the future, clicking that button will bring you to a website that " +
         "shows a world map with markers of all the treasures. todo...",
         Markup.keyboard(getKeyboard(ctx)).resize()
@@ -385,6 +408,8 @@ export const run = async function (params) {
   bot.use(claimNftMiddleware)
 
   bot.use(enterAddress.middleware())
+
+  bot.use(enterAmount.middleware())
 
   /*
    *   Collect and show in console all bot errors

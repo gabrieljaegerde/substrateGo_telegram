@@ -49,13 +49,12 @@ Enter new ${botParams.settings.network.name} address:`
   },
 })
 
-editWallet.interact("Withdraw balance", "d", {
+editWallet.interact("Withdraw", "d", {
   do: async ctx => {
     if (!ctx.session.wallet || ctx.session.wallet.balance === 0){
       return ".."
     }
     await deleteMenuFromContext(ctx)
-    ctx.session.addressChange = true
     withdrawBalanceMiddleware.replyToContext(ctx)
     //replyMenuToContext(withdrawBalance, ctx, '/withdraw/')
 
@@ -109,7 +108,7 @@ const enterAddress = new TelegrafStatelessQuestion("adr", async ctx => {
   const quarterAfter = new Date(now.getTime() + (15 * 60 * 1000))
   ctx.session.wallet = {
     address: ctx.message.text,
-    balance: parseInt(0),
+    balance: "0",
     timestamp: new Date(),
     linked: false,
     password: await randomNumber(botParams.settings.pwordLower, botParams.settings.pwordUpper),
@@ -153,11 +152,11 @@ const enterAddress = new TelegrafStatelessQuestion("adr", async ctx => {
     ` (This amount was randomly generated and thus acts as a password to ensure you ` +
     `are the rightful owner of it. Do NOT share this amount with anyone!)` +
     "\n\n*FROM* the address you registered:" +
-    `\n\n${user.wallet.address}\n\n` +
+    `\n\n*${user.wallet.address}*\n\n` +
     "*TO* this address: \n\n`" + botParams.settings.depositAddress + "`\n\n" +
     "As soon as a transfer comes in, I will credit your account.\n\n" +
     "Please note that the password expires in 15 minutes! After which you will have to generate " +
-    "a new one by clicking on 'Link address' in the menu again." +
+    "a new one by clicking on '🔗 Link address' in the menu again." +
     `\n\nThe purpose of this transfer is to link your wallet with your account ` +
     `and allow for safe transfers and withdrawals in the future.`
   ctx.replyWithMarkdown(

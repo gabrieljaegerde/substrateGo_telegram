@@ -1,32 +1,35 @@
 import { MenuTemplate, MenuMiddleware, replyMenuToContext, deleteMenuFromContext } from "telegraf-inline-menu"
 import { botParams, getKeyboard } from "../../config.js"
 import { Markup } from "telegraf"
-import { amountToHuman, getAccountDetails, setSessionWallet } from "./helpers.js"
+import { amountToHuman, amountToHumanString, getAccountDetails, setSessionWallet, setSessionUser, addBigNumbers } from "./helpers.js"
 import _ from "lodash"
 import { balanceToString } from "../../tools/typeParser.js"
 import randomNumber from "random-number-csprng"
 
 const deposit = new MenuTemplate(async ctx => {
-  await setSessionWallet(ctx)
-  if (!ctx.session.wallet.address) {
+  await setSessionUser(ctx)
+  var sWallet = ctx.session.user.wallet
+  if (!sWallet.address) {
     return `Please first add a ${botParams.settings.network.name} wallet to your account ` +
       `by clicking on 'Add Address' in the menu below.`
   }
-  var text = await getAccountDetails(ctx.session.wallet)
-  var shortAddr = ctx.session.wallet.address.substring(0, 3) +
+  let balanceString = amountToHumanString(addBigNumbers(sWallet.balance, ctx.session.user.rewardBalance))
+  var text = `*Address:* _${sWallet.address}_\n\n*Account Balance:* _${balanceString}_`
+  var shortAddr = sWallet.address.substring(0, 3) +
     "..." +
-    ctx.session.wallet.address.substring(ctx.session.wallet.address.length - 3)
-  if (ctx.session.wallet.linked) {
-    text += "\n\n\u2705 The wallet with address " + shortAddr + "is currently linked to this account. You can " +
+    sWallet.address.substring(sWallet.address.length - 3)
+  if (sWallet.linked) {
+    text += "\n\n\u2705 The wallet with address " + shortAddr + " is currently linked to this account. You can " +
       `now go ahead and make a transfer from it to the deposit address of this bot: ` +
       "\n\n`" + botParams.settings.depositAddress + "`\n\nYour transfer amount " +
       `will then be automatically credited to your balance.`
-    ctx.session.wallet = null
+    ctx.session.user = null
   }
   else {
-    text += `\n\n\u274C The wallet is NOT linked to this account! Please link the wallet first!!! ` +
-      `Do NOT transfer to the deposit address BEFORE having linked your wallet. Or you may loose ` +
-      `your funds.`
+    text += "\n\n\u274C The wallet with address " + shortAddr + " is *NOT* linked to this account! " + 
+      "Please link the wallet ASAP!!!\n\n" +
+      `_Do NOT transfer to the deposit address BEFORE having linked your wallet. Or you may loose ` +
+      `your funds._`
   }
   return { text, parse_mode: 'Markdown' }
 })
@@ -52,18 +55,17 @@ async function linkAddress(ctx) {
     "*TO* this address: \n\n`" + botParams.settings.depositAddress + "`\n\n" +
     "As soon as a transfer comes in, I will credit your account.\n\n" +
     "Please note that the password expires in 15 minutes! After which you will have to generate " +
-    "a new one by clicking on 'Link address' in the menu again." +
+    "a new one by clicking on '🔗 Link address' in the menu again." +
     `\n\nThe purpose of this transfer is to link your wallet with your account ` +
-    `and allow for safe transfers and withdrawals in the future.`
+    `and allow for safe deposits and withdrawals in the future.`
   ctx.replyWithMarkdown(
     reply,
     Markup.keyboard(getKeyboard(ctx)).resize()
   )
-
   ctx.session.wallet = null
 }
 
-deposit.interact("Link address", "la", {
+deposit.interact("🔗 Link address", "la", {
   do: async ctx => {
     linkAddress(ctx)
     await deleteMenuFromContext(ctx)

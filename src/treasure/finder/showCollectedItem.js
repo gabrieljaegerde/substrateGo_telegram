@@ -71,7 +71,7 @@ showCollectedItem.interact("Show blockchain transaction", "sBT", {
       .sendMessage(ctx.chat.id, message, Markup.inlineKeyboard(links))
     return true
   },
-  joinLastRow: true
+  joinLastRow: false
 })
 
 showCollectedItem.interact("Edit name", "eNS", {

@@ -5,13 +5,6 @@ import Jimp from "jimp"
 import jsQR from "jsqr"
 import QrCode from "qrcode-reader"
 
-async function setSessionWallet(ctx) {
-  botParams.db.read()
-  botParams.db.chain = _.chain(botParams.db.data)
-  var user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-  ctx.session.wallet = user.wallet
-}
-
 async function scan(url) {
   try {
     var image = await Jimp.read(url)
@@ -52,7 +45,6 @@ function checkQr(result) {
 }
 
 export {
-  setSessionWallet,
   scan,
   decorateQr
 }

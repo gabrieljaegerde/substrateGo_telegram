@@ -5,13 +5,13 @@ import _ from "lodash"
 import jsQR from "jsqr"
 import { getTransactionCost, mintAndSend } from "../network/accountHandler.js"
 import { NFT } from 'rmrk-tools';
-import { amountToHumanString } from "../wallet/helpers.js"
+import { addBigNumbers, amountToHumanString, compareBigNumbers, subtractBigNumbers } from "../wallet/helpers.js"
+import BigNumber from "bignumber.js"
 
 const claimNft = new MenuTemplate(async ctx => {
     ctx.session.remarks = null
     var loadMessage = await botParams.bot.telegram
         .sendMessage(ctx.chat.id, "Loading...")
-
     let treasure = botParams.db.chain.get("treasures").find({ id: ctx.session.qrId }).value()
     let nftProps = {
         "block": 0,
@@ -29,8 +29,12 @@ const claimNft = new MenuTemplate(async ctx => {
     ctx.session.remarks = remarks
     let info = await getTransactionCost("nft", ctx.session.user.wallet.address, remarks)
     botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
+    console.log("info.partialFee", info.partialFee)
+    console.log("botParams.settings.creatorReward", botParams.settings.creatorReward)
     let reply = `Receiving the NFT in your wallet will incur a ` +
-        `fee of ${amountToHumanString(info.partialFee)}. Do you wish to proceed?`
+        `fee of ${amountToHumanString(addBigNumbers(info.partialFee, botParams.settings.creatorReward))} ` +
+        `(${amountToHumanString(info.partialFee)} network fee + ${amountToHumanString(botParams.settings.creatorReward)} ` +
+        `creator reward). Do you wish to proceed?`
     return reply
 })
 
@@ -44,13 +48,29 @@ claimNft.interact("Proceed", "sp", {
             botParams.db.chain = _.chain(botParams.db.data)
             //find user and decrease balance
             let user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-            user.wallet.balance -= fee
+            let totalCost = addBigNumbers(fee, botParams.settings.creatorReward)
+            let coverableByRewards = subtractBigNumbers(user.rewardBalance, totalCost)
+            if (compareBigNumbers(coverableByRewards, 0, "<"))
+            {
+                user.rewardBalance = "0"
+                //since coverableByRewards is -ve this is actually subtraction
+                user.wallet.balance = addBigNumbers(user.wallet.balance, coverableByRewards)
+            }
+            else {
+                user.rewardBalance = coverableByRewards
+            }
+            let treasure = botParams.db.chain.get("treasures").find({ id: ctx.session.qrId }).value()
+            let creator = botParams.db.chain.get("users").find({ chatid: treasure.creator }).value()
+            creator.rewardBalance = addBigNumbers(creator.rewardBalance, botParams.settings.creatorReward)
+            creator.totalRewardBalance = addBigNumbers(creator.totalRewardBalance, botParams.settings.creatorReward)
+            await botParams.bot.telegram
+                .sendMessage(creator.chatid, `Treasure '${treasure.name}' was just collected.\n\n` +
+                    `${amountToHumanString(botParams.settings.creatorReward)} credited to your account.`)
             //check if scanned has an entry
             botParams.db.chain.get("scanned")
                 .find({ finder: ctx.session.user.chatid, qrId: ctx.session.qrId })
                 .assign({ collected: true, timestampCollected: new Date(), txHash: response }).value()
             botParams.db.write()
-            let treasure = botParams.db.chain.get("treasures").find({ id: ctx.session.qrId }).value()
             await deleteMenuFromContext(ctx)
             var links = botParams.settings
                 .getExtrinsicLinks(
@@ -67,8 +87,8 @@ claimNft.interact("Proceed", "sp", {
             await botParams.bot.telegram
                 .sendMessage(ctx.chat.id, message, Markup.inlineKeyboard(links))
             if (treasure.nft != botParams.settings.defaultNft) {
-                var loadMessage = await botParams.bot.telegram
-                    .sendMessage(ctx.chat.id, "Loading...")
+                // var loadMessage = await botParams.bot.telegram
+                //     .sendMessage(ctx.chat.id, "Loading...")
                 let treasureDb = botParams.db.chain.get("treasures").find({ id: ctx.session.scannedDb.qrId }).value()
                 var response = await fetch(`http://ipfs.io/ipfs/${treasureDb.nft}`)
                 let buffer = await response.buffer()
@@ -95,7 +115,7 @@ claimNft.interact("Proceed", "sp", {
                 "Please top up your balance by going to the main menu and " +
                 "clicking on 'Account Settings'. " +
                 "I have saved this treasure for you and you can still claim it within the next 30 days. " +
-                "To claim it, simply click on '\uD83C\uDF81 My treasures' in the Finder menu."
+                "To claim it, simply click on '🎁 My treasures' in the Finder menu."
             botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
             await deleteMenuFromContext(ctx)
             ctx.replyWithMarkdown(
@@ -123,7 +143,7 @@ claimNft.interact("Cancel", "sc", {
         await deleteMenuFromContext(ctx)
         let message = "You have NOT claimed this treasure. " +
             "But I have saved it for you and you can still claim it within the next 30 days. " +
-            "To claim it, simply click on '\uD83C\uDF81 My treasures' in the Finder menu."
+            "To claim it, simply click on '🎁 My treasures' in the Finder menu."
         ctx.replyWithMarkdown(
             message,
             Markup.keyboard(getKeyboard(ctx)).resize()

@@ -18,7 +18,7 @@ async function generateQr(ctx) {
         let qrImage = await decorateQr(Buffer.from(url.split(',')[1], 'base64'))
         console.log("qrImage", qrImage)
         let caption = "Go ahead and print this sticker now. Once you have placed it somewhere, " +
-            "click on '\uD83D\uDC8E Create treasure \uD83D\uDC8E' again " +
+            "click on '💎 Create treasure 💎' again " +
             "and move on to Step 2: 'Add Treasure', to link it to a location."
         //save genqr in db
         var new_gen_qr = {

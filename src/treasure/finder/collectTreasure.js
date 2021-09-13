@@ -54,13 +54,13 @@ function fastTrackGet(ctx, qrId) {
             }
             botParams.db.chain.get("scanned").push(new_scanned).value()
             botParams.db.write()
-            if (!user.wallet.address) {
+            if (!user.wallet.address || !user.wallet.linked) {
                 return ctx.replyWithMarkdown(
                     `In order to collect a Treasure, you first need to link a ${botParams.settings.network.name} ` +
                     `address to your account. Please go to 'Account settings' ` +
                     `in the main menu. ` +
-                    `\n\nI have saved this treasure for you and you can still claim it within the next 30 days. ` +
-                    `To claim it, simply click on '\uD83C\uDF81 My treasures' in the Finder menu.`,
+                    `\n\n_I have saved this treasure for you and you can still claim it within the next 30 days. ` +
+                    `To claim it, simply click on '🎁 My treasures' in the Finder menu._`,
                     Markup.keyboard(getKeyboard(ctx)).resize()
                 )
             }
@@ -74,13 +74,13 @@ function fastTrackGet(ctx, qrId) {
             else {
                 botParams.db.chain.get("scanned").find({ qrId: qrId, finder: user.chatid }).assign({ expiry: thirtyAfter }).value()
                 botParams.db.write()
-                if (!user.wallet.address) {
+                if (!user.wallet.address || !user.wallet.linked) {
                     return ctx.replyWithMarkdown(
                         `In order to collect a Treasure, you first need to link a ${botParams.settings.network.name} ` +
                         `address to your account. Please go to 'Account settings' ` +
                         `in the main menu. ` +
                         `\n\nI have saved this treasure for you and you can still claim it within the next 30 days. ` +
-                        `To claim it, simply click on '\uD83C\uDF81 My treasures' in the Finder menu.`,
+                        `To claim it, simply click on '🎁 My treasures' in the Finder menu.`,
                         Markup.keyboard(getKeyboard(ctx)).resize()
                     )
                 }

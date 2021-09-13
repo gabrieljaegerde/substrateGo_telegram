@@ -8,36 +8,90 @@ import {
   deleteMenuFromContext
 } from "telegraf-inline-menu"
 import { withdraw, getTransactionCost } from "../network/accountHandler.js"
-import { amountToHumanString, setSessionWallet } from "./helpers.js"
+import { addBigNumbers, amountToHumanString, compareBigNumbers, setSessionWallet, subtractBigNumbers } from "./helpers.js"
 import { editWalletMiddleware } from "./edit.js"
 import { amountToHuman } from "./helpers.js"
+import TelegrafStatelessQuestion from "telegraf-stateless-question"
+import BigNumber from "bignumber.js"
+
+
+const enterAmount = new TelegrafStatelessQuestion("amt", async ctx => {
+  botParams.db.read()
+  botParams.db.chain = _.chain(botParams.db.data)
+  var decimals = botParams.settings.network.decimals
+  var requestedAmount = new BigNumber(ctx.message.text)
+    .multipliedBy(new BigNumber("1e" + decimals)).toString()
+  ctx.session.withdrawAmount = requestedAmount
+  var user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
+  if (!user.wallet.balance) {
+    let replyMsg = "Please add an address to your account first by clicking on 'Add address'\n. " +
+      "This is the address your withdrawal will be sent to.\n\n_While it is not " +
+      "required to link your account to the address for a withdrawal, it is still " +
+      "good practice to do so for you to ensure that you have entered the correct address._"
+    return ctx.replyWithMarkdown(
+      replyMsg,
+      Markup.keyboard(getKeyboard(ctx)).resize()
+    )
+  }
+  var userBalance = addBigNumbers(user.wallet.balance, user.rewardBalance)
+  console.log("userBalance", userBalance)
+  if (compareBigNumbers(userBalance, requestedAmount, "<")) {
+    let replyMsg = `The amount you entered (${amountToHumanString(requestedAmount)}) is bigger ` +
+      `than your balance of _${amountToHumanString(userBalance)}_.\n\n` +
+      `Please enter an amount *less than* or *equal* to your balance.`
+    return enterAmount.replyWithMarkdown(ctx, replyMsg)
+  }
+  if (compareBigNumbers(requestedAmount, 0, "<")) {
+    let replyMsg = "The amount *has* to be a *positive* number. Please enter an amount *greater* than *0*."
+    return enterAmount.replyWithMarkdown(ctx, replyMsg)
+  }
+  withdrawBalanceMiddleware.replyToContext(ctx)
+})
 
 //create submenu for withdrawal
 const withdrawBalance = new MenuTemplate(async ctx => {
+  ctx.session.hideWithdrawButtons = false
   botParams.db.read()
   botParams.db.chain = _.chain(botParams.db.data)
   var loadMessage = await botParams.bot.telegram
     .sendMessage(ctx.chat.id, "Loading...")
   var user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-  await setSessionWallet(ctx)
   var reply
-  if (ctx.session.wallet.balance > 0 && ctx.session.wallet.linked) {
-    let info = await getTransactionCost("transfer", user.wallet.address, user.wallet.balance)
+  var userBalance = addBigNumbers(user.wallet.balance, user.rewardBalance)
+  if (compareBigNumbers(userBalance, 0, ">") &&
+    compareBigNumbers(userBalance, ctx.session.withdrawAmount, ">=")) {
+    let info = await getTransactionCost("transfer", user.wallet.address, ctx.session.withdrawAmount)
     //format to human
-    reply = `With your current balance of ${amountToHumanString(user.wallet.balance)} the withdrawal will incur a ` +
-      `fee of ${amountToHumanString(info.partialFee)}. A total of ${amountToHumanString(parseInt(user.wallet.balance) - parseInt(info.partialFee))} ` +
-      `should arrive in your wallet. Do you wish to proceed with the withdrawal?`
-  }
-  else if (ctx.session.wallet.balance > 0 && !ctx.session.wallet.linked) {
-    reply = `You can only withdraw your funds to the same wallet they came from (security reasons).\n\n` +
-      `As that wallet is currently not linked to this account, you are not able to withdraw at this moment.\n\n` +
-      `Please first link this account to the wallet again by clicking on 'Link address' in the menu below.`
+    let amountToArrive = subtractBigNumbers(ctx.session.withdrawAmount, info.partialFee)
+    if (compareBigNumbers(amountToArrive, 0, ">")) {
+      reply = `The *withdrawal* of _${amountToHumanString(ctx.session.withdrawAmount)}_ will incur a ` +
+        `*fee* of _${amountToHumanString(info.partialFee)}_. A total of *${amountToHumanString(amountToArrive)}* ` +
+        `should arrive in your wallet:\n\n*${user.wallet.address}*\n\nDo you wish to proceed with the withdrawal?`
+    }
+    else {
+      ctx.session.hideWithdrawButtons = true
+      reply = `The *withdrawal* of _${amountToHumanString(ctx.session.withdrawAmount)}_ will incur a ` +
+        `*fee* of _${amountToHumanString(info.partialFee)}_. Since the fee *exceeds* the actual withdrawal amount, ` +
+        `it is *not* possible to withdraw such a small amount.`
+      await ctx.replyWithMarkdown(
+        reply,
+        Markup.keyboard(getKeyboard(ctx)).resize()
+      )
+      if (compareBigNumbers(userBalance, info.partialFee, ">")) {
+        let replyMsg = `Try withdrawing a *bigger* amount.`
+        enterAmount.replyWithMarkdown(ctx, replyMsg)
+      }
+      else {
+        reply = "If this is your entire balance, try increasing it by creating treasures 😉.\n\n_Creators " +
+          `get a reward whenever their treasures are collected!_`
+      }
+    }
   }
   else {
-    reply = `You have nothing to withdraw... Your balance is 0.`
+    reply = `You have nothing to withdraw... Your balance is 0. Nice try. 😉`
   }
   botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
-  return reply
+  return { text: reply, parse_mode: 'Markdown' }
 })
 
 withdrawBalance.interact("Proceed", "pr", {
@@ -50,12 +104,7 @@ withdrawBalance.interact("Proceed", "pr", {
       .sendMessage(ctx.chat.id, "Loading...")
     let success = await withdrawFunds(ctx)
     if (success) {
-      setSessionWallet(ctx)
       await deleteMenuFromContext(ctx)
-
-      if (ctx.session.addressChange) {
-        editWalletMiddleware.replyToContext(ctx)
-      }
       botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
       return false
       //show a certain menu or non...
@@ -63,13 +112,13 @@ withdrawBalance.interact("Proceed", "pr", {
     else {
       //await deleteMenuFromContext(ctx)
       botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
-      return "withdraw/"
+      return false
       //show a certain menu
     }
   },
   joinLastRow: true,
   hide: ctx => {
-    return !ctx.session.wallet.balance > 0 || !ctx.session.wallet.linked
+    return ctx.session.hideWithdrawButtons
   },
 })
 
@@ -80,14 +129,15 @@ withdrawBalance.interact("Cancel", "c", {
       return "/"
     }*/
     await deleteMenuFromContext(ctx)
-    if (ctx.session.addressChange) {
-      editWalletMiddleware.replyToContext(ctx)
-    }
+    ctx.replyWithMarkdown(
+      "Withdrawal canceled",
+      Markup.keyboard(getKeyboard(ctx)).resize()
+    )
     return false
   },
   joinLastRow: true,
-  hide: ctx => {
-    return !ctx.session.wallet.balance > 0 || !ctx.session.wallet.linked
+  hide: async ctx => {
+    return ctx.session.hideWithdrawButtons
   },
 })
 
@@ -99,7 +149,7 @@ async function withdrawFunds(ctx) {
   botParams.db.read()
   botParams.db.chain = _.chain(botParams.db.data)
   var user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-  let { success, response } = await withdraw(user.wallet.address, user.wallet.balance)
+  let { success, response } = await withdraw(user.wallet.address, ctx.session.withdrawAmount)
   console.log("sucess:", success)
   console.log("response:", response)
   if (!success) {
@@ -125,10 +175,19 @@ async function withdrawFunds(ctx) {
   )*/
     return false
   }
-  var new_user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id })
-    .get("wallet").assign({ balance: 0 }).value()
+  let coverableByRewards = subtractBigNumbers(user.rewardBalance, ctx.session.withdrawAmount)
+  if (compareBigNumbers(coverableByRewards, 0, "<")) {
+    user.rewardBalance = "0"
+    //since coverableByRewards is -ve this is actually subtraction
+    user.wallet.balance = addBigNumbers(user.wallet.balance, coverableByRewards)
+  }
+  else {
+    user.rewardBalance = coverableByRewards
+  }
   botParams.db.write()
-  var reply = "Funds were sent back to you."
+  var reply = `${amountToHumanString(ctx.session.withdrawAmount)} were sent to wallet with ` +
+    `address:\n${user.wallet.address}`
+  ctx.session.withdrawAmount = null
   var links = botParams.settings
     .getExtrinsicLinks(
       botParams.settings.network.name,
@@ -142,14 +201,19 @@ async function withdrawFunds(ctx) {
     })
   await botParams.bot.telegram
     .sendMessage(ctx.chat.id, reply, Markup.inlineKeyboard(links))
-  /*ctx.replyWithMarkdown(
-    reply,
+  //update user var
+  user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
+  var userBalance = addBigNumbers(user.wallet.balance, user.rewardBalance)
+  let walletInfo = `Your current wallet balance is ${amountToHumanString(userBalance)}`
+  ctx.replyWithMarkdown(
+    walletInfo,
     Markup.keyboard(getKeyboard(ctx)).resize()
-  )*/
+  )
   return true
 }
 
 export {
+  enterAmount,
   withdrawFunds,
   withdrawBalanceMiddleware,
 }

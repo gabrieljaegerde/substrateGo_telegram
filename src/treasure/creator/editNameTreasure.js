@@ -22,7 +22,7 @@ const editNameTreasure = new TelegrafStatelessQuestion("eNT", async ctx => {
         return editNameTreasure.replyWithMarkdown(ctx, reply)
     }
 
-    ctx.replyWithMarkdown(
+    await ctx.replyWithMarkdown(
         reply,
         Markup.keyboard(getKeyboard(ctx)).resize()
     )

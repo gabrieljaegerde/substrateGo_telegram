@@ -21,7 +21,8 @@ const editNFT = new TelegrafStatelessQuestion("eNF", async ctx => {
     }
     else {
         reply = "I was not able to edit the NFT. Please try sending me a file again."
-        return editNFT.replyWithMarkdown(ctx, message)
+        botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
+        return editNFT.replyWithMarkdown(ctx, reply)
     }
 
     let file = await ctx.telegram.getFile(fileId)
