@@ -1,7 +1,7 @@
 import { MenuTemplate, MenuMiddleware, replyMenuToContext, deleteMenuFromContext } from "telegraf-inline-menu"
 import { botParams, getKeyboard } from "../../config.js"
 import { Markup } from "telegraf"
-import { amountToHuman, amountToHumanString, getAccountDetails, setSessionWallet, setSessionUser, addBigNumbers } from "./helpers.js"
+import { amountToHuman, amountToHumanString, getAccountDetails, setSessionWallet, setSessionUser, bigNumberArithmetic } from "./walletHelpers.js"
 import _ from "lodash"
 import { balanceToString } from "../../tools/typeParser.js"
 import randomNumber from "random-number-csprng"
@@ -13,7 +13,7 @@ const deposit = new MenuTemplate(async ctx => {
     return `Please first add a ${botParams.settings.network.name} wallet to your account ` +
       `by clicking on 'Add Address' in the menu below.`
   }
-  let balanceString = amountToHumanString(addBigNumbers(sWallet.balance, ctx.session.user.rewardBalance))
+  let balanceString = amountToHumanString(bigNumberArithmetic(sWallet.balance, ctx.session.user.rewardBalance, "+"))
   var text = `*Address:* _${sWallet.address}_\n\n*Account Balance:* _${balanceString}_`
   var shortAddr = sWallet.address.substring(0, 3) +
     "..." +

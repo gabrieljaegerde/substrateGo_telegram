@@ -3,7 +3,7 @@ import { Markup } from "telegraf"
 import _ from "lodash"
 import crypto from "crypto"
 import QRCode from "qrcode"
-import { decorateQr } from "../treasure/helpers.js"
+import { decorateQr } from "../treasure/treasureHelpers.js"
 
 async function generateQr(ctx) {
     try {

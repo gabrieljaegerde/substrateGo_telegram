@@ -41,21 +41,17 @@ function amountToHumanString(amount, afterCommas) {
   return value + tokenString
 }
 
-function addBigNumbers(amount1, amount2) {
-  return new BigNumber(amount1.toString()).plus(new BigNumber(amount2.toString())).toString()
-}
-
-function subtractBigNumbers(amount1, amount2) {
-  return new BigNumber(amount1.toString()).minus(new BigNumber(amount2.toString())).toString()
-}
-
-function compareBigNumbers(amount1, amount2, sign) {
-  if (sign == ">=")
+function bigNumberArithmetic(amount1, amount2, sign) {
+  if (sign === ">=")
     return new BigNumber(amount1.toString()).isGreaterThanOrEqualTo(new BigNumber(amount2.toString()))
-  else if (sign == "<")
+  else if (sign === "<")
     return new BigNumber(amount1.toString()).isLessThan(new BigNumber(amount2.toString()))
-  else if (sign == ">")
+  else if (sign === ">")
     return new BigNumber(amount1.toString()).isGreaterThan(new BigNumber(amount2.toString()))
+  else if (sign === "-")
+    return new BigNumber(amount1.toString()).minus(new BigNumber(amount2.toString())).toString()
+  else if (sign === "+")
+    return new BigNumber(amount1.toString()).plus(new BigNumber(amount2.toString())).toString()
 }
 
 export {
@@ -64,7 +60,5 @@ export {
   setSessionUser,
   amountToHuman,
   amountToHumanString,
-  addBigNumbers,
-  subtractBigNumbers,
-  compareBigNumbers
+  bigNumberArithmetic
 }

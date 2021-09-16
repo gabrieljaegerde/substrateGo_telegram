@@ -9,9 +9,8 @@ const listScanned = new MenuTemplate(async ctx => {
   botParams.db.chain = _.chain(botParams.db.data)
   var reply = ""
   var userScanned = botParams.db.chain.get("scanned").filter({ finder: ctx.chat.id }).value()
-  var userCollected = _.chain(userScanned)
-    .filter(item => item.collected === true)
-    .value()
+  var userCollected = userScanned.filter(item => item.collected === true)
+  ctx.session.userCollected = userCollected
   var userNonCollected = _.chain(userScanned)
     .filter(item => item.collected === false && new Date(item.expiry) > new Date())
     .orderBy(["timestamp"],["asc"]).value()
@@ -29,11 +28,11 @@ const listScanned = new MenuTemplate(async ctx => {
 })
 
 listScanned.submenu('View collected', 'lCo', listCollected, {
-  hide: ctx => !ctx.session.userCollected || ctx.session.userCollected.length > 0
+  hide: ctx => !ctx.session.userCollected || !ctx.session.userCollected.length > 0
 })
 
 listScanned.submenu('View non-collected', 'lNC', listNonCollected, {
-  hide: ctx => !ctx.session.userCollected || !ctx.session.userNonCollected.length > 0
+  hide: ctx => !ctx.session.userNonCollected || !ctx.session.userNonCollected.length > 0
 })
 
 const listScannedMiddleware = new MenuMiddleware('lS/', listScanned)

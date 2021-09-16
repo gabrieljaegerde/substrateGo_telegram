@@ -3,7 +3,7 @@ import { Markup } from "telegraf"
 import TelegrafStatelessQuestion from "telegraf-stateless-question"
 import _ from "lodash"
 import { claimNftMiddleware } from "../../nft/claimNft.js"
-import { scan } from "../helpers.js"
+import { scan } from "../treasureHelpers.js"
 
 function collectTreasure(ctx) {
     var reply = `Please send me a picture of the treasure's QR Code.`

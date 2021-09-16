@@ -8,9 +8,9 @@ import {
   deleteMenuFromContext
 } from "telegraf-inline-menu"
 import { withdraw, getTransactionCost } from "../network/accountHandler.js"
-import { addBigNumbers, amountToHumanString, compareBigNumbers, setSessionWallet, subtractBigNumbers } from "./helpers.js"
+import { amountToHumanString, bigNumberArithmetic, setSessionWallet } from "./walletHelpers.js"
 import { editWalletMiddleware } from "./edit.js"
-import { amountToHuman } from "./helpers.js"
+import { amountToHuman } from "./walletHelpers.js"
 import TelegrafStatelessQuestion from "telegraf-stateless-question"
 import BigNumber from "bignumber.js"
 
@@ -33,15 +33,15 @@ const enterAmount = new TelegrafStatelessQuestion("amt", async ctx => {
       Markup.keyboard(getKeyboard(ctx)).resize()
     )
   }
-  var userBalance = addBigNumbers(user.wallet.balance, user.rewardBalance)
+  var userBalance = bigNumberArithmetic(user.wallet.balance, user.rewardBalance, "+")
   console.log("userBalance", userBalance)
-  if (compareBigNumbers(userBalance, requestedAmount, "<")) {
+  if (bigNumberArithmetic(userBalance, requestedAmount, "<")) {
     let replyMsg = `The amount you entered (${amountToHumanString(requestedAmount)}) is bigger ` +
       `than your balance of _${amountToHumanString(userBalance)}_.\n\n` +
       `Please enter an amount *less than* or *equal* to your balance.`
     return enterAmount.replyWithMarkdown(ctx, replyMsg)
   }
-  if (compareBigNumbers(requestedAmount, 0, "<")) {
+  if (bigNumberArithmetic(requestedAmount, 0, "<")) {
     let replyMsg = "The amount *has* to be a *positive* number. Please enter an amount *greater* than *0*."
     return enterAmount.replyWithMarkdown(ctx, replyMsg)
   }
@@ -57,13 +57,13 @@ const withdrawBalance = new MenuTemplate(async ctx => {
     .sendMessage(ctx.chat.id, "Loading...")
   var user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
   var reply
-  var userBalance = addBigNumbers(user.wallet.balance, user.rewardBalance)
-  if (compareBigNumbers(userBalance, 0, ">") &&
-    compareBigNumbers(userBalance, ctx.session.withdrawAmount, ">=")) {
+  var userBalance = bigNumberArithmetic(user.wallet.balance, user.rewardBalance, "+")
+  if (bigNumberArithmetic(userBalance, 0, ">") &&
+    bigNumberArithmetic(userBalance, ctx.session.withdrawAmount, ">=")) {
     let info = await getTransactionCost("transfer", user.wallet.address, ctx.session.withdrawAmount)
     //format to human
-    let amountToArrive = subtractBigNumbers(ctx.session.withdrawAmount, info.partialFee)
-    if (compareBigNumbers(amountToArrive, 0, ">")) {
+    let amountToArrive = bigNumberArithmetic(ctx.session.withdrawAmount, info.partialFee, "-")
+    if (bigNumberArithmetic(amountToArrive, 0, ">")) {
       reply = `The *withdrawal* of _${amountToHumanString(ctx.session.withdrawAmount)}_ will incur a ` +
         `*fee* of _${amountToHumanString(info.partialFee)}_. A total of *${amountToHumanString(amountToArrive)}* ` +
         `should arrive in your wallet:\n\n*${user.wallet.address}*\n\nDo you wish to proceed with the withdrawal?`
@@ -77,7 +77,7 @@ const withdrawBalance = new MenuTemplate(async ctx => {
         reply,
         Markup.keyboard(getKeyboard(ctx)).resize()
       )
-      if (compareBigNumbers(userBalance, info.partialFee, ">")) {
+      if (bigNumberArithmetic(userBalance, info.partialFee, ">")) {
         let replyMsg = `Try withdrawing a *bigger* amount.`
         enterAmount.replyWithMarkdown(ctx, replyMsg)
       }
@@ -175,11 +175,11 @@ async function withdrawFunds(ctx) {
   )*/
     return false
   }
-  let coverableByRewards = subtractBigNumbers(user.rewardBalance, ctx.session.withdrawAmount)
-  if (compareBigNumbers(coverableByRewards, 0, "<")) {
+  let coverableByRewards = bigNumberArithmetic(user.rewardBalance, ctx.session.withdrawAmount, "-")
+  if (bigNumberArithmetic(coverableByRewards, 0, "<")) {
     user.rewardBalance = "0"
     //since coverableByRewards is -ve this is actually subtraction
-    user.wallet.balance = addBigNumbers(user.wallet.balance, coverableByRewards)
+    user.wallet.balance = bigNumberArithmetic(user.wallet.balance, coverableByRewards, "+")
   }
   else {
     user.rewardBalance = coverableByRewards
@@ -203,7 +203,7 @@ async function withdrawFunds(ctx) {
     .sendMessage(ctx.chat.id, reply, Markup.inlineKeyboard(links))
   //update user var
   user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-  var userBalance = addBigNumbers(user.wallet.balance, user.rewardBalance)
+  var userBalance = bigNumberArithmetic(user.wallet.balance, user.rewardBalance, "+")
   let walletInfo = `Your current wallet balance is ${amountToHumanString(userBalance)}`
   ctx.replyWithMarkdown(
     walletInfo,

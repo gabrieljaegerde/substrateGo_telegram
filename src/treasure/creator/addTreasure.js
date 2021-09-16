@@ -2,7 +2,7 @@ import { botParams, getKeyboard } from "../../../config.js"
 import { Markup } from "telegraf"
 import TelegrafStatelessQuestion from "telegraf-stateless-question"
 import _ from "lodash"
-import { scan } from "../helpers.js"
+import { scan } from "../treasureHelpers.js"
 import { createTreasureGuideMiddleware } from "./createTreasureGuide.js"
 
 async function addTreasure(ctx) {

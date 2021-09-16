@@ -2,7 +2,7 @@ import { Telegraf, Markup } from "telegraf"
 import { botParams, getKeyboard } from "./config.js"
 import { addWallet } from "./src/wallet/add.js"
 import { editWalletMiddleware, enterAddress } from "./src/wallet/edit.js"
-import { addBigNumbers, amountToHumanString, getAccountDetails } from "./src/wallet/helpers.js"
+import { bigNumberArithmetic, amountToHumanString, getAccountDetails } from "./src/wallet/walletHelpers.js"
 import { enterAmount, withdrawBalanceMiddleware } from "./src/wallet/withdraw.js"
 import { depositMiddleware, linkAddress } from "./src/wallet/deposit.js"
 import { addTreasure, uploadQr } from "./src/treasure/creator/addTreasure.js"
@@ -22,6 +22,7 @@ import { fastTrackGet } from "./src/treasure/finder/collectTreasure.js"
 import LocalSession from 'telegraf-session-local'
 import { editNFT } from "./src/nft/editNFT.js"
 import { createTreasureGuideMiddleware } from "./src/treasure/creator/createTreasureGuide.js"
+import { findClosest, findTreasuresMiddleware } from "./src/treasure/finder/findTreasures.js"
 
 // const telegramBotUpdates = new prom.Counter({
 //   name: "substrate_bot_telegram_updates",
@@ -257,7 +258,7 @@ export const run = async function (params) {
       botParams.db.read()
       botParams.db.chain = _.chain(botParams.db.data)
       var user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-      var userBalance = addBigNumbers(user.wallet.balance ? user.wallet.balance : 0 , user.rewardBalance)
+      var userBalance = bigNumberArithmetic(user.wallet.balance ? user.wallet.balance : 0, user.rewardBalance, "+")
       let replyMsg = `Your balance: *${amountToHumanString(userBalance)}*\n\nHow much would you ` +
         `like to withdraw?\n\n_Please use '.' notation instead of commas. e.g. 0.02 or 0.5 or 1.4 etc._`
       enterAmount.replyWithMarkdown(ctx, replyMsg)
@@ -363,15 +364,13 @@ export const run = async function (params) {
    *   React bot on 'Find treasures' message
    */
 
-  bot.hears("🔍 Find treasures", ctx => {
+  bot.hears("🔍 Find treasures", async ctx => {
     if (ctx.chat.type == "private") {
-      ctx.replyWithMarkdown(
-        "In the future, clicking that button will bring you to a website that " +
-        "shows a world map with markers of all the treasures. todo...",
-        Markup.keyboard(getKeyboard(ctx)).resize()
-      )
+      findTreasuresMiddleware.replyToContext(ctx)
     }
   })
+
+  bot.use(findTreasuresMiddleware)
 
   bot.use(depositMiddleware)
 
@@ -380,6 +379,8 @@ export const run = async function (params) {
   bot.use(createTreasureGuideMiddleware)
 
   bot.use(uploadQr.middleware())
+
+  bot.use(findClosest.middleware())
 
   bot.use(editMessage.middleware())
 

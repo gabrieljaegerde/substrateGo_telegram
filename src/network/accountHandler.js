@@ -3,7 +3,7 @@ import _ from "lodash"
 import { checkFilter } from "../../tools/utils.js"
 import * as telegram from "../../helpers/telegram.js"
 import { Markup } from "telegraf"
-import { addBigNumbers, amountToHumanString, compareBigNumbers, subtractBigNumbers } from "../wallet/helpers.js"
+import { amountToHumanString, bigNumberArithmetic } from "../wallet/walletHelpers.js"
 import BigNumber from "bignumber.js"
 
 const alreadyReceived = new Map()
@@ -60,7 +60,8 @@ async function deposit(record, currentBlock) {
   }
   if (users.length === 1 && !users[0].wallet.linked) {
     //transfer amount matches password && password not expired yet
-    if (users[0].wallet.password.toString() === value && new Date(users[0].wallet.expiry) >= new Date()) {
+    if (new BigNumber(users[0].wallet.password.toString()).isEqualTo(new BigNumber(value))
+      && new Date(users[0].wallet.expiry) >= new Date()) {
       user = users[0]
       user.wallet.linked = true
       message = "Your wallet has been successfully linked	\u2705 to your account! " +
@@ -71,7 +72,8 @@ async function deposit(record, currentBlock) {
         "your wallet is still linked to your account!\nYou can now use the bot to create " +
         "and collect treasures! Have fun.\n\n"
     }
-    else if (!users[0].wallet.password.toString() === value && !new Date(users[0].wallet.expiry) >= new Date()) {
+    else if (!new BigNumber(users[0].wallet.password.toString()).isEqualTo(new BigNumber(value))
+      && !new Date(users[0].wallet.expiry) >= new Date()) {
       withdraw(from.toString(), value)
       message = "You did not make the deposit on time (15 minutes), neither did you transfer the right amount. " +
         "Your transfer has been sent back to the wallet it came from (minus transaction fees)." +
@@ -127,7 +129,7 @@ async function deposit(record, currentBlock) {
 
   if (user) {
     if (user.wallet.linked) {
-      user.wallet.balance = addBigNumbers(user.wallet.balance, value)
+      user.wallet.balance = bigNumberArithmetic(user.wallet.balance, value, "+")
       botParams.db.write()
       message += `${humanVal} have been credited to your account.`
     }
@@ -144,26 +146,19 @@ function findNewlyAdded(users) {
 }
 
 function checkPasswordMatch(users, transferAmount) {
-  return users.find(eachUser => eachUser.wallet.password.toString() === transferAmount &&
+  return users.find(eachUser => new BigNumber(eachUser.wallet.password.toString())
+    .isEqualTo(new BigNumber(transferAmount)) &&
     new Date(eachUser.wallet.expiry) >= new Date())
-}
-
-//run this function after deposit to prevent account from overfilling
-function checkBalance() {
-
-  //const now = await botParams.api.query.timestamp.now()
-  //const { data: balance } = await botParams.api.query.system.account(botParams.settings.depositAddress)
-  //if balance.free>1, send to another account
 }
 
 async function withdraw(recipient, value) {
   //get estimation of transfer cost
   let info = await getTransactionCost("transfer", recipient, value)
   //deduct fee from amount to be sent back
-  var transferAmount = subtractBigNumbers(value, info.partialFee)
+  var transferAmount = bigNumberArithmetic(value, info.partialFee, "-")
 
   //send back if (amount - fee) is +ve
-  if (compareBigNumbers(transferAmount, 0, ">")) {
+  if (bigNumberArithmetic(transferAmount, 0, ">")) {
     try {
       const txHash = await botParams.api.tx.balances
         .transfer(recipient, transferAmount)
@@ -192,11 +187,8 @@ async function mintAndSend(remarks, user) {
     txs.push(botParams.api.tx.system.remark(remark));
   }
   let info = await getTransactionCost("nft", user.wallet.address, remarks)
-  let userBalance = addBigNumbers(user.wallet.balance, user.rewardBalance)
-  var ableToCover = compareBigNumbers(userBalance, info.partialFee, ">=")
-  console.log("addBigNumbers(user.wallet.balance, user.rewardBalance)", userBalance)
-  console.log("able to cover", ableToCover)
-  console.log("info.partialFee.toString()", info.partialFee.toString())
+  let userBalance = bigNumberArithmetic(user.wallet.balance, user.rewardBalance, "+")
+  var ableToCover = bigNumberArithmetic(userBalance, info.partialFee, ">=")
   //console.log("parseInt(user.wallet.balance) + parseInt(user.wallet.creatorReward)", parseInt(user.wallet.balance) + parseInt(user.wallet.creatorReward))
   if (!ableToCover) {
     //await botParams.bot.telegram.sendMessage(user.chatid, message)

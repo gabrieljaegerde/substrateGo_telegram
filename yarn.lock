@@ -4918,10 +4918,10 @@
     "hash-base" "^3.0.0"
     "inherits" "^2.0.1"
 
-"rmrk-tools@^2.0.0-rc.15":
-  "integrity" "sha512-SrR0u2WDnbpFQT+lzEO0RtP+VI7gVMaziLisv2b+o0eyU7eE5YIwg/FJIexrX05VZaKXbJIX1JP4WhQqmQCqXA=="
-  "resolved" "https://registry.npmjs.org/rmrk-tools/-/rmrk-tools-2.0.0-rc.15.tgz"
-  "version" "2.0.0-rc.15"
+"rmrk-tools@^2.0.3":
+  "integrity" "sha512-PQGZ+dMh62Nz9FFaR4k82HxOV/j4SOlByQEkveukAWF0ugpGL7pOJVw1xMcl2q5uDdA4l8i3EfJnl9CO81NwWQ=="
+  "resolved" "https://registry.npmjs.org/rmrk-tools/-/rmrk-tools-2.0.3.tgz"
+  "version" "2.0.3"
   dependencies:
     "chalk" "^4.1.0"
     "emoji-regex" "^9.2.2"

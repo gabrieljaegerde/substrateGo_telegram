@@ -29,14 +29,31 @@ async function decorateQr(url) {
     var logo = await Jimp.read(`${botParams.settings.network.name}.png`)
     logo.resize(100, Jimp.AUTO);
     const font = await Jimp.loadFont(Jimp.FONT_SANS_12_BLACK)
-    canvas.composite( qr, 60, 95 )
-    canvas.composite( logo, 5, 270 )
+    canvas.composite(qr, 60, 95)
+    canvas.composite(logo, 5, 270)
     let buffer = await canvas.getBufferAsync(Jimp.MIME_PNG)
     return buffer
   }
   catch (err) {
     return err
   }
+}
+
+function checkIfAlreadyCollected(treasureId, userId) {
+  botParams.db.read()
+  botParams.db.chain = _.chain(botParams.db.data)
+  var userScanned = botParams.db.chain.get("scanned").filter({ finder: userId }).value()
+  if (userScanned.some(e => e.qrId === treasureId)) {
+    return true
+  }
+  return false
+}
+
+function howManyCollected(treasureId) {
+  botParams.db.read()
+  botParams.db.chain = _.chain(botParams.db.data)
+  var allScanned = botParams.db.chain.get("scanned").filter({ qrId: treasureId }).value()
+  return allScanned.length
 }
 
 function checkQr(result) {
@@ -46,5 +63,7 @@ function checkQr(result) {
 
 export {
   scan,
-  decorateQr
+  decorateQr,
+  checkIfAlreadyCollected,
+  howManyCollected
 }

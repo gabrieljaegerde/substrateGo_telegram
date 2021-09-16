@@ -23,7 +23,7 @@
     "qrcode": "^1.4.4",
     "qrcode-reader": "^1.0.4",
     "random-number-csprng": "^1.0.2",
-    "rmrk-tools": "^2.0.0-rc.15",
+    "rmrk-tools": "^2.0.3",
     "stream": "^0.0.2",
     "telegraf": "^4.4.1",
     "telegraf-inline-menu": "^6.3.0",

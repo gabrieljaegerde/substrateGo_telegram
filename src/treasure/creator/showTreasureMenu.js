@@ -5,7 +5,7 @@ import { listCreatedMiddleware } from "./listCreated.js"
 import QRCode from "qrcode"
 import { Markup } from "telegraf"
 import fetch from 'node-fetch'
-import { decorateQr } from "../helpers.js"
+import { decorateQr } from "../treasureHelpers.js"
 
 const showTreasureMenu = new MenuTemplate(async ctx => {
     botParams.db.read()
@@ -39,7 +39,7 @@ showTreasureMenu.interact("Show NFT", "sN", {
             .sendMessage(ctx.chat.id, "Loading...")
         let treasureDb = botParams.db.chain.get("treasures").find({ id: ctx.session.treasureId, creator: ctx.chat.id }).value()
 
-        var response = await fetch(`http://ipfs.io/ipfs/${treasureDb.nft}`)
+        var response = await fetch(`https://ipfs.io/ipfs/${treasureDb.nft}`)
         let buffer = await response.buffer()
         await botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
         ctx.replyWithMarkdown(

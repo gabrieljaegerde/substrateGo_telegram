@@ -5,7 +5,7 @@ import _ from "lodash"
 import jsQR from "jsqr"
 import { getTransactionCost, mintAndSend } from "../network/accountHandler.js"
 import { NFT } from 'rmrk-tools';
-import { addBigNumbers, amountToHumanString, compareBigNumbers, subtractBigNumbers } from "../wallet/helpers.js"
+import { amountToHumanString, bigNumberArithmetic } from "../wallet/walletHelpers.js"
 import BigNumber from "bignumber.js"
 
 const claimNft = new MenuTemplate(async ctx => {
@@ -32,7 +32,7 @@ const claimNft = new MenuTemplate(async ctx => {
     console.log("info.partialFee", info.partialFee)
     console.log("botParams.settings.creatorReward", botParams.settings.creatorReward)
     let reply = `Receiving the NFT in your wallet will incur a ` +
-        `fee of ${amountToHumanString(addBigNumbers(info.partialFee, botParams.settings.creatorReward))} ` +
+        `fee of ${amountToHumanString(bigNumberArithmetic(info.partialFee, botParams.settings.creatorReward, "+"))} ` +
         `(${amountToHumanString(info.partialFee)} network fee + ${amountToHumanString(botParams.settings.creatorReward)} ` +
         `creator reward). Do you wish to proceed?`
     return reply
@@ -48,21 +48,21 @@ claimNft.interact("Proceed", "sp", {
             botParams.db.chain = _.chain(botParams.db.data)
             //find user and decrease balance
             let user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-            let totalCost = addBigNumbers(fee, botParams.settings.creatorReward)
-            let coverableByRewards = subtractBigNumbers(user.rewardBalance, totalCost)
-            if (compareBigNumbers(coverableByRewards, 0, "<"))
+            let totalCost = bigNumberArithmetic(fee, botParams.settings.creatorReward, "+")
+            let coverableByRewards = bigNumberArithmetic(user.rewardBalance, totalCost, "-")
+            if (bigNumberArithmetic(coverableByRewards, 0, "<"))
             {
                 user.rewardBalance = "0"
                 //since coverableByRewards is -ve this is actually subtraction
-                user.wallet.balance = addBigNumbers(user.wallet.balance, coverableByRewards)
+                user.wallet.balance = bigNumberArithmetic(user.wallet.balance, coverableByRewards, "+")
             }
             else {
                 user.rewardBalance = coverableByRewards
             }
             let treasure = botParams.db.chain.get("treasures").find({ id: ctx.session.qrId }).value()
             let creator = botParams.db.chain.get("users").find({ chatid: treasure.creator }).value()
-            creator.rewardBalance = addBigNumbers(creator.rewardBalance, botParams.settings.creatorReward)
-            creator.totalRewardBalance = addBigNumbers(creator.totalRewardBalance, botParams.settings.creatorReward)
+            creator.rewardBalance = bigNumberArithmetic(creator.rewardBalance, botParams.settings.creatorReward, "+")
+            creator.totalRewardBalance = bigNumberArithmetic(creator.totalRewardBalance, botParams.settings.creatorReward, "+")
             await botParams.bot.telegram
                 .sendMessage(creator.chatid, `Treasure '${treasure.name}' was just collected.\n\n` +
                     `${amountToHumanString(botParams.settings.creatorReward)} credited to your account.`)
@@ -90,7 +90,7 @@ claimNft.interact("Proceed", "sp", {
                 // var loadMessage = await botParams.bot.telegram
                 //     .sendMessage(ctx.chat.id, "Loading...")
                 let treasureDb = botParams.db.chain.get("treasures").find({ id: ctx.session.scannedDb.qrId }).value()
-                var response = await fetch(`http://ipfs.io/ipfs/${treasureDb.nft}`)
+                var response = await fetch(`https://ipfs.io/ipfs/${treasureDb.nft}`)
                 let buffer = await response.buffer()
                 await botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
                 ctx.replyWithMarkdown(

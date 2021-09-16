@@ -35,7 +35,7 @@ showCollectedItem.interact("Show NFT", "sN", {
       .sendMessage(ctx.chat.id, "Loading...")
     let treasureDb = botParams.db.chain.get("treasures").find({ id: ctx.session.scannedDb.qrId }).value()
 
-    var response = await fetch(`http://ipfs.io/ipfs/${treasureDb.nft}`)
+    var response = await fetch(`https://ipfs.io/ipfs/${treasureDb.nft}`)
     let buffer = await response.buffer()
     await botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
     ctx.replyWithMarkdown(

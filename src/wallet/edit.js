@@ -1,6 +1,6 @@
 import { botParams, getKeyboard } from "../../config.js"
 import _ from "lodash"
-import { getAccountDetails, setSessionWallet } from "./helpers.js"
+import { getAccountDetails, setSessionWallet } from "./walletHelpers.js"
 import { MenuTemplate,
   MenuMiddleware,
   createBackMainMenuButtons,
@@ -144,7 +144,8 @@ const enterAddress = new TelegrafStatelessQuestion("adr", async ctx => {
 
   }
   botParams.db.write()
-  let value = user.wallet.password / 10**botParams.settings.network.decimals
+  
+  let value = new BigNumber(user.wallet.password).dividedBy(new BigNumber("1e" + botParams.settings.network.decimals)).toString()
   let tokenString = botParams.settings.network.token
   ctx.session.wallet = null
   ctx.session.oldWallet = null

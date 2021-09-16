@@ -1,6 +1,6 @@
 import { LowSync, JSONFileSync } from 'lowdb'
 import _ from "lodash"
-import { addBigNumbers, amountToHumanString, compareBigNumbers } from './src/wallet/helpers.js'
+import { bigNumberArithmetic, amountToHumanString} from './src/wallet/walletHelpers.js'
 
 const botParams = {
   api: {},
@@ -96,11 +96,11 @@ function getKeyboard(ctx) {
           return accountLinkedKeyboard
         }
         else if (user.wallet.address && !user.wallet.linked && 
-          addBigNumbers(user.wallet.balance, user.rewardBalance) === "0") {
+          bigNumberArithmetic(user.wallet.balance, user.rewardBalance, "+") === "0") {
           return accountNoLinkedKeyboard
         }
         else if (user.wallet.address && !user.wallet.linked && 
-          compareBigNumbers(addBigNumbers(user.wallet.balance, user.rewardBalance), 0, ">")) {
+          bigNumberArithmetic(bigNumberArithmetic(user.wallet.balance, user.rewardBalance, "+"), 0, ">")) {
           return accountNoLinkedBalanceKeyboard
         }
         return accountNoAddressKeyboard
@@ -110,13 +110,13 @@ function getKeyboard(ctx) {
         var user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
         if (user.wallet.address && user.wallet.linked) {
           return getMainLinkedKeyboard(amountToHumanString(
-            addBigNumbers(user.wallet.balance, user.rewardBalance), 2))
+            bigNumberArithmetic(user.wallet.balance, user.rewardBalance, "+"), 2))
         }
         else if (user.wallet.address && !user.wallet.linked) {
           return getMainNoLinkedKeyboard(amountToHumanString(
-            addBigNumbers(user.wallet.balance, user.rewardBalance), 2))
+            bigNumberArithmetic(user.wallet.balance, user.rewardBalance, "+"), 2))
         }
-        else if (!user.wallet.balance && compareBigNumbers(user.rewardBalance, 0, ">")) {
+        else if (!user.wallet.balance && bigNumberArithmetic(user.rewardBalance, 0, ">")) {
           return getMainRewardBalanceKeyboard(amountToHumanString(user.rewardBalance, 2))
         }
         return mainKeyboard
