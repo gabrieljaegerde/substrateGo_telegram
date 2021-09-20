@@ -4,3 +4,4 @@ todo.js
 db/*
 .DS_Store
 metrics.js
+dist/
