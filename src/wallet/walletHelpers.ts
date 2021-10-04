@@ -1,42 +1,23 @@
 import _ from "lodash"
 import { botParams } from "../../config.js"
 import BigNumber from "bignumber.js"
-import { IUser } from "../types.js"
-
-async function setSessionWallet(ctx) {
-  botParams.db.read()
-  botParams.db.chain = _.chain(botParams.db.data)
-  var user: IUser = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-  ctx.session.wallet = user.wallet
-}
-
-async function setSessionUser(ctx) {
-  botParams.db.read()
-  botParams.db.chain = _.chain(botParams.db.data)
-  ctx.session.user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-}
-
-async function getAccountDetails(wallet) {
-  let { value, tokenString } = await amountToHuman(wallet.balance)
-  return `Address: ${wallet.address}\n\nBalance: ${value} ${tokenString}`
-}
 
 function amountToHuman(amount: string, afterCommas?: number) {
-  var decimals = botParams.settings.network.decimals
+  var decimals = parseInt(botParams.settings.network.decimals)
   var token = botParams.settings.network.token
   var value = new BigNumber(amount.toString())
     .dividedBy(new BigNumber("1e" + decimals))
-    .toFixed(afterCommas ? afterCommas : 4, BigNumber.ROUND_FLOOR)
+    .toFixed(afterCommas ? afterCommas : 5, BigNumber.ROUND_FLOOR)
   var tokenString = token ? " " + token : ""
   return { value: value, tokenString: tokenString }
 }
 
 function amountToHumanString(amount: string, afterCommas?: number) {
-  var decimals = botParams.settings.network.decimals
+  var decimals = parseInt(botParams.settings.network.decimals)
   var token = botParams.settings.network.token
   var value = new BigNumber(amount.toString())
     .dividedBy(new BigNumber("1e" + decimals))
-    .toFixed(afterCommas ? afterCommas : 4, BigNumber.ROUND_FLOOR)
+    .toFixed(afterCommas ? afterCommas : 5, BigNumber.ROUND_FLOOR)
   var tokenString = token ? " " + token : ""
   return value + tokenString
 }
@@ -58,9 +39,6 @@ function bigNumberComparison(amount1: string, amount2: string, sign: string): bo
 }
 
 export {
-  getAccountDetails,
-  setSessionWallet,
-  setSessionUser,
   amountToHuman,
   amountToHumanString,
   bigNumberArithmetic,

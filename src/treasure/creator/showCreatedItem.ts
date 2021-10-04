@@ -3,85 +3,54 @@ import { botParams } from "../../../config.js"
 import _ from "lodash"
 import { editTreasureMenu } from "./editTreasureMenu.js"
 import { showTreasureMenu } from "./showTreasureMenu.js"
-
+import Treasure, { ITreasure } from "../../models/treasure.js"
+import Reward, { IReward } from "../../models/reward.js"
 
 const showCreatedItem = new MenuTemplate(async (ctx: any) => {
-    const qrId = ctx.match[1]
-    botParams.db.read()
-    botParams.db.chain = _.chain(botParams.db.data)
-    var treasureDb = botParams.db.chain.get("treasures").find({ id: qrId, creator: ctx.chat.id }).value()
-    ctx.session.treasureId = qrId
-    var info = `Created on: ${treasureDb.timestamp}. `
-    info += treasureDb.name ? `\nName: ${treasureDb.name}` : ""
-    if (treasureDb.active) {
+    const treasureId = ctx.match[1]
+    var treasure: ITreasure = await Treasure.findOne({ _id: treasureId, creator: ctx.chat.id })
+    ctx.session.treasureId = treasureId
+    var info = `Created on: ${treasure.date_of_entry.toDateString()}. `
+    info += treasure.name ? `\nName: ${treasure.name}` : ""
+    if (treasure.active) {
         info += `\nStatus: \u2705 (Treasure shown publicly)`
     }
     else {
         info += `\nStatus: \uD83D\uDEAB (Treasure NOT shown publicly)`
     }
-    info += `\nMessage to treasure finders: ${treasureDb.message}\n\n`
-    var allScannedDb = botParams.db.chain.get("scanned").filter({ qrId: qrId }).value()
-    if (allScannedDb) {
-        info += `Treasure has been collected ${allScannedDb.length} time(s).`
+    info += `\nMessage to treasure finders: ${treasure.description}\n\n`
+    var allRewards: Array<IReward> = await Reward.find({ treasure_id: ctx.session.treasureId, collected: true })
+    if (allRewards) {
+        info += `Treasure has been collected ${allRewards.length} time(s).`
     }
     else {
         info += `This treasure has not been collected yet`
     }
-    //info += `\nLocation Coordinates: \n   lat: ${treasureDb.location.latitude}\n   long: ${treasureDb.location.longitude}`
+    //info += `\nLocation Coordinates: \n   lat: ${treasure.location.latitude}\n   long: ${treasure.location.longitude}`
     return info
 })
 
-showCreatedItem.submenu("Edit Treasure", "eT", editTreasureMenu)
+showCreatedItem.submenu("Edit Treasure", "et", editTreasureMenu)
 
-showCreatedItem.submenu("Show Treasure Details", "sTD", showTreasureMenu)
+showCreatedItem.submenu("Show Treasure Details", "std", showTreasureMenu)
 
-/*
-showCreatedItem.interact("Edit Treasure", "eT", {
-    do: ctx => {
-        ctx.session.editMode = true
-        ctx.session.showMode = false
-        return true
-    },
-    joinLastRow: false,
-    hide: ctx => {
-        return ctx.session.editMode === true
-    }
-})
-
-showCreatedItem.interact("Show Treasure Details", "sTD", {
-    do: ctx => {
-        ctx.session.editMode = false
-        ctx.session.showMode = true
-        return true
-    },
-    joinLastRow: false,
-    hide: ctx => {
-        return ctx.session.showMode === true
-    }
-})*/
-
-showCreatedItem.toggle(ctx => {
-    botParams.db.read()
-    botParams.db.chain = _.chain(botParams.db.data)
-    let treasureDb = botParams.db.chain.get("treasures").find({ id: ctx.session.treasureId, creator: ctx.chat.id }).value()
-    return treasureDb.active ? "Activated" : "Deactivated"
+showCreatedItem.toggle(async (ctx) => {
+    let treasure: ITreasure = await Treasure.findOne({ _id: ctx.session.treasureId, creator: ctx.chat.id })
+    return treasure.active ? "Activated" : "Deactivated"
 },
     'a',
     {
-        set: (ctx, choice) => {
-            const qrId = ctx.match[1]
-            botParams.db.read()
-            botParams.db.chain = _.chain(botParams.db.data)
-            botParams.db.chain.get("treasures").find({ id: qrId, creator: ctx.chat.id }).assign({ active: choice }).value()
-            botParams.db.write()
+        set: async (ctx, choice) => {
+            const treasureId = ctx.match[1]
+            let treasure: ITreasure = await Treasure.findOne({ _id: treasureId, creator: ctx.chat.id })
+            treasure.active = choice
+            await treasure.save()
             return true
         },
-        isSet: ctx => {
-            const qrId = ctx.match[1]
-            botParams.db.read()
-            botParams.db.chain = _.chain(botParams.db.data)
-            let treasureDb = botParams.db.chain.get("treasures").find({ id: qrId, creator: ctx.chat.id }).value()
-            return treasureDb.active === true
+        isSet: async (ctx) => {
+            const treasureId = ctx.match[1]
+            let treasure: ITreasure = await Treasure.findOne({ _id: treasureId, creator: ctx.chat.id })
+            return treasure.active === true
         }
     })
 

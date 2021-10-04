@@ -15,10 +15,10 @@ async function checkIsGroup(ctx, checkAdmin = false) {
 }
 
 function getGroupOrCreate(ctx) {
-  var group = botParams.db.get("users").find({ chatid: ctx.chat.id }).value()
+  var group = botParams.db.get("users").find({ chat_id: ctx.chat.id }).value()
   if (!group) {
     group = {
-      chatid: ctx.chat.id,
+      chat_id: ctx.chat.id,
       type: ctx.chat.type,
       wallets: [],
       enabled: false,
@@ -51,8 +51,29 @@ async function getAccountName(account, user) {
   return account
 }
 
+const asyncFilter = async (arr, predicate) => {
+  const results = await Promise.all(arr.map(predicate));
+  return arr.filter((_v, index) => results[index]);
+}
+
+export const sleep = (ms: number): Promise<void> => {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(), ms);
+  });
+};
+
+export const resetSession = (ctx) => {
+  ctx.session.treasure = null
+  ctx.session.guideStep = null
+  ctx.session.guideMessage = null
+  ctx.session.userCollected = null
+  ctx.session.userNonCollected = null
+  ctx.session.userCollectedRewards = null
+}
+
 export {
   checkIsGroup,
   getGroupOrCreate,
-  getAccountName
+  getAccountName,
+  asyncFilter
 }

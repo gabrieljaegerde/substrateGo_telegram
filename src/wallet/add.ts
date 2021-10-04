@@ -1,23 +1,20 @@
 import { botParams } from "../../config.js"
-import _ from "lodash"
+import _, { StringIterator } from "lodash"
 import { editWalletMiddleware, enterAddress } from "./edit.js"
-import { IUser } from "../types.js"
-
+import User, { IUser } from "../models/user.js"
 
 async function addWallet(ctx) {
-  botParams.db.read()
-  botParams.db.chain = _.chain(botParams.db.data)
-  var user: IUser = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
+  var user: IUser = await User.findOne({ chat_id: ctx.chat.id })
   ctx.session.wallet = user.wallet
-  if (ctx.session.wallet.address) {
+  if (ctx.session.wallet) {
     editWalletMiddleware.replyToContext(ctx)
   }
   else {
-    var reply
+    var reply: string
     reply = "Please enter your wallet address with which you wish to top up " +
-    "your account (to pay for minting and transaction fees). Your NFTs will " +
-    "also be sent to this address. Each address can only be linked to " +
-    "1 telegram account at a time!"
+      "your account (to pay for minting and transaction fees). Your NFTs will " +
+      "also be sent to this address. Each address can only be linked to " +
+      "1 telegram account at a time!"
     enterAddress.replyWithMarkdown(ctx, reply)
   }
   return

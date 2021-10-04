@@ -26,10 +26,10 @@ export const send = async (id, message, links) => {
     if (error.message.includes("bot was blocked by the user")) {
       botParams.db
         .get("users")
-        .find({ chatid: id })
-        .assign({ enabled: false, blocked: true })
+        .find({ chat_id: id })
+        .assign({ blocked: true })
         .write()
-      console.log(new Date(), `Bot was blocked by user with chatid ${id}`)
+      console.log(new Date(), `Bot was blocked by user with chat_id ${id}`)
       return
     }
     console.log(new Date(), error)

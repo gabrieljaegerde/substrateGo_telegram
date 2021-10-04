@@ -49,7 +49,6 @@ export class RemarkStorageAdapter implements IConsolidatorAdapter {
   }
 
   public async updateNFTList(nft: NFT, consolidatedNFT: NFTConsolidated) {
-    console.log("whassup")
     botParams.remarkStorage.read()
     var nftDb = botParams.remarkStorage.data.nfts.find(({ id }) => id === consolidatedNFT.id)
     nftDb = {
@@ -193,6 +192,7 @@ export class RemarkStorageAdapter implements IConsolidatorAdapter {
   }
 
   public async updateNFTMint(nft: NFT) {
+    console.log("nft", nft)
     botParams.remarkStorage.data.nfts.push({
       ...nft,
       symbol: nft.symbol,
@@ -263,8 +263,6 @@ export class RemarkStorageAdapter implements IConsolidatorAdapter {
 
   public async getCollectionById(id: string) {
     botParams.remarkStorage.read()
-    console.log("id", id)
-    console.log("here", botParams.remarkStorage.data.collections.find((collection) => collection.id === id))
     return botParams.remarkStorage.data.collections.find((collection) => collection.id === id)
   }
 

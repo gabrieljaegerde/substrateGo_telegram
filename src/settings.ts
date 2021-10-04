@@ -64,11 +64,13 @@ export const getSettings = () => {
     botToken: process.env.BOT_TOKEN,
     botUsername: "polkadotGo_bot",
     codeLength: 20,
-    pwordLower: 100000000000, //0.1wmd
-    pwordUpper: 110000000000,
-    creatorReward: 10000000000, //0.01wmd
-    defaultNft: "QmaQCd7pS56AbgbdA8eqZQZqRwhWD8cjDUbAdni9UQ8yEA",
-    collectionId: "8e9e74b9d29b92c328-GONOW1",
+    pwordLower: 10000, //0.1wmd
+    pwordUpper: 11000, //0.11wmd
+    pwordDigitsToAdd: "7", 
+    creatorReward: "10000000000", //0.01wmd
+    defaultFile: "QmaQCd7pS56AbgbdA8eqZQZqRwhWD8cjDUbAdni9UQ8yEA",
+    collectionSymbol: "Wesys",
+    collectionId: "62cf4ac95b7ed1a660-WESYS",
     depositAddress: process.env.DEPOSIT_ADDRESS.toString(),
     callback: (data, isExtrinsic) => {},
   }

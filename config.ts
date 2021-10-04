@@ -1,7 +1,8 @@
 import { LowSync, JSONFileSync } from 'lowdb'
 import _ from "lodash"
-import { bigNumberArithmetic, amountToHumanString, bigNumberComparison} from './src/wallet/walletHelpers.js'
-import { IUser } from './src/types.js';
+import { bigNumberArithmetic, amountToHumanString, bigNumberComparison } from './src/wallet/walletHelpers.js'
+import User, { IUser } from "./src/models/user.js"
+import mongoose from "mongoose"
 
 interface BotParams {
   api: {},
@@ -86,7 +87,7 @@ function getMainRewardBalanceKeyboard(userBalance) {
   ]
 }
 
-function getKeyboard(ctx) {
+async function getKeyboard(ctx) {
   if (ctx.session.menu) {
     switch (ctx.session.menu) {
       case "finder":
@@ -94,35 +95,33 @@ function getKeyboard(ctx) {
       case "creator":
         return creatorKeyboard
       case "account":
-        botParams.db.read()
-        botParams.db.chain = _.chain(botParams.db.data)
-        var user: IUser = (botParams.db as any).chain.get("users").find({ chatid: ctx.chat.id }).value()
-        if (user.wallet.address && user.wallet.linked) {
+        var user: IUser = await User.findOne({ chat_id: ctx.chat.id })
+        var userBalance = user.getBalance()
+        if (user.wallet && user.wallet.address && user.wallet.linked) {
           return accountLinkedKeyboard
         }
-        else if (user.wallet.address && !user.wallet.linked && 
-          bigNumberArithmetic(user.wallet.balance, user.rewardBalance, "+") === "0") {
+        else if (user.wallet && user.wallet.address && !user.wallet.linked &&
+          userBalance === "0") {
           return accountNoLinkedKeyboard
         }
-        else if (user.wallet.address && !user.wallet.linked && 
-          bigNumberComparison(bigNumberArithmetic(user.wallet.balance, user.rewardBalance, "+"), "0", ">")) {
+        else if (user.wallet && user.wallet.address && !user.wallet.linked &&
+          bigNumberComparison(userBalance, "0", ">")) {
           return accountNoLinkedBalanceKeyboard
         }
         return accountNoAddressKeyboard
       case "main":
-        botParams.db.read()
-        botParams.db.chain = _.chain(botParams.db.data)
-        var user: IUser = (botParams.db as any).chain.get("users").find({ chatid: ctx.chat.id }).value()
-        if (user.wallet.address && user.wallet.linked) {
+        var user: IUser = await User.findOne({ chat_id: ctx.chat.id })
+        var userBalance = user.getBalance()
+        if (user.wallet && user.wallet.address && user.wallet.linked) {
           return getMainLinkedKeyboard(amountToHumanString(
-            bigNumberArithmetic(user.wallet.balance, user.rewardBalance, "+"), 2))
+            userBalance, 2))
         }
-        else if (user.wallet.address && !user.wallet.linked) {
+        else if (user.wallet && user.wallet.address && !user.wallet.linked) {
           return getMainNoLinkedKeyboard(amountToHumanString(
-            bigNumberArithmetic(user.wallet.balance, user.rewardBalance, "+"), 2))
+            userBalance, 2))
         }
-        else if (!user.wallet.balance && bigNumberComparison(user.rewardBalance, "0", ">")) {
-          return getMainRewardBalanceKeyboard(amountToHumanString(user.rewardBalance, 2))
+        else if (!user.wallet && bigNumberComparison(user.reward_balance, "0", ">")) {
+          return getMainRewardBalanceKeyboard(amountToHumanString(user.reward_balance, 2))
         }
         return mainKeyboard
     }
@@ -130,9 +129,14 @@ function getKeyboard(ctx) {
   return mainKeyboard
 }
 
-function getDb() {
-  const db = new LowSync(new JSONFileSync(process.env.DB_FILE_PATH))
-  return db
+async function getDb() {
+  const uri = process.env.MONGO_URI
+  try {
+    await mongoose.connect(uri)
+    console.log('MongoDB Connected...')
+  } catch (err) {
+    console.log(err)
+  }
 }
 
 function getLocalStorage() {

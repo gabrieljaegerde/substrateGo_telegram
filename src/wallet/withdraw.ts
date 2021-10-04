@@ -8,41 +8,37 @@ import {
   deleteMenuFromContext
 } from "telegraf-inline-menu"
 import { withdraw, getTransactionCost } from "../network/accountHandler.js"
-import { amountToHumanString, bigNumberArithmetic, bigNumberComparison, setSessionWallet } from "./walletHelpers.js"
+import { amountToHumanString, bigNumberArithmetic, bigNumberComparison } from "./walletHelpers.js"
 import { editWalletMiddleware } from "./edit.js"
 import { amountToHuman } from "./walletHelpers.js"
 import TelegrafStatelessQuestion from "telegraf-stateless-question"
 import BigNumber from "bignumber.js"
-import { IUser } from "../types.js"
-
+import User, { IUser } from "../models/user.js"
 
 const enterAmount = new TelegrafStatelessQuestion("amt", async (ctx: any) => {
-  botParams.db.read()
-  botParams.db.chain = _.chain(botParams.db.data)
-  var decimals = botParams.settings.network.decimals
-  var requestedAmount = new BigNumber(ctx.message.text)
+  var decimals = parseInt(botParams.settings.network.decimals)
+  var withdrawAmount = new BigNumber(ctx.message.text)
     .multipliedBy(new BigNumber("1e" + decimals)).toString()
-  ctx.session.withdrawAmount = requestedAmount
-  var user: IUser = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-  if (!user.wallet.balance) {
+  ctx.session.withdrawAmount = withdrawAmount
+  var user: IUser = await User.findOne({ chat_id: ctx.chat.id })
+  if (!user.wallet) {
     let replyMsg = "Please add an address to your account first by clicking on 'Add address'\n. " +
       "This is the address your withdrawal will be sent to.\n\n_While it is not " +
       "required to link your account to the address for a withdrawal, it is still " +
       "good practice to do so for you to ensure that you have entered the correct address._"
     return ctx.replyWithMarkdown(
       replyMsg,
-      Markup.keyboard(getKeyboard(ctx)).resize()
+      Markup.keyboard(await getKeyboard(ctx)).resize()
     )
   }
-  var userBalance = bigNumberArithmetic(user.wallet.balance, user.rewardBalance, "+")
-  console.log("userBalance", userBalance)
-  if (bigNumberComparison(userBalance, requestedAmount, "<")) {
-    let replyMsg = `The amount you entered (${amountToHumanString(requestedAmount)}) is bigger ` +
+  var userBalance: string = user.getBalance()
+  if (user.withdrawalAllowed(userBalance, withdrawAmount)) {
+    let replyMsg = `The amount you entered (${amountToHumanString(withdrawAmount)}) is bigger ` +
       `than your balance of _${amountToHumanString(userBalance)}_.\n\n` +
       `Please enter an amount *less than* or *equal* to your balance.`
     return enterAmount.replyWithMarkdown(ctx, replyMsg)
   }
-  if (bigNumberComparison(requestedAmount, "0", "<")) {
+  if (bigNumberComparison(withdrawAmount, "0", "<")) {
     let replyMsg = "The amount *has* to be a *positive* number. Please enter an amount *greater* than *0*."
     return enterAmount.replyWithMarkdown(ctx, replyMsg)
   }
@@ -52,15 +48,12 @@ const enterAmount = new TelegrafStatelessQuestion("amt", async (ctx: any) => {
 //create submenu for withdrawal
 const withdrawBalance = new MenuTemplate(async (ctx: any) => {
   ctx.session.hideWithdrawButtons = false
-  botParams.db.read()
-  botParams.db.chain = _.chain(botParams.db.data)
   var loadMessage = await botParams.bot.telegram
     .sendMessage(ctx.chat.id, "Loading...")
-  var user: IUser = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
+  var user: IUser = await User.findOne({ chat_id: ctx.chat.id })
   var reply: string
-  var userBalance = bigNumberArithmetic(user.wallet.balance, user.rewardBalance, "+")
-  if (bigNumberComparison(userBalance, "0", ">") &&
-    bigNumberComparison(userBalance, ctx.session.withdrawAmount, ">=")) {
+  var userBalance = user.getBalance()
+  if (user.withdrawalAllowed(userBalance, ctx.session.withdrawAmount)) {
     let info = await getTransactionCost({
       type: "transfer",
       recipient: user.wallet.address,
@@ -80,7 +73,7 @@ const withdrawBalance = new MenuTemplate(async (ctx: any) => {
         `it is *not* possible to withdraw such a small amount.`
       await ctx.replyWithMarkdown(
         reply,
-        Markup.keyboard(getKeyboard(ctx)).resize()
+        Markup.keyboard(await getKeyboard(ctx)).resize()
       )
       if (bigNumberComparison(userBalance, info.partialFee, ">")) {
         let replyMsg = `Try withdrawing a *bigger* amount.`
@@ -136,7 +129,7 @@ withdrawBalance.interact("Cancel", "c", {
     await deleteMenuFromContext(ctx)
     ctx.replyWithMarkdown(
       "Withdrawal canceled",
-      Markup.keyboard(getKeyboard(ctx)).resize()
+      Markup.keyboard(await getKeyboard(ctx)).resize()
     )
     return false
   },
@@ -151,14 +144,10 @@ withdrawBalance.manualRow(createBackMainMenuButtons())
 const withdrawBalanceMiddleware = new MenuMiddleware('withdraw/', withdrawBalance)
 
 async function withdrawFunds(ctx) {
-  botParams.db.read()
-  botParams.db.chain = _.chain(botParams.db.data)
-  var user: IUser = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
+  var user: IUser = await User.findOne({ chat_id: ctx.chat.id })
   let { success, response } = await withdraw(
-    user.wallet.address, 
+    user.wallet.address,
     ctx.session.withdrawAmount)
-  console.log("sucess:", success)
-  console.log("response:", response)
   if (!success) {
     let reply = "An error occured with the withdrawal. Please try again. If this issue persists, " +
       "please contact @xxx on telegram."
@@ -175,23 +164,10 @@ async function withdrawFunds(ctx) {
       })
     await botParams.bot.telegram
       .sendMessage(ctx.chat.id, response ? response : reply, Markup.inlineKeyboard(links))
-    /*
-  ctx.replyWithMarkdown(
-    response ? response : reply,
-    Markup.keyboard(getKeyboard(ctx)).resize()
-  )*/
     return false
   }
-  let coverableByRewards = bigNumberArithmetic(user.rewardBalance, ctx.session.withdrawAmount, "-")
-  if (bigNumberComparison(coverableByRewards, "0", "<")) {
-    user.rewardBalance = "0"
-    //since coverableByRewards is -ve this is actually subtraction
-    user.wallet.balance = bigNumberArithmetic(user.wallet.balance, coverableByRewards, "+")
-  }
-  else {
-    user.rewardBalance = coverableByRewards
-  }
-  botParams.db.write()
+  user.subtractFromBalance(ctx.session.withdrawAmount)
+  await user.save()
   var reply = `${amountToHumanString(ctx.session.withdrawAmount)} were sent to wallet with ` +
     `address:\n${user.wallet.address}`
   ctx.session.withdrawAmount = null
@@ -208,13 +184,10 @@ async function withdrawFunds(ctx) {
     })
   await botParams.bot.telegram
     .sendMessage(ctx.chat.id, reply, Markup.inlineKeyboard(links))
-  //update user var
-  user = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-  var userBalance = bigNumberArithmetic(user.wallet.balance, user.rewardBalance, "+")
-  let walletInfo = `Your current wallet balance is ${amountToHumanString(userBalance)}`
+  let walletInfo = `Your current wallet balance is ${amountToHumanString(user.getBalance())}`
   ctx.replyWithMarkdown(
     walletInfo,
-    Markup.keyboard(getKeyboard(ctx)).resize()
+    Markup.keyboard(await getKeyboard(ctx)).resize()
   )
   return true
 }

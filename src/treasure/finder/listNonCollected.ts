@@ -1,17 +1,21 @@
 import { MenuTemplate, MenuMiddleware, createBackMainMenuButtons } from "telegraf-inline-menu"
-import { botParams, getKeyboard } from "../../../config.js"
 import _ from "lodash"
 import { showNonCollectedItem } from "./showNonCollectedItem.js"
+import { IReward } from "../../models/reward.js"
 
 const listNonCollected = new MenuTemplate(async (ctx: any) => {
+  if (!ctx.session.userNonCollected || ctx.session.userNonCollected.length === 0)
+    return `You don't have any non-collected treasures.`
   return `Here are all your non-collected treasures... Claim them now before they expire (30 days after scan)!`
 })
 
 listNonCollected.chooseIntoSubmenu(
   "a",
   ctx => {
-    return ctx.session.userNonCollected.map(item =>
-      item.id
+    if (!ctx.session.userNonCollected || ctx.session.userNonCollected.length === 0)
+      return ""
+    return ctx.session.userNonCollected.map((reward: IReward) =>
+      reward._id
     )
   },
   showNonCollectedItem,
@@ -20,20 +24,22 @@ listNonCollected.chooseIntoSubmenu(
       if (
         !ctx.session ||
         !ctx.session.userNonCollected ||
-        ctx.session.userNonCollected.length == 0
+        ctx.session.userNonCollected.length === 0
       )
         true
       return false
     },
     buttonText: (ctx, key) => {
+      if (key === "")
+        return
       let text = ""
-      let item = ctx.session.userNonCollected.find(item => item.id === key)
+      let reward: IReward = ctx.session.userNonCollected.find((reward: IReward) => reward._id.equals(key))
       let dayInMs = 1000 * 60 * 60 * 24
-      if ((new Date(item.expiry).getTime() - new Date().getTime()) < (3 * dayInMs)){
-        text = `\u26A0 ${new Date(item.timestamp).toDateString()} \u26A0`
+      if ((reward.expiry.getTime() - new Date().getTime()) < (3 * dayInMs)) {
+        text = `\u26A0 ${reward.date_of_entry.toDateString()} - ${reward.name} \u26A0`
       }
       else {
-        text = new Date(item.timestamp).toDateString() 
+        text = `${reward.date_of_entry.toDateString()} - ${reward.name}`
       }
       return text
     },
@@ -46,9 +52,9 @@ listNonCollected.chooseIntoSubmenu(
   }
 )
 
-const listNonCollectedMiddleware = new MenuMiddleware('lNCo/', listNonCollected)
-
 listNonCollected.manualRow(createBackMainMenuButtons())
+
+const listNonCollectedMiddleware = new MenuMiddleware('lnco/', listNonCollected)
 
 export {
   listNonCollected,

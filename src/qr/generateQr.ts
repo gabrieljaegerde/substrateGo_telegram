@@ -4,37 +4,31 @@ import _ from "lodash"
 import crypto from "crypto"
 import QRCode from "qrcode"
 import { decorateQr } from "../treasure/treasureHelpers.js"
+import Qr, { IQr } from "../models/qr.js"
 
 async function generateQr(ctx) {
     try {
-        botParams.db.read()
-        botParams.db.chain = _.chain(botParams.db.data)
         do {
             var id = crypto.randomBytes(parseInt(botParams.settings.codeLength)).toString("hex")
-            var genQrDb = botParams.db.chain.get("generated_qrs").find({ id: id }).value()
-        } while (genQrDb)
-        let code = `https://t.me/${botParams.settings.botUsername}?start=` + id
-        let url = await QRCode.toDataURL(code)
+            var qr: IQr = await Qr.findOne({ code: id })
+        } while (qr)
+        let codeLink = `https://t.me/${botParams.settings.botUsername}?start=` + id
+        let url = await QRCode.toDataURL(codeLink)
         let qrImage = await decorateQr(Buffer.from(url.split(',')[1], 'base64'))
-        console.log("qrImage", qrImage)
-        let caption = "Go ahead and print this sticker now. Once you have placed it somewhere, " +
-            "click on '💎 Create treasure 💎' again " +
-            "and move on to Step 2: 'Add Treasure', to link it to a location."
-        //save genqr in db
-        var new_gen_qr = {
-            id: id,
+        let caption = "Go ahead and *print* this sticker now.\n\n_Once you have placed it somewhere, " +
+            "click on_ *'💎 Create treasure 💎'* _again " +
+            "and move on to_ *Step 2: 'Add Treasure'*_, to link it to a location._"
+        //save qr in db
+        await new Qr({
+            code: id,
             creator: ctx.chat.id,
-            timestamp: new Date()
-        }
-        botParams.db.read()
-        botParams.db.chain = _.chain(botParams.db.data)
-        botParams.db.chain.get("generated_qrs").push(new_gen_qr).value()
-        botParams.db.write()
+            date_of_entry: new Date()
+        }).save()
         await botParams.bot.telegram
             .sendPhoto(ctx.chat.id, { source: qrImage })
         ctx.replyWithMarkdown(
             caption,
-            Markup.keyboard(getKeyboard(ctx)).resize()
+            Markup.keyboard(await getKeyboard(ctx)).resize()
         )
     } catch (err) {
         console.error(err)

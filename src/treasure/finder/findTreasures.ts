@@ -3,7 +3,8 @@ import { botParams, getKeyboard } from "../../../config.js"
 import TelegrafStatelessQuestion from "telegraf-stateless-question"
 import _ from "lodash"
 import { Markup } from "telegraf"
-import { checkIfAlreadyCollected, howManyCollected } from "../treasureHelpers.js"
+import Treasure, { ITreasure } from "../../models/treasure.js"
+import { asyncFilter } from "../../../tools/utils.js"
 
 function distance(location1, location2, unit) {
     var radlat1 = Math.PI * location1.latitude / 180
@@ -23,27 +24,35 @@ function distance(location1, location2, unit) {
 }
 
 const findClosest = new TelegrafStatelessQuestion("fC", async (ctx: any) => {
-    botParams.db.read()
-    botParams.db.chain = _.chain(botParams.db.data)
-    var treasures = botParams.db.chain.get("treasures").value()
-    var message
-    var nearest
-    var nonCollected = treasures.filter(function(treasure) {
-        return !checkIfAlreadyCollected(treasure.id, ctx.chat.id)
+    const allTreasures: Array<ITreasure> = await Treasure.find({ active: true })
+    var message: string
+    var nearest: ITreasure
+
+    const nonCollected: Array<ITreasure> = await asyncFilter(allTreasures, async (treasure: ITreasure) => {
+        var collected: boolean = await treasure.checkIfAlreadyCollected(ctx.chat.id)
+        return !collected
     })
+
+    if (nonCollected.length < 1) {
+        await ctx.replyWithMarkdown(
+            "You have collected all created Treasures already!",
+            Markup.keyboard(await getKeyboard(ctx)).resize()
+        )
+        return
+    }
     if (ctx.message.location) {
         nearest = nonCollected.reduce(function (prev, curr) {
             var prevDistance = distance(ctx.message.location, prev.location, "K"),
                 currDistance = distance(ctx.message.location, curr.location, "K")
             return (prevDistance < currDistance) ? prev : curr
         })
-        message = `The closest non-collected treasure is ` + 
-            `${Math.round(distance(ctx.message.location, nearest.location, "K") * 100) / 100}km away.\n` +
-            `This treasure has been collected by ${howManyCollected(nearest.id)} others so far.\n\n` +
+        message = `The closest non-collected treasure is ` +
+            `*${Math.round(distance(ctx.message.location, nearest.location, "K") * 100) / 100}km* away.\n\n` +
+            `This treasure has been collected by *${await nearest.howManyCollected()}* others so far.\n\n` +
             `Treasure '${nearest.name}' location:`
         await ctx.replyWithMarkdown(
             message,
-            Markup.keyboard(getKeyboard(ctx)).resize()
+            Markup.keyboard(await getKeyboard(ctx)).resize()
         )
         await botParams.bot.telegram.sendLocation(ctx.chat.id, nearest.location.latitude, nearest.location.longitude)
     }

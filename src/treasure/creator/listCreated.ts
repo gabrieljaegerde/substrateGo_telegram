@@ -2,17 +2,15 @@ import { MenuTemplate, MenuMiddleware, deleteMenuFromContext } from "telegraf-in
 import { botParams, getKeyboard } from "../../../config.js"
 import { showCreatedItem } from "./showCreatedItem.js"
 import _ from "lodash"
+import Treasure, { ITreasure } from "../../models/treasure.js"
 
 const listCreated = new MenuTemplate(async (ctx: any) => {
+  console.log("in here")
   ctx.session.editMode = false
   ctx.session.showMode = false
-  botParams.db.read()
-  botParams.db.chain = _.chain(botParams.db.data)
-  var userCreated = botParams.db.chain.get("treasures")
-    .filter({ creator: ctx.chat.id })
-    .orderBy(["timestamp"], ["desc"])
-    .value()
+  var userCreated = await Treasure.find({creator: ctx.chat.id}).sort({date_of_entry: "desc"})
   ctx.session.userCreated = userCreated
+  console.log("ctx", ctx.update.update_id)
   if (userCreated.length > 0) {
     return `Here are all your created treasures sorted by newest:`
   }
@@ -23,8 +21,11 @@ const listCreated = new MenuTemplate(async (ctx: any) => {
 listCreated.chooseIntoSubmenu(
   "b",
   ctx => {
-    return ctx.session.userCreated.map(item =>
-      item.id
+    console.log("ctx1", ctx.update.update_id)
+    if (!ctx.session.userCreated || ctx.session.userCreated.length === 0)
+      return ""
+    return ctx.session.userCreated.map((treasure: ITreasure) =>
+      treasure._id
     )
   },
   showCreatedItem,
@@ -41,8 +42,10 @@ listCreated.chooseIntoSubmenu(
     maxRows: 5,
     columns: 1,
     buttonText: (ctx, key) => {
-      var item = ctx.session.userCreated.find(item => item.id === key)
-      return item.name ? item.name : "Created on: " + item.timestamp
+      if (key === "")
+        return
+      var treasure = ctx.session.userCreated.find((treasure: ITreasure) => treasure._id.equals(key))
+      return treasure.name ? treasure.name : "Created on: " + treasure.date_of_entry.toDateString()
     },
     getCurrentPage: ctx => ctx.session.createdPage,
     setPage: (ctx, page) => {

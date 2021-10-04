@@ -2,24 +2,24 @@ import { botParams, getKeyboard } from "../../../config.js"
 import { Markup } from "telegraf"
 import TelegrafStatelessQuestion from "telegraf-stateless-question"
 import _ from "lodash"
-import { claimNftMiddleware } from "../../nft/claimNft.js"
+import { claimNftMiddleware } from "./claimNft.js"
 import { scan } from "../treasureHelpers.js"
-import { IUser } from "../../types.js"
+import Treasure, { ITreasure } from "../../models/treasure.js"
+import Reward, { IReward } from "../../models/reward.js"
+import User, { IUser } from "../../models/user.js"
 
 function collectTreasure(ctx) {
     var reply = `Please send me a picture of the treasure's QR Code.`
     return getTreasure.replyWithMarkdown(ctx, reply)
 }
 
-function fastTrackGet(ctx, qrId) {
-    botParams.db.read()
-    botParams.db.chain = _.chain(botParams.db.data)
-    var user: IUser = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
+async function fastTrackGet(ctx, qrId) {
+    var user: IUser = await User.findOne({ chat_id: ctx.chat.id })
     var message
     //see if this qr id is registered in the db
-    var qrDb = botParams.db.chain.get("treasures").find({ id: qrId }).value()
+    var treasure : ITreasure = await Treasure.findOne({code: qrId})
     //qr not registered in db
-    if (!qrDb) {
+    if (!treasure) {
         //exit
         message = "The QR Code you tried to scan, either does not belong to this bot, " +
             "or has not been activated yet. If you think that I am mistaken, then please try again.\n\n" +
@@ -27,34 +27,29 @@ function fastTrackGet(ctx, qrId) {
             "maybe just try sending a new one."
         return getTreasure.replyWithMarkdown(ctx, message)
     }
-    else if (qrDb && !qrDb.active) {
+    else if (treasure && !treasure.active) {
         //exit
         message = "This treasure has been deactivated by its creator..."
     }
-    //qr is registered in db
+    //treasure is registered in db
     else {
-        ctx.session.remark = qrDb.remark
         ctx.session.qrId = qrId
-        ctx.session.user = user
-        var scannedDb = botParams.db.chain.get("scanned").find({ qrId: qrId, finder: user.chatid }).value()
-        ctx.session.scannedDb = scannedDb
+        var reward: IReward = await Reward.findOne({treasure_id: treasure._id, finder: user.chat_id})
         const now = new Date()
         const thirtyAfter = new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000))
-        if (!scannedDb) {
-            var new_scanned = {
-                id: qrId.substring(0,10) + ctx.chat.id + now.getTime(),
-                qrId: qrId,
+        if (!reward) {
+            var newReward: IReward = new Reward({
+                treasure_id: treasure._id,
                 finder: ctx.chat.id,
                 collected: false,
-                name: qrDb.name,
-                timestamp: now,
+                name: null,
                 expiry: thirtyAfter,
-                timestampCollected: null,
-                txHash: null,
-                nft: qrDb.nft
-            }
-            botParams.db.chain.get("scanned").push(new_scanned).value()
-            botParams.db.write()
+                date_collected: null,
+                tx_hash: null,
+                file: null,
+                date_of_entry: now,
+            })
+            await newReward.save()
             if (!user.wallet.address || !user.wallet.linked) {
                 return ctx.replyWithMarkdown(
                     `In order to collect a Treasure, you first need to link a ${botParams.settings.network.name} ` +
@@ -62,19 +57,20 @@ function fastTrackGet(ctx, qrId) {
                     `in the main menu. ` +
                     `\n\n_I have saved this treasure for you and you can still claim it within the next 30 days. ` +
                     `To claim it, simply click on '🎁 My treasures' in the Finder menu._`,
-                    Markup.keyboard(getKeyboard(ctx)).resize()
+                    Markup.keyboard(await getKeyboard(ctx)).resize()
                 )
             }
             return claimNftMiddleware.replyToContext(ctx)
         }
         else {
-            if (scannedDb.collected === true) {
+            if (reward.collected === true) {
                 message = "You already claimed this treasure! You can only claim a treasure once."
             }
             // not collected yet, but rescanned -> move back expiry
             else {
-                botParams.db.chain.get("scanned").find({ qrId: qrId, finder: user.chatid }).assign({ expiry: thirtyAfter }).value()
-                botParams.db.write()
+                //botParams.db.chain.get("scanned").find({ qrId: qrId, finder: user.chat_id }).assign({ expiry: thirtyAfter }).value()
+                reward.expiry = thirtyAfter
+                await reward.save()
                 if (!user.wallet.address || !user.wallet.linked) {
                     return ctx.replyWithMarkdown(
                         `In order to collect a Treasure, you first need to link a ${botParams.settings.network.name} ` +
@@ -82,19 +78,17 @@ function fastTrackGet(ctx, qrId) {
                         `in the main menu. ` +
                         `\n\nI have saved this treasure for you and you can still claim it within the next 30 days. ` +
                         `To claim it, simply click on '🎁 My treasures' in the Finder menu.`,
-                        Markup.keyboard(getKeyboard(ctx)).resize()
+                        Markup.keyboard(await getKeyboard(ctx)).resize()
                     )
                 }
                 return claimNftMiddleware.replyToContext(ctx)
             }
         }
-        ctx.session.remark = null
         ctx.session.qrId = null
-        ctx.session.user = null
     }
     ctx.replyWithMarkdown(
         message,
-        Markup.keyboard(getKeyboard(ctx)).resize()
+        Markup.keyboard(await getKeyboard(ctx)).resize()
     )
 }
 

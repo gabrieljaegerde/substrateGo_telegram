@@ -14,6 +14,8 @@ import { RemarkStorageAdapter } from "./src/network/remarkStorageAdapter.js"
 import pinataSDK from "@pinata/sdk"
 import _ from "lodash"
 import dotenv from "dotenv"
+import User, { IUser } from "./src/models/user.js"
+
 
 import * as bot from "./bot.js"
 dotenv.config()
@@ -22,7 +24,7 @@ class SubstrateBot {
   settings: any
   api: any
   account: any
-  db: any
+  dbClient: any
   localStorage: any
   remarkStorage: any
   invalidateCacheInterval: NodeJS.Timer
@@ -42,14 +44,13 @@ class SubstrateBot {
     this.settings = settings
     this.api = api
     this.account = account
-    this.db = getDb()
     this.localStorage = getLocalStorage()
     this.remarkStorage = getRemarkStorage()
   }
 
   async run() {
+    await getDb()
     botParams.api = this.api
-    botParams.db = this.db
     botParams.localStorage = this.localStorage
     botParams.remarkStorage = this.remarkStorage
     botParams.account = this.account
@@ -95,10 +96,9 @@ class SubstrateBot {
         storageProvider: new LocalStorageProvider()
       })
       const subscriber = listener.initialiseObservable()
-      console.log("should be listening")
-      subscriber.subscribe((val) => console.log("working:", val))
+      subscriber.subscribe((val) => console.log(val))
     }
-    startListening()
+    await startListening()
 
     //setup pinata
     botParams.pinata = pinataSDK(process.env.PINATA_API, process.env.PINATA_SECRET)
@@ -114,7 +114,6 @@ class SubstrateBot {
     //await mintNFT()
     this.invalidateCacheInterval = setInterval(() => {
       ;[...alreadyReceived.entries()].forEach(key => {
-        console.log("in invalidateCacheInterval")
         var dateMinuteAgo = new Date()
         dateMinuteAgo.setSeconds(dateMinuteAgo.getSeconds() - 60)
         if (alreadyReceived.get(key[0]) < dateMinuteAgo) {
@@ -125,14 +124,11 @@ class SubstrateBot {
   }
 
   async stop() {
-    botParams.db.read()
-    botParams.db.chain = _.chain(botParams.db.data)
-    let users = botParams.db.chain
-      .get("users")
+    let users: Array<IUser> = await User.find({})
     for (var user of users) {
       var alert = `The bot will be down for an undetermined amount of time for maintenance. ` +
         `You will be notified when it comes back online. Sorry for the inconvenience!`
-      await botParams.bot.telegram.sendMessage(user.chatid, alert)
+      await botParams.bot.telegram.sendMessage(user.chat_id, alert)
     }
     clearInterval(this.invalidateCacheInterval)
   }
@@ -149,14 +145,10 @@ async function main() {
     account
   })
   await substrateBot.run()
-  botParams.db.read()
-  botParams.db.chain = _.chain(botParams.db.data)
-  let users = botParams.db.chain
-    .get("users")
   /*
     for (var user of users) {
     var alert = `The bot is back online!`
-    await botParams.bot.telegram.sendMessage(user.chatid, alert)
+    await botParams.bot.telegram.sendMessage(user.chat_id, alert)
   }
   */
 }

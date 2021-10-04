@@ -1,17 +1,17 @@
-import { Telegraf, Markup } from "telegraf"
+import { Telegraf, Markup, Context } from "telegraf"
 import { botParams, getKeyboard } from "./config.js"
 import { addWallet } from "./src/wallet/add.js"
 import { editWalletMiddleware, enterAddress } from "./src/wallet/edit.js"
-import { bigNumberArithmetic, amountToHumanString, getAccountDetails } from "./src/wallet/walletHelpers.js"
+import { bigNumberArithmetic, amountToHumanString } from "./src/wallet/walletHelpers.js"
 import { enterAmount, withdrawBalanceMiddleware } from "./src/wallet/withdraw.js"
-import { depositMiddleware, linkAddress } from "./src/wallet/deposit.js"
-import { addTreasure, uploadQr } from "./src/treasure/creator/addTreasure.js"
-import { listScannedMiddleware } from "./src/treasure/finder/listScanned.js"
+import { infoMiddleware, linkAddress } from "./src/wallet/info.js"
+import { uploadTreasure } from "./src/treasure/creator/addTreasure.js"
+import { listUserRewardsMiddleware } from "./src/treasure/finder/listUserRewards.js"
 import { listCreatedMiddleware } from "./src/treasure/creator/listCreated.js"
-import { editMessage } from "./src/treasure/creator/editMessage.js"
+import { editDescription } from "./src/treasure/creator/editDescription.js"
 import { editNameTreasure } from "./src/treasure/creator/editNameTreasure.js"
-import { editNameScanned } from "./src/treasure/finder/editNameScanned.js"
-import { claimNftMiddleware } from "./src/nft/claimNft.js"
+import { editNameReward } from "./src/treasure/finder/editNameReward.js"
+import { claimNftMiddleware } from "./src/treasure/finder/claimNft.js"
 import { collectTreasure, getTreasure } from "./src/treasure/finder/collectTreasure.js"
 import { createTreasureMiddleware } from "./src/treasure/creator/createTreasure.js"
 import { listCollectedMiddleware } from "./src/treasure/finder/listCollected.js"
@@ -19,32 +19,40 @@ import { listNonCollectedMiddleware } from "./src/treasure/finder/listNonCollect
 //import prom from "./metrics.js"
 import _ from "lodash"
 import { fastTrackGet } from "./src/treasure/finder/collectTreasure.js"
-import LocalSession from 'telegraf-session-local'
-import { editNFT } from "./src/nft/editNFT.js"
+import { session } from 'telegraf-session-mongodb'
+import { editFile } from "./src/treasure/creator/editFile.js"
 import { createTreasureGuideMiddleware } from "./src/treasure/creator/createTreasureGuide.js"
 import { findClosest, findTreasuresMiddleware } from "./src/treasure/finder/findTreasures.js"
-import { IUser } from "./src/types.js"
+import User, { IUser } from "./src/models/user.js"
+import Treasure, { ITreasure } from "./src/models/treasure.js"
+import mongoose from "mongoose"
+import { resetSession } from "./tools/utils.js"
 
 // const telegramBotUpdates = new prom.Counter({
 //   name: "substrate_bot_telegram_updates",
 //   help: "metric_help",
 // })
 
+export interface SessionContext extends Context {
+  session: any;
+};
+
 export const run = async function (params) {
   /*
    *   BOT initialization
    */
-  const bot = new Telegraf(botParams.settings.botToken)
-  bot.use(await(new LocalSession({ database: process.env.LOCAL_STORAGE_DB_FILE_PATH })).middleware())
-
+  
+  const bot = new Telegraf<SessionContext>(botParams.settings.botToken)
+  const { db } = mongoose.connection
+  bot.use(session(db, { collectionName: 'sessions' }))
+  
   /*
    *   Message on command /start (Hello msg)
    */
   bot.start(async (ctx: any) => {
     if (ctx.chat.type == "private") {
-      botParams.db.read()
-      botParams.db.chain = _.chain(botParams.db.data)
-      var user: IUser = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
+      resetSession(ctx)
+      var user: IUser = await User.findOne({ chat_id: ctx.chat.id })
       var message
       //normal start
       if (ctx.message.text === "/start") {
@@ -83,41 +91,39 @@ export const run = async function (params) {
         //the QR code id is sent in with the /start command.
         //seperate the id out
         var qrId = ctx.message.text.replace("/start", "").replace(/\s/g, "")
-        user = {
+        await new User({
           first_name: ctx.chat.first_name,
           username: ctx.chat.username,
-          chatid: ctx.chat.id,
+          chat_id: ctx.chat.id,
           type: ctx.chat.type,
-          totalRewardBalance: "0",
-          rewardBalance: "0",
-          wallet: null,
-          oldWallets: [],
+          total_reward_balance: "0",
+          reward_balance: "0",
+          wallet: {},
+          old_wallets: [],
           blocked: false,
-          timestamp: new Date().toString()
-        }
-        botParams.db.chain.get("users").push(user).value()
-        botParams.db.write()
+          date_of_entry: new Date()
+        }).save()
+        //botParams.db.chain.get("users").push(user).value()
+        //botParams.db.write()
       }
       //if new user -> add to db
       if (!user) {
-        user = {
+        await new User({
           first_name: ctx.chat.first_name,
           username: ctx.chat.username,
-          chatid: ctx.chat.id,
+          chat_id: ctx.chat.id,
           type: ctx.chat.type,
-          totalRewardBalance: "0",
-          rewardBalance: "0",
-          wallet: null,
-          oldWallets: [],
+          total_reward_balance: "0",
+          reward_balance: "0",
+          wallet: {},
+          old_wallets: [],
           blocked: false,
-          timestamp: new Date().toString()
-        }
-        botParams.db.chain.get("users").push(user).value()
-        await botParams.db.write()
+          date_of_entry: new Date()
+        }).save()
       }
       await ctx.replyWithMarkdown(
         message,
-        Markup.keyboard(getKeyboard(ctx)).resize()
+        Markup.keyboard(await getKeyboard(ctx)).resize()
       )
       if (ctx.message.text !== "/start") {
         fastTrackGet(ctx, qrId)
@@ -134,7 +140,7 @@ export const run = async function (params) {
       let reply = "Here you go"
       ctx.replyWithMarkdown(
         reply,
-        Markup.keyboard(getKeyboard(ctx)).resize()
+        Markup.keyboard(await getKeyboard(ctx)).resize()
       )
     }
   })
@@ -159,34 +165,31 @@ export const run = async function (params) {
    *   React bot on 'View stats' message
    */
 
-  bot.hears("📊 View stats", ctx => {
+  bot.hears("📊 View stats", async (ctx) => {
     if (ctx.chat.type == "private") {
-      botParams.db.read()
-      botParams.db.chain = _.chain(botParams.db.data)
-      var user: IUser = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-      var userTreasures = botParams.db.chain.get("treasures").filter({ creator: ctx.chat.id }).value()
-      var userTreasuresScanned = botParams.db.chain.get("scanned").filter((item) => userTreasures.some(treasure => treasure.id === item.qrId)).value()
-      var groupedScanned = _.groupBy(userTreasuresScanned, 'qrId')
-      var groupedScannedLengths = []
-      for (var treasure in groupedScanned) {
-        groupedScannedLengths.push({ name: userTreasures.find(treas => treas.id === treasure).name, length: groupedScanned[treasure].length })
-      }
-      var message = "";
-      if (userTreasuresScanned.length > 0) {
-        message = `Your ${userTreasures.length} treasures have already been collected ${userTreasuresScanned.length} times.\n\n`
-        groupedScannedLengths.forEach(function (item) {
-          message += `Treasure '${item.name}' was collected ${item.length} time(s).\n`
-        })
-      }
-      else if (userTreasuresScanned.length == 0 && userTreasures.length > 0) {
-        message = `Your treasures have not been collected yet.`
+      resetSession(ctx)
+      var user: IUser = await User.findOne({ chat_id: ctx.chat.id })
+      var userTreasures: Array<ITreasure> = await Treasure.find({ creator: ctx.chat.id })
+      var message = ""
+      var collectedCount = 0
+      var treasureMessages = ""
+      if (userTreasures.length > 0) {
+        //console.log("userTreasures", userTreasures)
+        await Promise.all(userTreasures.map(async (treasure: ITreasure) => {
+          let timesCollected = await treasure.howManyCollected()
+          treasureMessages += `Treasure '${treasure.name}' was collected ${timesCollected} time(s).\n`
+          collectedCount += timesCollected
+        }))
+        message = `Your ${userTreasures.length} treasures have already been collected ${collectedCount} times.\n\n`
+        message += `Total Rewards earned: ${amountToHumanString(user.total_reward_balance)}\n\n`
+        message += treasureMessages
       }
       else {
         message = `You do not have any treasures yet. Go and create some today!`
       }
       ctx.replyWithMarkdown(
         message,
-        Markup.keyboard(getKeyboard(ctx)).resize()
+        Markup.keyboard(await getKeyboard(ctx)).resize()
       )
       return
     }
@@ -198,6 +201,7 @@ export const run = async function (params) {
 
   bot.hears("📷 Collect treasure", ctx => {
     if (ctx.chat.type == "private") {
+      resetSession(ctx)
       collectTreasure(ctx)
     }
   })
@@ -208,6 +212,7 @@ export const run = async function (params) {
 
   bot.hears("💎 Create treasure 💎", ctx => {
     if (ctx.chat.type == "private") {
+      resetSession(ctx)
       createTreasureMiddleware.replyToContext(ctx)
     }
   })
@@ -216,11 +221,10 @@ export const run = async function (params) {
    *   React bot on 'Edit address' message
    */
 
-  bot.hears("\uD83D\uDCEA Edit address", ctx => {
+  bot.hears("\uD83D\uDCEA Edit address", async (ctx) => {
     if (ctx.chat.type == "private") {
-      botParams.db.read()
-      botParams.db.chain = _.chain(botParams.db.data)
-      var user: IUser = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
+      resetSession(ctx)
+      var user: IUser = await User.findOne({ chat_id: ctx.chat.id })
       var replyMsg = `Current Address:\n_${user.wallet.address}_\n\n` +
         `Enter new ${botParams.settings.network.name} address:`
       enterAddress.replyWithMarkdown(ctx, replyMsg)
@@ -246,7 +250,8 @@ export const run = async function (params) {
 
   bot.hears("🎁 My treasures", ctx => {
     if (ctx.chat.type == "private") {
-      listScannedMiddleware.replyToContext(ctx)
+      resetSession(ctx)
+      listUserRewardsMiddleware.replyToContext(ctx)
     }
   })
 
@@ -254,13 +259,11 @@ export const run = async function (params) {
    *   React bot on 'Withdraw' message
    */
 
-  bot.hears("\uD83E\uDDFE Withdraw", ctx => {
+  bot.hears("\uD83E\uDDFE Withdraw", async (ctx) => {
     if (ctx.chat.type == "private") {
-      botParams.db.read()
-      botParams.db.chain = _.chain(botParams.db.data)
-      var user: IUser = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-      var userBalance = bigNumberArithmetic(user.wallet.balance ? user.wallet.balance : "0", user.rewardBalance, "+")
-      let replyMsg = `Your balance: *${amountToHumanString(userBalance)}*\n\nHow much would you ` +
+      resetSession(ctx)
+      var user: IUser = await User.findOne({ chat_id: ctx.chat.id })
+      let replyMsg = `Your balance: *${amountToHumanString(user.getBalance())}*\n\nHow much would you ` +
         `like to withdraw?\n\n_Please use '.' notation instead of commas. e.g. 0.02 or 0.5 or 1.4 etc._`
       enterAmount.replyWithMarkdown(ctx, replyMsg)
       //withdrawBalanceMiddleware.replyToContext(ctx)
@@ -273,6 +276,7 @@ export const run = async function (params) {
 
   bot.hears("🔗 Link address", ctx => {
     if (ctx.chat.type == "private") {
+      resetSession(ctx)
       linkAddress(ctx)
     }
   })
@@ -283,7 +287,8 @@ export const run = async function (params) {
 
   bot.hears("\u26A0 Deposit \u26A0", ctx => {
     if (ctx.chat.type == "private") {
-      depositMiddleware.replyToContext(ctx)
+      resetSession(ctx)
+      infoMiddleware.replyToContext(ctx)
     }
   })
 
@@ -293,6 +298,7 @@ export const run = async function (params) {
 
   bot.hears("✏️ Edit treasures", async (ctx: any) => {
     if (ctx.chat.type == "private") {
+      resetSession(ctx)
       listCreatedMiddleware.replyToContext(ctx)
     }
   })
@@ -301,8 +307,9 @@ export const run = async function (params) {
    *   React bot on 'Creator Mode' message
    */
 
-  bot.hears("🧙🏻‍♀️ Creator Mode", (ctx: any) => {
+  bot.hears("🧙🏻‍♀️ Creator Mode", async (ctx: any) => {
     if (ctx.chat.type == "private") {
+      resetSession(ctx)
       ctx.session.menu = "creator"
       ctx.replyWithMarkdown(
         "You have entered 🧙🏻‍♀️ *creator* mode.\n\nHere you can:\n• *create* new treasures💎\n" +
@@ -310,7 +317,7 @@ export const run = async function (params) {
         "• and *track* their performance📊.\n\n_Each time a user collects your treasures, you receive a " +
         `small reward (${amountToHumanString(botParams.settings.creatorReward)}). The NFT treasure ` +
         `sent to the finders is customizable by you. Go create awesome treasures and earn!_`,
-        Markup.keyboard(getKeyboard(ctx)).resize()
+        Markup.keyboard(await getKeyboard(ctx)).resize()
       )
     }
   })
@@ -321,13 +328,14 @@ export const run = async function (params) {
 
   bot.hears("🕵🏾‍♂️ Finder Mode", async (ctx: any) => {
     if (ctx.chat.type == "private") {
+      resetSession(ctx)
       ctx.session.menu = "finder"
       ctx.replyWithMarkdown(
         "You have entered 🕵🏾‍♂️ *finder* mode.\n\nHere you can:\n• *collect* treasures 📷\n" +
         "• *find* treasures 🔍\n• and *view* your found treasures 🎁\n\n_Each time you collect a treasure, " +
         `an NFT gets created on the ${botParams.settings.network.name}. These prove your ownership of ` +
         "the treasures and can be freely traded on the open market._",
-        Markup.keyboard(getKeyboard(ctx)).resize()
+        Markup.keyboard(await getKeyboard(ctx)).resize()
       )
     }
   })
@@ -338,12 +346,13 @@ export const run = async function (params) {
   var regex = new RegExp(/.*Account Settings.*/i)
   bot.hears(regex, async (ctx: any) => {
     if (ctx.chat.type == "private") {
+      resetSession(ctx)
       ctx.session.menu = "account"
       await ctx.replyWithMarkdown(
         "Welcome to your 🛠️ Account Settings. Let me give you some quick info.",
-        Markup.keyboard(getKeyboard(ctx)).resize()
+        Markup.keyboard(await getKeyboard(ctx)).resize()
       )
-      depositMiddleware.replyToContext(ctx)
+      infoMiddleware.replyToContext(ctx)
     }
   })
 
@@ -351,12 +360,13 @@ export const run = async function (params) {
    *   React bot on 'Back to main menu' message
    */
 
-  bot.hears("\u2B05 Back to main menu", (ctx: any) => {
+  bot.hears("\u2B05 Back to main menu", async (ctx: any) => {
     if (ctx.chat.type == "private") {
+      resetSession(ctx)
       ctx.session.menu = "main"
       ctx.replyWithMarkdown(
         "Welcome home 🏠",
-        Markup.keyboard(getKeyboard(ctx)).resize()
+        Markup.keyboard(await getKeyboard(ctx)).resize()
       )
     }
   })
@@ -367,29 +377,30 @@ export const run = async function (params) {
 
   bot.hears("🔍 Find treasures", async (ctx: any) => {
     if (ctx.chat.type == "private") {
+      resetSession(ctx)
       findTreasuresMiddleware.replyToContext(ctx)
     }
   })
 
   bot.use(findTreasuresMiddleware)
 
-  bot.use(depositMiddleware)
+  bot.use(infoMiddleware)
 
   bot.use(createTreasureMiddleware)
 
   bot.use(createTreasureGuideMiddleware)
 
-  bot.use(uploadQr.middleware())
+  bot.use(uploadTreasure.middleware())
 
   bot.use(findClosest.middleware())
 
-  bot.use(editMessage.middleware())
+  bot.use(editDescription.middleware())
 
   bot.use(editNameTreasure.middleware())
 
-  bot.use(editNameScanned.middleware())
+  bot.use(editNameReward.middleware())
 
-  bot.use(editNFT.middleware())
+  bot.use(editFile.middleware())
 
   bot.use(getTreasure.middleware())
 
@@ -399,7 +410,7 @@ export const run = async function (params) {
 
   bot.use(listCollectedMiddleware)
 
-  bot.use(listScannedMiddleware)
+  bot.use(listUserRewardsMiddleware)
 
   bot.use(editWalletMiddleware)
 

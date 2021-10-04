@@ -3,61 +3,54 @@ import { botParams, getKeyboard } from "../../../config.js"
 import { Markup } from "telegraf"
 import _ from "lodash"
 import fetch from 'node-fetch'
-import { listScannedMiddleware } from "./listScanned.js"
-import { editNameScanned } from "./editNameScanned.js"
+import { listUserRewardsMiddleware } from "./listUserRewards.js"
+import { editNameReward } from "./editNameReward.js"
+import Treasure, { ITreasure } from "../../models/treasure.js"
+import Reward, { IReward } from "../../models/reward.js"
 
 const showCollectedItem = new MenuTemplate(async (ctx: any) => {
-  ctx.session.treasureDb = null
-  ctx.session.scannedId = ctx.match[1]
-  botParams.db.read()
-  botParams.db.chain = _.chain(botParams.db.data)
-  //var scannedDb = botParams.db.chain.get("scanned").find({ id: scannedId }).value()
-  ctx.session.scannedDb = botParams.db.chain.get("scanned").find({ id: ctx.session.scannedId }).value()
-  var allScannedDb = botParams.db.chain.get("scanned").filter({ qrId: ctx.session.scannedDb.qrId }).value()
-  let info = `Name: ${ctx.session.scannedDb.name}\n\nYou collected this ` +
-    `treasure on ${new Date(ctx.session.scannedDb.timestampCollected).toDateString()}.\n\n`
-  if (allScannedDb) {
-    info += `Treasure has been collected by ${allScannedDb.length - 1} others.`
-    if (allScannedDb.length == 1) {
-      info += `\n\nYour are the ONLY one that has found this treasure so far!`
+  const reward: IReward = await Reward.findOne({ _id: ctx.match[1], finder: ctx.chat.id })
+  ctx.session.reward = reward
+  var allRewards: Array<IReward> = await Reward.find({ treasure_id: reward.treasure_id, collected: true })
+  let info = `Name: ${reward.name}\n\nYou collected this ` +
+    `treasure on ${reward.date_collected.toDateString()}.\n\n`
+  if (allRewards) {
+    info += `Treasure has been collected by ${allRewards.length - 1} others.`
+    if (allRewards.length == 1) {
+      info += `\n\nYour are the ONLY one that has collected this treasure so far!`
     }
   }
   //todo: add more info regarding treasure
   return info
 })
 
-showCollectedItem.interact("Show NFT", "sN", {
+showCollectedItem.interact("Show NFT", "sn", {
   do: async (ctx: any) => {
-    botParams.db.read()
-    botParams.db.chain = _.chain(botParams.db.data)
     await deleteMenuFromContext(ctx)
     var loadMessage = await botParams.bot.telegram
       .sendMessage(ctx.chat.id, "Loading...")
-    let treasureDb = botParams.db.chain.get("treasures").find({ id: ctx.session.scannedDb.qrId }).value()
-
-    var response = await fetch(`https://ipfs.io/ipfs/${treasureDb.nft}`)
+    var response = await fetch(`https://ipfs.io/ipfs/${ctx.session.reward.file}`)
     let buffer = await response.buffer()
     await botParams.bot.telegram.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
     ctx.replyWithMarkdown(
-      `Treasure '${treasureDb.name}' NFT:`,
-      Markup.keyboard(getKeyboard(ctx)).resize()
+      `Treasure '${ctx.session.reward.name}' NFT:`,
+      Markup.keyboard(await getKeyboard(ctx)).resize()
     )
     await botParams.bot.telegram
       .sendPhoto(ctx.chat.id, { source: buffer })
-    console.log("id", ctx.session.scannedId)
-    listScannedMiddleware.replyToContext(ctx, `lS/lCo/a:${ctx.session.scannedId}/`)
+    listUserRewardsMiddleware.replyToContext(ctx, `ls/lco/a:${ctx.session.reward._id}/`)
     return true
   },
   joinLastRow: false
 })
 
-showCollectedItem.interact("Show blockchain transaction", "sBT", {
+showCollectedItem.interact("Show blockchain transaction", "sbt", {
   do: async (ctx: any) => {
     //await deleteMenuFromContext(ctx)
     var links = botParams.settings
       .getExtrinsicLinks(
         botParams.settings.network.name,
-        ctx.session.scannedDb.txHash
+        ctx.session.reward.txHash
       )
       .map(row => {
         console.log("row", row)
@@ -74,11 +67,11 @@ showCollectedItem.interact("Show blockchain transaction", "sBT", {
   joinLastRow: false
 })
 
-showCollectedItem.interact("Edit name", "eNS", {
+showCollectedItem.interact("Edit name", "ens", {
   do: async (ctx: any) => {
     //await deleteMenuFromContext(ctx)
     var message = `Please send me the new name.`
-    editNameScanned.replyWithMarkdown(ctx, message)
+    editNameReward.replyWithMarkdown(ctx, message)
     return true
   },
   joinLastRow: false
