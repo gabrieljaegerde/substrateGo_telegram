@@ -2,8 +2,7 @@ import { NFTMetadata } from 'rmrk-tools/dist/classes/nft';
 import pLimit from 'p-limit';
 import { Readable } from 'stream';
 import fs from 'fs';
-// @ts-ignore
-import pinataSDK, { PinataOptions, PinataPinOptions } from '@pinata/sdk';
+import { PinataPinOptions } from '@pinata/sdk';
 import { sleep } from './utils.js';
 import { botParams } from '../config.js';
 
@@ -131,3 +130,16 @@ export const pinSingleFile = async (
         return '';
     }
 };
+
+export const unpin = async (cid: string) => {
+    try {
+        const status = await botParams.pinata.unpin(cid.replace("ipfs://ipfs/", ""));
+        return status
+    } catch (error) {
+        console.log(error);
+        console.log(JSON.stringify(error));
+        return '';
+    }
+}
+
+

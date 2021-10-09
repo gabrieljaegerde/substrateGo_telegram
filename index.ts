@@ -1,31 +1,28 @@
-import { botParams, getDb, getLocalStorage, getRemarkStorage } from "./config.js"
+import { botParams, getDb, getRemarkStorage } from "./config.js"
 import { newHeaderHandler } from "./src/network/blockHandler.js"
 import { alreadyReceived } from "./src/network/accountHandler.js"
-import { mintNFT } from "./src/nft/nft.js"
-import { getSettings } from "./src/settings.js"
-import { getApi } from "./src/api.js"
-import { initAccount } from "./src/account.js"
+import { getSettings } from "./tools/settings.js"
 //import prom from "./metrics.js"
-//import { fetchRemarks, getRemarksFromBlocks, getLatestFinalizedBlock, Consolidator, RemarkListener, NFT } from 'rmrk-tools';
 import pkg from 'rmrk-tools';
 const { Consolidator, RemarkListener } = pkg;
-import { LocalStorageProvider } from "./helpers/localStorageProvider.js"
-import { RemarkStorageAdapter } from "./src/network/remarkStorageAdapter.js"
+import { blockCountAdapter } from "./tools/blockCountAdapter.js"
+import { RemarkStorageAdapter } from "./tools/remarkStorageAdapter.js"
 import pinataSDK from "@pinata/sdk"
-import _ from "lodash"
 import dotenv from "dotenv"
 import User, { IUser } from "./src/models/user.js"
-
-
+import { Header } from '@polkadot/types/interfaces';
 import * as bot from "./bot.js"
+import { createCharityUser } from "./tools/utils.js"
+import { initAccount, getApi } from "./tools/substrateUtils.js"
+import { ApiPromise } from "@polkadot/api"
+import { KeyringPair } from "@polkadot/keyring/types"
+
 dotenv.config()
 
 class SubstrateBot {
   settings: any
-  api: any
-  account: any
-  dbClient: any
-  localStorage: any
+  api: ApiPromise
+  account: KeyringPair
   remarkStorage: any
   invalidateCacheInterval: NodeJS.Timer
   /**
@@ -44,18 +41,16 @@ class SubstrateBot {
     this.settings = settings
     this.api = api
     this.account = account
-    this.localStorage = getLocalStorage()
     this.remarkStorage = getRemarkStorage()
   }
 
   async run() {
-    await getDb()
+    const dbLoaded = await getDb()
     botParams.api = this.api
-    botParams.localStorage = this.localStorage
     botParams.remarkStorage = this.remarkStorage
     botParams.account = this.account
 
-    var networkProperties = await this.api.rpc.system.properties()
+    const networkProperties = await this.api.rpc.system.properties()
     if (!this.settings.network.prefix && networkProperties.ss58Format) {
       this.settings.network.prefix = networkProperties.ss58Format.toString()
     }
@@ -69,22 +64,22 @@ class SubstrateBot {
       this.settings.network.token = networkProperties.tokenSymbol.toString()
     }
     botParams.settings = this.settings
-
     botParams.bot = await bot.run(this)
+    await createCharityUser()
     // prom.register.setDefaultLabels({
     //   telegram_bot_name: botParams.bot.options.username,
     //   network: botParams.settings.network.name,
     // })
 
     //setup block listener for transaction listener
-    await this.api.rpc.chain.subscribeNewHeads(async header =>
-      newHeaderHandler(header)
+    await this.api.rpc.chain.subscribeNewHeads(async (header: Header) =>
+      newHeaderHandler(header, new blockCountAdapter(botParams.remarkStorage, "headerBlock"))
     )
-
+    
     //setup remark listener for minting listener
     const consolidateFunction = async (remarks) => {
       console.log("remarks: ", remarks)
-      const consolidator = new Consolidator(2, new RemarkStorageAdapter() )
+      const consolidator = new Consolidator(2, new RemarkStorageAdapter(botParams.remarkStorage))
       return consolidator.consolidate(remarks)
     }
 
@@ -93,7 +88,7 @@ class SubstrateBot {
         polkadotApi: botParams.api,
         prefixes: ['0x726d726b', '0x524d524b'],
         consolidateFunction,
-        storageProvider: new LocalStorageProvider()
+        storageProvider: new blockCountAdapter(botParams.remarkStorage, "remarkBlock")
       })
       const subscriber = listener.initialiseObservable()
       subscriber.subscribe((val) => console.log(val))
@@ -104,7 +99,7 @@ class SubstrateBot {
     botParams.pinata = pinataSDK(process.env.PINATA_API, process.env.PINATA_SECRET)
 
     try {
-      let result = await botParams.pinata.testAuthentication()
+      const result = await botParams.pinata.testAuthentication()
       console.log(result)
     }
     catch (err) {
@@ -113,8 +108,8 @@ class SubstrateBot {
     }
     //await mintNFT()
     this.invalidateCacheInterval = setInterval(() => {
-      ;[...alreadyReceived.entries()].forEach(key => {
-        var dateMinuteAgo = new Date()
+      [...alreadyReceived.entries()].forEach(key => {
+        const dateMinuteAgo = new Date()
         dateMinuteAgo.setSeconds(dateMinuteAgo.getSeconds() - 60)
         if (alreadyReceived.get(key[0]) < dateMinuteAgo) {
           alreadyReceived.delete(key[0])
@@ -124,11 +119,11 @@ class SubstrateBot {
   }
 
   async stop() {
-    let users: Array<IUser> = await User.find({})
-    for (var user of users) {
-      var alert = `The bot will be down for an undetermined amount of time for maintenance. ` +
+    const users: Array<IUser> = await User.find({})
+    for (const user of users) {
+      const alert = `The bot will be down for an undetermined amount of time for maintenance. ` +
         `You will be notified when it comes back online. Sorry for the inconvenience!`
-      await botParams.bot.telegram.sendMessage(user.chat_id, alert)
+      await botParams.bot.api.sendMessage(user.chatId, alert)
     }
     clearInterval(this.invalidateCacheInterval)
   }
@@ -136,9 +131,9 @@ class SubstrateBot {
 
 let substrateBot
 async function main() {
-  var settings = getSettings()
-  var api = await getApi()
-  var account = await initAccount()
+  const settings = getSettings()
+  const api = await getApi()
+  const account = await initAccount()
   substrateBot = new SubstrateBot({
     settings,
     api,
@@ -148,7 +143,7 @@ async function main() {
   /*
     for (var user of users) {
     var alert = `The bot is back online!`
-    await botParams.bot.telegram.sendMessage(user.chat_id, alert)
+    await botParams.bot.api.sendMessage(user.chatId, alert)
   }
   */
 }

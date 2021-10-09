@@ -1,24 +1,22 @@
-import mongoose, {Document} from "mongoose"
+import mongoose, { Document } from "mongoose"
 
-export interface IQr extends Document{
-    code: string,
-    creator: number,
-    date_of_entry: Date
+export interface IQr extends Document {
+    code: string;
+    creator: number;
 }
 
 const Schema = mongoose.Schema
-const QrSchema = new Schema({
-    code: {
-        type: String,
-        required: true
+const QrSchema = new Schema(
+    {
+        code: {
+            type: String,
+            required: true
+        },
+        creator: {
+            type: Number,
+            required: true
+        }
     },
-    creator: {
-        type: Number,
-        required: true
-    },
-    date_of_entry: {
-        type: Date,
-        default: Date.now()
-    }
-});
+    { timestamps: true }
+);
 export default mongoose.model<IQr>('qr', QrSchema);

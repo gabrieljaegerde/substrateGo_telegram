@@ -1,24 +1,14 @@
 import { botParams } from "../../config.js"
-import _ from "lodash"
-import { Markup } from "telegraf"
-import { amountToHumanString, bigNumberArithmetic, bigNumberComparison } from "../wallet/walletHelpers.js"
-import BigNumber from "bignumber.js"
+import { amountToHumanString, bigNumberArithmetic, bigNumberComparison } from "../../tools/utils.js"
 import User, { IUser } from "../models/user.js"
-import { sendAndFinalize } from "../../tools/remarkUtils.js"
+import { allowWithdrawal, sendAndFinalize } from "../../tools/substrateUtils.js"
 import { CodecHash } from "@polkadot/types/interfaces";
+import { InlineKeyboard } from "grammy"
 
-export interface IGetTransactionCost {
-  type: string,
-  recipient: string,
-  toSendAmount?: string,
-  toSendRemarks?: Array<string>
-}
-
-
-const alreadyReceived = new Map()
+export const alreadyReceived = new Map()
 
 export const deposit = async (record, currentBlock: number) => {
-  console.log("record", record)
+  console.log(record)
   if (
     alreadyReceived.get(
       record.hash.toHuman ? record.hash.toHuman() : record.hash.toJSON()
@@ -30,44 +20,25 @@ export const deposit = async (record, currentBlock: number) => {
     )
   }
   const { event, phase } = record
-  var from = event.data[0].toString()
-  var value = event.data[2].toString()
-  var humanVal = amountToHumanString(value)
+  const from = event.data[0].toString()
+  const value = event.data[2].toString()
+  const humanVal = amountToHumanString(value)
   //make sure value is not null/undefined
-  var links = botParams.settings
-    .getExtrinsicLinksBlock(
-      botParams.settings.network.name,
-      phase.value["toNumber"] && phase.value.toNumber() < 1000
-        ? phase.value.toNumber()
-        : null,
-      currentBlock
-    )
-    .map(row => {
-      console.log("row", row)
-      return row.map(link => {
-        return Markup.button.url(link[0], link[1])
-      })
-    })
 
-  // await botParams.bot.telegram
-  // .sendMessage(id, message, {
-  //   parse_mode: "html",
-  //   disable_web_page_preview: "true",
-  //   reply_markup: Markup.inlineKeyboard(links),
-  // })
-  var allUsers: Array<IUser> = await User.find().exec()
-  var users: Array<IUser> = allUsers.filter(
-    (eachUser: IUser) => eachUser.wallet.address === from)
-  var verifiedUsers: Array<IUser> = users.filter(eachUser => eachUser.wallet.linked === true)
-  var user: IUser
-  var message: string = ""
+  const allUsers: Array<IUser> = await User.find().exec()
+  const users: Array<IUser> = allUsers.filter(
+    (eachUser: IUser) => eachUser.wallet && eachUser.wallet.address === from)
+  const verifiedUsers: Array<IUser> = users.filter(eachUser => eachUser.wallet && eachUser.wallet.linked === true)
+  let user: IUser
+  let message = ""
   if (users.length === 1) {
     user = users[0]
   }
   if (user && !user.wallet.linked) {
     //transfer amount matches password && password not expired yet
-    if (new BigNumber(user.wallet.password).isEqualTo(new BigNumber(value))
-      && user.wallet.password_expiry >= new Date()) {
+    const pwordMatch = bigNumberComparison(user.wallet.password, value, "=")
+    const pwordExpired = user.wallet.passwordExpired()
+    if (pwordMatch && !pwordExpired) {
       user.wallet.linked = true
       message = "Your wallet has been successfully linked	\u2705 to your account! " +
         "Any deposits you make from that wallet to the deposit address of this bot will now automatically " +
@@ -78,8 +49,7 @@ export const deposit = async (record, currentBlock: number) => {
         "and collect treasures! Have fun.\n\n"
     }
     //pasword not matching and password expired
-    else if (!new BigNumber(user.wallet.password).isEqualTo(new BigNumber(value))
-      && user.wallet.password_expiry < new Date()) {
+    else if (!pwordMatch && pwordExpired) {
       withdraw(from.toString(), value)
       message = "You did not make the deposit on time (15 minutes), neither did you transfer the right amount. " +
         "Your transfer has been sent back to the wallet it came from (minus transaction fees)." +
@@ -87,7 +57,7 @@ export const deposit = async (record, currentBlock: number) => {
         "the menu again to see the requirements."
     }
     //password expired
-    else if (user.wallet.password_expiry < new Date()) {
+    else if (pwordExpired) {
       withdraw(from.toString(), value)
       message = "You did not make the transfer within the required time of 15 minutes. It has been sent back to you " +
         "(minus transaction fees).\nClick on '🔗 Link address' in " +
@@ -106,10 +76,11 @@ export const deposit = async (record, currentBlock: number) => {
     user = checkPasswordMatch(users, value)
     if (user) {
       for (const vUser of verifiedUsers) {
-        var alert = `\u26A0Your wallet ${vUser.wallet.address} has just been linked with another account.\u26A0 ` +
+        const alert = `\u26A0Your wallet ${vUser.wallet.address} has just been linked with another account.\u26A0 ` +
           `It is *NO LONGER LINKED* to this account. You MUST relink a wallet (different or same) with this account BEFORE ` +
           `depositing. Otherwise your funds will be credited to another account!!!`
-        await botParams.bot.telegram.sendMessage(vUser.chat_id, alert)
+        await botParams.bot.api
+          .sendMessage(vUser.chatId, alert, { parse_mode: "MarkdownV2" })
         vUser.wallet.linked = false
         await vUser.save()
       }
@@ -122,6 +93,7 @@ export const deposit = async (record, currentBlock: number) => {
         "your wallet is still linked to your account!\nYou can now use the bot to create " +
         "and collect treasures! Have fun.\n\n"
     }
+    //shouldn't happen
     else if (!user && verifiedUsers.length > 0) {
       user = findNewlyAdded(verifiedUsers)
     }
@@ -142,50 +114,76 @@ export const deposit = async (record, currentBlock: number) => {
       await user.save()
       message += `${humanVal} have been credited to your account.`
     }
-    await botParams.bot.telegram
-      .sendMessage(user.chat_id, message, Markup.inlineKeyboard(links))
+    const inlineKeyboard = new InlineKeyboard()
+    botParams.settings
+      .getExtrinsicLinksBlock(
+        botParams.settings.network.name,
+        phase.value["toNumber"] && phase.value.toNumber() < 1000
+          ? phase.value.toNumber()
+          : null,
+        currentBlock
+      )
+      .map(row => {
+        return row.map(link => {
+          inlineKeyboard.url(link[0], link[1])
+        })
+      })
+    await botParams.bot.api
+      .sendMessage(user.chatId, message, { reply_markup: inlineKeyboard, parse_mode: "Markdown" })
   }
 }
 
-function findNewlyAdded(users: Array<IUser>) {
+const findNewlyAdded = (users: Array<IUser>) => {
   return users.reduce((prev: IUser, curr: IUser) => {
-    return prev.wallet.date_of_entry < curr.wallet.date_of_entry ? curr : prev
+    return prev.wallet.passwordExpiry < curr.wallet.passwordExpiry ? curr : prev
   })
 }
 
-function checkPasswordMatch(users: Array<IUser>, transferAmount: string): IUser {
-  return users.find((eachUser: IUser) => new BigNumber(eachUser.wallet.password)
-    .isEqualTo(new BigNumber(transferAmount)) &&
-    eachUser.wallet.password_expiry >= new Date())
+const checkPasswordMatch = (users: Array<IUser>, transferAmount: string): IUser => {
+  return users.find((eachUser: IUser) =>
+    bigNumberComparison(eachUser.wallet.password, transferAmount, "=") &&
+    !eachUser.wallet.passwordExpired())
 }
 
-async function withdraw(recipient: string, value: string): Promise<any> {
+export const withdraw = async (recipientAddress: string, value: string, recipient?: IUser): Promise<{
+  block?: number
+  success: boolean
+  hash?: CodecHash
+}> => {
   //get estimation of transfer cost
-  let info = await getTransactionCost({ type: "transfer", recipient: recipient, toSendAmount: value })
+  const info = await getTransactionCost("transfer", recipientAddress, value)
   //deduct fee from amount to be sent back
-  var transferAmount = bigNumberArithmetic(value, info.partialFee, "-")
+  const transferAmount = bigNumberArithmetic(value, info.partialFee, "-")
 
+  const users: Array<IUser> = await User.find({})
+  const allowed = await allowWithdrawal(botParams.api, value, users, recipient)
+  if (!allowed) {
+    console.log("something fishy going on!!!")
+    return { success: false }
+  }
+  console.log("allowed", allowed)
   //send back if (amount - fee) is +ve
   if (bigNumberComparison(transferAmount, "0", ">")) {
     try {
-      const txHash = await botParams.api.tx.balances
-        .transfer(recipient, transferAmount)
-        .signAndSend(botParams.account)
-      return { success: true, response: txHash }
+      const tx = botParams.api.tx.balances.transfer(recipientAddress, transferAmount)
+      const { block, hash, success } = await sendAndFinalize(tx, botParams.account);
+      return { block, success, hash }
     }
     catch (error) {
       //write error to logs
-      console.log(error)
-      return { success: false, response: null }
+      console.error(error)
+      return { success: false }
     }
   }
   //throw into charity pool
   else {
-    //log this to logs
-    let message = `Attempt transfer to ${recipient} an amount of: ${value}. The fee was higher ` +
+    const charityAccount: IUser = await User.findOne({ char_id: botParams.settings.charityChatId })
+    charityAccount.totalRewardBalance = bigNumberArithmetic(charityAccount.totalRewardBalance, value, "+")
+    charityAccount.save()
+    const message = `Attempt transfer to ${recipientAddress} an amount of: ${value}. The fee was higher ` +
       `than the transaction amount: ${info.partialFee}`
     console.log(message)
-    return { success: false, response: message }
+    return { success: false }
   }
 }
 
@@ -197,15 +195,16 @@ export const mintAndSend = async (remarks: Array<string>,
     fee?: string
     topupRequired?: boolean
   }> => {
-  let info = await getTransactionCost({
-    type: "nft",
-    recipient: user.wallet.address,
-    toSendRemarks: remarks
-  })
-  var ableToCover: boolean = user.mintAllowed(
-    bigNumberArithmetic(info.partialFee.toString(), botParams.settings.creatorReward, "+"))
+  const info = await getTransactionCost(
+    "nft",
+    user.wallet.address,
+    null,
+    remarks
+  )
+  const totalCost = bigNumberArithmetic(info.partialFee, botParams.settings.creatorReward, "+")
+  const ableToCover: boolean = user.mintAllowed(totalCost)
   if (!ableToCover) {
-    return { success: false, topupRequired: true }
+    return { success: false, topupRequired: true, fee: totalCost }
   }
 
   const txs = []
@@ -225,15 +224,15 @@ export const mintAndSend = async (remarks: Array<string>,
 }
 
 //pass in if its transfer or remark type
-async function getTransactionCost({
-  type,
-  recipient,
-  toSendAmount,
-  toSendRemarks }: IGetTransactionCost): Promise<any> {
+export const getTransactionCost = async (
+  type: string,
+  recipient: string,
+  toSendAmount?: string,
+  toSendRemarks?: Array<string>): Promise<any> => {
   if (type === "transfer") {
     //estimate fee for transfer back
     const value = toSendAmount
-    let info = await botParams.api.tx.balances
+    const info = await botParams.api.tx.balances
       .transfer(recipient, value)
       .paymentInfo(botParams.account.address)
     return info
@@ -251,13 +250,6 @@ async function getTransactionCost({
     return info
   }
   else {
-    //todo:log and error that says wrong type and tell user to try again later
     return "error"
   }
-}
-
-export {
-  alreadyReceived,
-  withdraw,
-  getTransactionCost,
 }

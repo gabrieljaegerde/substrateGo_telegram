@@ -1,5 +1,4 @@
 import { botParams } from "../../config.js"
-import _ from "lodash"
 import { deposit } from "./accountHandler.js"
 //import prom from "../../metrics.js"
 
@@ -8,16 +7,10 @@ import { deposit } from "./accountHandler.js"
 //   help: "metric_help",
 // })
 
-let currentBlock = 0
-async function newHeaderHandler(header) {
-  const blockNumber = header.number.toNumber()
-  if (currentBlock < blockNumber) currentBlock = blockNumber
-  else return
-  //lastBlockGauge.set(currentBlock)
+export const fetchEventsAtBlock = async (blockNumber: number)=> {
   const blockHash = await botParams.api.rpc.chain.getBlockHash(blockNumber)
-  const block = await botParams.api.rpc.chain.getBlock(blockHash)
   const events = await botParams.api.query.system.events.at(blockHash)
-  
+
   if (events.length > 0) {
     try {
       await newEventsHandler(events, currentBlock)
@@ -27,12 +20,36 @@ async function newHeaderHandler(header) {
   }
 }
 
-async function newEventsHandler(events, currentBlock) {
+export const fetchMissingBlockEvents = async (latestBlockDb: number, to: number) => {
+  try {
+    for (let i = latestBlockDb + 1; i <= to; i++) {
+      fetchEventsAtBlock(i)
+    }
+  } catch (error: any) {
+    console.log(error);
+  }
+}
+
+let currentBlock = 0
+export const newHeaderHandler = async (header, provider) => {
+  const blockNumber = header.number.toNumber()
+  const latestBlock = await provider.get()
+  if (latestBlock < blockNumber - 1) {
+    await fetchMissingBlockEvents(latestBlock, blockNumber - 1)
+  }
+  if (currentBlock < blockNumber) currentBlock = blockNumber
+  else return
+  //lastBlockGauge.set(currentBlock)
+  fetchEventsAtBlock(currentBlock)
+  await provider.set(currentBlock)
+}
+
+const newEventsHandler = async (events, currentBlock) => {
   if (events.length > 0) {
-    let depositEvents = events.filter(record => {
+    const depositEvents = events.filter(record => {
       //maybe better to get account public address instead of settings.deposit
       return record.event.section === "balances" && record.event.method === "Transfer" &&
-        record.event.data[1].toString() === botParams.settings.depositAddress.toString()
+        record.event.data[1].toString() === botParams.account.address
     })
     depositEvents.forEach(event => {
       try {
@@ -44,6 +61,3 @@ async function newEventsHandler(events, currentBlock) {
   }
 }
 
-export {
-  newHeaderHandler,
-}

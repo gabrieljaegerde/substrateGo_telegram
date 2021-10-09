@@ -1,0 +1,79 @@
+function getEventLinks(network, index, block) {
+  const links = []
+  links.push([
+    ["subscan", `https://${network.toLowerCase()}.subscan.io/extrinsic/${block}-${index}`],
+    [
+      "polkascan",
+      `https://polkascan.io/${network.toLowerCase()}/transaction/${block}-${index}`,
+    ],
+  ])
+  return links
+}
+
+function getExtrinsicLinks(network, txHash) {
+  const links = []
+  links.push([
+    ["subscan", `https://${network.toLowerCase()}.subscan.io/extrinsic/${txHash}`]
+    // ,
+    // [
+    //   "polkascan",
+    //   `https://polkascan.io/${network.toLowerCase()}/transaction/${block}-${index}`,
+    // ],
+  ])
+  return links
+}
+
+function getExtrinsicLinksBlock(network, index, block) {
+  const links = []
+  links.push([
+    ["subscan", `https://${network.toLowerCase()}.subscan.io/extrinsic/${block}-${index}`]
+    // ,
+    // [
+    //   "polkascan",
+    //   `https://polkascan.io/${network.toLowerCase()}/transaction/${block}-${index}`,
+    // ],
+  ])
+  return links
+}
+
+export const getSettings = () => {
+  const settings = {
+    network: {
+      name: "Westend",
+      prefix: "42",
+      decimals: "12",
+      token: "WND",
+    },
+    startMsg:
+      "Created by Gabriel Jaeger.\n\n",
+    validatorsMessage:
+      'To tip me:\n\nThank you!',
+    getEventLinks: getEventLinks,
+    getExtrinsicLinks: getExtrinsicLinks,
+    getExtrinsicLinksBlock: getExtrinsicLinksBlock,
+    keyboard: {
+      addqr: "Add new QR Code",
+      genqr: "Generate QR Code",
+      stats: "View Stats",
+      col: "Add/edit collection(s)",
+      scanqr: "Scan QR Code",
+      find: "Find prey",
+      addadr: "Add/edit address",
+      addbal: "View balance",
+    },
+    botToken: process.env.BOT_TOKEN,
+    botUsername: "polkadotGo_bot",
+    codeLength: 20,
+    pwordLower: 10000, //0.1wmd
+    pwordUpper: 11000, //0.11wmd
+    pwordDigitsToAdd: "7", 
+    creatorReward: "10000000000", //0.01wmd
+    defaultFile: "QmaQCd7pS56AbgbdA8eqZQZqRwhWD8cjDUbAdni9UQ8yEA",
+    cidPlaceholder: "ipfs://ipfs/bafkreihiwzspn4d335fmeejqak476lhuqp5kaoulshyrosjkum3c3gko4i",
+    collectionSymbol: "Wesys",
+    collectionId: "62cf4ac95b7ed1a660-WESYS",
+    depositAddress: process.env.DEPOSIT_ADDRESS.toString(),
+    charityChatId: 1000000000000,
+  }
+  return settings
+}

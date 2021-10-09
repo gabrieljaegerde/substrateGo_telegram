@@ -1,5 +1,9 @@
 {
   "dependencies": {
+    "@grammyjs/files": "^1.0.2",
+    "@grammyjs/router": "^1.1.1",
+    "@grammyjs/stateless-question": "^3.0.0",
+    "@grammyjs/transformer-throttler": "^1.0.1",
     "@pinata/sdk": "^1.1.23",
     "@polkadot/api": "^5.1.1",
     "@polkadot/extension-dapp": "^0.39.1",
@@ -7,12 +11,15 @@
     "@polkadot/util": "^7.0.2",
     "@polkadot/util-crypto": "^7.0.2",
     "@polkadot/x-randomvalues": "^7.0.2",
+    "@satont/grammy-typeorm-storage": "^1.0.0",
     "bent": "^7.3.12",
     "bignumber.js": "^9.0.1",
     "crypto": "^1.0.1",
     "dotenv": "^10.0.0",
+    "encrypt-decrypt-library": "^1.0.5",
     "fs": "^0.0.1-security",
     "grammy": "^1.3.3",
+    "grammy-inline-menu": "^7.0.1",
     "ipfs-core": "^0.10.0",
     "jimp": "^0.16.1",
     "jsqr": "^1.4.0",
@@ -33,7 +40,8 @@
     "telegraf-session-local": "^2.1.0",
     "telegraf-session-mongodb": "^2.0.2",
     "telegraf-stateless-question": "^2.0.1",
-    "ts-node": "^10.2.1"
+    "ts-node": "^10.2.1",
+    "typeorm": "^0.2.38"
   },
   "deprecated": false,
   "type": "module",
@@ -51,5 +59,14 @@
   "lint": "jshint **/*.js",
   "version": "1.0.0",
   "repository": "https://github.com/gabrieljaegerde/substrateGo",
-  "author": "Gabriel Jaeger"
+  "author": "Gabriel Jaeger",
+  "scripts": {
+    "lint": "eslint . --ext .ts",
+    "lint-and-fix": "eslint . --ext .ts --fix"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/parser": "^4.33.0",
+    "eslint": "^7.32.0"
+  }
 }
