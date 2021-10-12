@@ -16,10 +16,13 @@ const showNonCollectedItem = new MenuTemplate(async (ctx: CustomContext) => {
 
 showNonCollectedItem.interact("Claim", "vnc", {
   do: async (ctx: CustomContext) => {
+    const session = await ctx.session
     await deleteMenuFromContext(ctx)
-    if (await prepareCollection(ctx)) {
-      claimNftMiddleware.replyToContext(ctx)
-    }
+    const { treasure, collectStep } = await prepareCollection(ctx, session.code)
+    session.treasure = treasure
+    session.collectStep = collectStep
+    if (treasure)
+      await claimNftMiddleware.replyToContext(ctx)
     return false
   },
   joinLastRow: true

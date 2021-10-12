@@ -26,8 +26,8 @@ createTreasure.interact("2. Add Treasure", "at", {
     do: async (ctx: CustomContext) => {
         const session = await ctx.session
         await deleteMenuFromContext(ctx)
-        session.code = null
-        const progressMessage = "Setup Progress:\n*Send Qr* -> Location -> Name"
+        session.treasure = null
+        const progressMessage = "Setup Progress:\n*Send QR* -> Location -> Name"
         await ctx.reply(
             progressMessage,
             {

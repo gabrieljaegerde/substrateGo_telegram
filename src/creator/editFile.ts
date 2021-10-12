@@ -15,11 +15,25 @@ const editFile = new StatelessQuestion("ef", async (ctx: CustomContext) => {
     if (ctx.message.photo) {
         const photo = ctx.message.photo[ctx.message.photo.length - 1]
         fileId = photo.file_id
+        console.log("phoot", photo)
     }
     else if (ctx.message.document) {
         fileId = ctx.message.document.file_id
         const mimeType = ctx.message.document.mime_type
         const fileName = ctx.message.document.file_name
+        console.log("ctx.message.document", ctx.message.document)
+        if (mimeType === "application/pdf") {
+            message = "I was not able to edit the NFT since PDF files are not permitted.\n\n" +
+                "Please upload a jpeg or png file."
+            botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
+            return editFile.replyWithMarkdown(ctx, message)
+        }
+        else {
+            message = "I was not able to edit the NFT since only image files are permitted.\n\n" +
+                "Please upload a jpeg or png file."
+            botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
+            return editFile.replyWithMarkdown(ctx, message)
+        }
     }
     else {
         message = "I was not able to edit the NFT. Please try sending me a file again."
@@ -40,7 +54,7 @@ const editFile = new StatelessQuestion("ef", async (ctx: CustomContext) => {
             resize_keyboard: true
         },
     })
-    listCreatedMiddleware.replyToContext(ctx, `lc/b:${session.treasureId}/`)
+    listCreatedMiddleware.replyToContext(ctx, `lc/i:${session.treasureId}/`)
 })
 
 export {

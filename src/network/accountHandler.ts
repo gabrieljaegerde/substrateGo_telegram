@@ -2,13 +2,11 @@ import { botParams } from "../../config.js"
 import { amountToHumanString, bigNumberArithmetic, bigNumberComparison } from "../../tools/utils.js"
 import User, { IUser } from "../models/user.js"
 import { allowWithdrawal, sendAndFinalize } from "../../tools/substrateUtils.js"
-import { CodecHash } from "@polkadot/types/interfaces";
 import { InlineKeyboard } from "grammy"
 
 export const alreadyReceived = new Map()
 
 export const deposit = async (record, currentBlock: number) => {
-  console.log(record)
   if (
     alreadyReceived.get(
       record.hash.toHuman ? record.hash.toHuman() : record.hash.toJSON()
@@ -24,7 +22,7 @@ export const deposit = async (record, currentBlock: number) => {
   const value = event.data[2].toString()
   const humanVal = amountToHumanString(value)
   //make sure value is not null/undefined
-
+  console.log("from", from)
   const allUsers: Array<IUser> = await User.find().exec()
   const users: Array<IUser> = allUsers.filter(
     (eachUser: IUser) => eachUser.wallet && eachUser.wallet.address === from)
@@ -34,19 +32,20 @@ export const deposit = async (record, currentBlock: number) => {
   if (users.length === 1) {
     user = users[0]
   }
+  console.log("user", user)
   if (user && !user.wallet.linked) {
     //transfer amount matches password && password not expired yet
     const pwordMatch = bigNumberComparison(user.wallet.password, value, "=")
     const pwordExpired = user.wallet.passwordExpired()
     if (pwordMatch && !pwordExpired) {
       user.wallet.linked = true
-      message = "Your wallet has been successfully linked	\u2705 to your account! " +
+      message = "Your wallet has been successfully linked	\u2705 to your account!\n\n" +
         "Any deposits you make from that wallet to the deposit address of this bot will now automatically " +
         "be credited to this account. When collecting treasures, the respective NFTs will also be sent " +
-        "to the linked wallet.\n" +
-        "As a precaution, please still always check your wallet's status *BEFORE* depositing to ensure " +
-        "your wallet is still linked to your account!\nYou can now use the bot to create " +
-        "and collect treasures! Have fun.\n\n"
+        "to the linked wallet.\n\n" +
+        "_As a precaution, please still always check your wallet's status *BEFORE* depositing to ensure " +
+        "your wallet is still linked to your account!_\n\nYou can now use the bot to *create* " +
+        "and *collect* treasures! *Have fun.*\n\n"
     }
     //pasword not matching and password expired
     else if (!pwordMatch && pwordExpired) {
@@ -86,12 +85,13 @@ export const deposit = async (record, currentBlock: number) => {
       }
       user.wallet.linked = true
       await user.save()
-      message = "Your wallet has been successfully linked	\u2705 to your account! " +
+      message = "Your wallet has been successfully linked	\u2705 to your account!\n\n" +
         "Any deposits you make from that wallet to the deposit address of this bot will now automatically " +
-        "be credited to this account. " +
-        "As a precaution, please still always check your wallet's status *BEFORE* depositing to ensure " +
-        "your wallet is still linked to your account!\nYou can now use the bot to create " +
-        "and collect treasures! Have fun.\n\n"
+        "be credited to this account. When collecting treasures, the respective NFTs will also be sent " +
+        "to the linked wallet.\n\n" +
+        "_As a precaution, please still always check your wallet's status *BEFORE* depositing to ensure " +
+        "your wallet is still linked to your account!_\n\nYou can now use the bot to *create* " +
+        "and *collect* treasures! *Have fun.*\n\n"
     }
     //shouldn't happen
     else if (!user && verifiedUsers.length > 0) {
@@ -148,7 +148,7 @@ const checkPasswordMatch = (users: Array<IUser>, transferAmount: string): IUser 
 export const withdraw = async (recipientAddress: string, value: string, recipient?: IUser): Promise<{
   block?: number
   success: boolean
-  hash?: CodecHash
+  hash?: string
 }> => {
   //get estimation of transfer cost
   const info = await getTransactionCost("transfer", recipientAddress, value)
@@ -158,10 +158,18 @@ export const withdraw = async (recipientAddress: string, value: string, recipien
   const users: Array<IUser> = await User.find({})
   const allowed = await allowWithdrawal(botParams.api, value, users, recipient)
   if (!allowed) {
-    console.log("something fishy going on!!!")
+    console.log(`Sth fishy going on!\n\n` +
+      `Account Balances don't add up in withdrawal!!!\n\n` +
+      `User: ${recipient}\n\n` +
+      `Withdrawal Amount: ${value}\n\n` +
+      `Users: ${users}`)
+    await botParams.bot.api
+      .sendMessage(botParams.settings.adminChatId, `Account Balances don't add up in withdrawal!!!\n\n` +
+        `User: ${recipient ? recipient._id : recipient}\n\n` +
+        `Withdrawal Amount: ${value}\n\n` +
+        `User Balance: ${recipient ? recipient.getBalance() : recipient}`)
     return { success: false }
   }
-  console.log("allowed", allowed)
   //send back if (amount - fee) is +ve
   if (bigNumberComparison(transferAmount, "0", ">")) {
     try {
@@ -191,7 +199,7 @@ export const mintAndSend = async (remarks: Array<string>,
   user: IUser): Promise<{
     block?: number
     success: boolean
-    hash?: CodecHash
+    hash?: string
     fee?: string
     topupRequired?: boolean
   }> => {
@@ -205,6 +213,21 @@ export const mintAndSend = async (remarks: Array<string>,
   const ableToCover: boolean = user.mintAllowed(totalCost)
   if (!ableToCover) {
     return { success: false, topupRequired: true, fee: totalCost }
+  }
+  const users: Array<IUser> = await User.find({})
+  const allowed = await allowWithdrawal(botParams.api, totalCost, users, user)
+  if (!allowed) {
+    console.log(`Sth fishy going on!\n\n` +
+      `Account Balances don't add up in NFT claim!!!\n\n` +
+      `User: ${user}\n\n` +
+      `Total Cost: ${totalCost}\n\n` +
+      `Users: ${users}`)
+    await botParams.bot.api
+      .sendMessage(botParams.settings.adminChatId, `Account Balances don't add up in NFT claim!!!\n\n` +
+        `User: ${user ? user._id : user}\n\n` +
+        `Total Cost: ${totalCost}\n\n` +
+        `User Balance: ${user ? user.getBalance() : user}`)
+    return { success: false }
   }
 
   const txs = []

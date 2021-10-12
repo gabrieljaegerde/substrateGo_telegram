@@ -1,5 +1,4 @@
 import { botParams, getKeyboard } from "../../config.js"
-import _ from "lodash"
 import { checkAddress } from "@polkadot/util-crypto"
 import { StatelessQuestion } from '@grammyjs/stateless-question';
 import User, { IUser } from "../models/user.js"
@@ -9,7 +8,7 @@ import { CustomContext } from "../../types/CustomContext.js"
 
 export const enterAddress = new StatelessQuestion("adr", async (ctx: CustomContext) => {
     const user: IUser = await User.findOne({ chatId: ctx.chat.id })
-    let isValid
+    let isValid = true
     try {
         isValid = checkAddress(
             ctx.message.text,

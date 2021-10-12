@@ -16,6 +16,7 @@ import { createCharityUser } from "./tools/utils.js"
 import { initAccount, getApi } from "./tools/substrateUtils.js"
 import { ApiPromise } from "@polkadot/api"
 import { KeyringPair } from "@polkadot/keyring/types"
+import { mintNFT } from "./src/nft/nft.js";
 
 dotenv.config()
 
@@ -64,18 +65,14 @@ class SubstrateBot {
       this.settings.network.token = networkProperties.tokenSymbol.toString()
     }
     botParams.settings = this.settings
-    botParams.bot = await bot.run(this)
+    botParams.bot = await bot.start()
     await createCharityUser()
-    // prom.register.setDefaultLabels({
-    //   telegram_bot_name: botParams.bot.options.username,
-    //   network: botParams.settings.network.name,
-    // })
 
     //setup block listener for transaction listener
     await this.api.rpc.chain.subscribeNewHeads(async (header: Header) =>
       newHeaderHandler(header, new blockCountAdapter(botParams.remarkStorage, "headerBlock"))
     )
-    
+
     //setup remark listener for minting listener
     const consolidateFunction = async (remarks) => {
       console.log("remarks: ", remarks)
@@ -91,7 +88,13 @@ class SubstrateBot {
         storageProvider: new blockCountAdapter(botParams.remarkStorage, "remarkBlock")
       })
       const subscriber = listener.initialiseObservable()
-      subscriber.subscribe((val) => console.log(val))
+      subscriber.subscribe(async (val) => {
+        if (val.invalid && val.invalid.length > 0) {
+          await botParams.bot.api
+            .sendMessage(botParams.settings.adminChatId, `Invalid Remark: ${JSON.stringify(val.invalid)}`)
+        }
+        console.log(val)
+      })
     }
     await startListening()
 
@@ -119,13 +122,19 @@ class SubstrateBot {
   }
 
   async stop() {
-    const users: Array<IUser> = await User.find({})
-    for (const user of users) {
-      const alert = `The bot will be down for an undetermined amount of time for maintenance. ` +
-        `You will be notified when it comes back online. Sorry for the inconvenience!`
-      await botParams.bot.api.sendMessage(user.chatId, alert)
-    }
+    await botParams.bot.stop()
     clearInterval(this.invalidateCacheInterval)
+    const users: Array<IUser> = await User.find({})
+    const alert = `🚧🚧🚧🚧🚧🚧🚧🚧🚧\nThe bot will be down for an undetermined amount of time for *maintenance*.\n\n` +
+      `👷🏽‍♀️👷🏻We are working hard to get the bot running again soon and ` +
+      `you will be notified when it comes back online.\n\n*Sorry for the inconvenience!*\n_Please ` +
+      `refrain from depositing to the bot wallet until the bot is running again._\n🚧🚧🚧🚧🚧🚧🚧🚧🚧`
+    for (const user of users) {
+      if (user.chatId !== botParams.settings.charityChatId) {
+        await botParams.bot.api.sendMessage(user.chatId, alert, {parse_mode: "Markdown" })
+      }
+    }
+    process.exit()
   }
 }
 
@@ -140,12 +149,19 @@ async function main() {
     account
   })
   await substrateBot.run()
-  /*
-    for (var user of users) {
-    var alert = `The bot is back online!`
-    await botParams.bot.api.sendMessage(user.chatId, alert)
+  const users: Array<IUser> = await User.find({})
+  const alert = `🚨The bot is back *online*!🚨`
+  for (var user of users) {
+    if (user.chatId !== botParams.settings.charityChatId) {
+      await botParams.bot.api.sendMessage(user.chatId, alert, {parse_mode: "Markdown" })
+    }
   }
-  */
+  process.once('SIGINT', () => {
+    substrateBot.stop()
+  });
+  process.once('SIGTERM', () => {
+    substrateBot.stop()
+  });
 }
 
 main()

@@ -5,6 +5,7 @@ import { IWallet } from "../src/models/wallet.js";
 import { INftProps } from "./NftProps.js";
 
 export interface SessionData {
+    collectStep: string;
     nonCollectedRewardsPage: number | PromiseLike<number>;
     collectedRewardsPage: number | PromiseLike<number>;
     menu: string;

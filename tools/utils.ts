@@ -129,23 +129,6 @@ export const getGroupOrCreate = async (ctx): Promise<IUser> => {
   return group
 }
 
-// export const getAccountName = async (account: string): Promise<string> => {
-//   const accountInfo = await botParams.api.derive.accounts.info(account)
-//   if (accountInfo.identity.displayParent || accountInfo.identity.display) {
-//     let value = ""
-//     if (accountInfo.identity.displayParent) {
-//       value += accountInfo.identity.displayParent + ":"
-//     }
-//     if (accountInfo.identity.display) {
-//       value += accountInfo.identity.display
-//     }
-//     return value
-//   } else if (accountInfo.accountIndex) {
-//     return accountInfo.accountIndex
-//   }
-//   return account
-// }
-
 export const asyncFilter = async (arr, predicate) => {
   const results = await Promise.all(arr.map(predicate));
   return arr.filter((_v, index) => results[index]);
@@ -187,5 +170,6 @@ export const createCharityUser = async (): Promise<void> => {
       oldWallets: [],
       blocked: false
     }).save()
+    console.log("Charity User Created")
   }
 }

@@ -21,8 +21,8 @@ showTreasureMenu.interact("Show NFT", "sN", {
         await deleteMenuFromContext(ctx)
         const loadMessage = await botParams.bot.api.sendMessage(ctx.chat.id, "Loading...")
         const treasure: ITreasure = await Treasure.findOne({ _id: session.treasureId, creator: ctx.chat.id })
-        const response: any = await fetch(session.reward.file.replace('ipfs://', 'https://ipfs.io/'))
-        const json: any = await response.json()
+        // const response: any = await fetch(session.reward.file.replace('ipfs://', 'https://ipfs.io/'))
+        // const json: any = await response.json()
         await botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
         const message = `Treasure '${treasure.name}' NFT:`
         await ctx.reply(
@@ -35,8 +35,8 @@ showTreasureMenu.interact("Show NFT", "sN", {
                 parse_mode: "Markdown",
             }
         )
-        await ctx.replyWithPhoto(json.image.replace('ipfs://', 'https://ipfs.io/'));
-        listCreatedMiddleware.replyToContext(ctx, `lc/b:${session.treasureId}/`)
+        await ctx.replyWithPhoto(`https://ipfs.io/ipfs/${treasure.file}`);
+        listCreatedMiddleware.replyToContext(ctx, `lc/i:${session.treasureId}/`)
         return false
     },
     joinLastRow: false
@@ -61,7 +61,7 @@ showTreasureMenu.interact("Show QR", "sQ", {
             await ctx.replyWithPhoto(new InputFile(qrImage))
             //await botParams.bot.api.sendPhoto(ctx.chat.id, { source: qrImage })
         }
-        listCreatedMiddleware.replyToContext(ctx, `lc/b:${session.treasureId}/`)
+        listCreatedMiddleware.replyToContext(ctx, `lc/i:${session.treasureId}/`)
         return false
     },
     joinLastRow: true
@@ -84,7 +84,7 @@ showTreasureMenu.interact("\uD83C\uDF0D Show location", "eP", {
             }
         )
         await botParams.bot.api.sendLocation(ctx.chat.id, treasure.location.latitude, treasure.location.longitude)
-        listCreatedMiddleware.replyToContext(ctx, `lc/b:${session.treasureId}/`)
+        listCreatedMiddleware.replyToContext(ctx, `lc/i:${session.treasureId}/`)
         return false
     },
     joinLastRow: false

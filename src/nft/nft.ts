@@ -5,7 +5,7 @@ import { encodeAddress } from "@polkadot/util-crypto"
 import { pinSingleMetadataFromDir } from "../../tools/pinataUtils.js";
 import { sendAndFinalize } from "../../tools/substrateUtils.js";
 
-export const createChunkyCollection = async () => {
+export const createCollection = async () => {
   try {
     const collectionId = Collection.generateId(
       u8aToHex(botParams.account.publicKey),
@@ -16,7 +16,7 @@ export const createChunkyCollection = async () => {
     const collectionMetadataCid = await pinSingleMetadataFromDir(
       "/assets",
       "preview.png",
-      "WestendTest",
+      "DevTest",
       {
         description: "Do something.",
         external_url: "https://subylo.com",
@@ -53,7 +53,7 @@ async function mintNFT() {
       botParams.settings.collectionSymbol
     );
 
-    await createChunkyCollection()
+    await createCollection()
 
     const metadataCid = await pinSingleMetadataFromDir(
       "/assets",

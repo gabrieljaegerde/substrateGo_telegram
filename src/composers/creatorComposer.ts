@@ -91,8 +91,8 @@ creatorComposer.hears("🧙🏻‍♀️ Creator Mode", async (ctx: CustomContex
             "• *edit* treasures✏️\n" +
             "• and *track* their performance📊.\n\n_Each time a user collects your treasures, you receive a " +
             `small reward (${amountToHumanString(botParams.settings.creatorReward)}). The NFT treasure ` +
-            `sent to the finders is customizable by you. Go create awesome treasures and earn!_`
-
+            `sent to the finders is customizable by you. Go create awesome treasures and earn!_\n\n` +
+            `Join ${botParams.settings.telegramGroupLink} to meet other treasure creators!`
         await ctx.reply(
             message,
             {

@@ -31,8 +31,8 @@ const withdrawBalance = new MenuTemplate(async (ctx: CustomContext) => {
     //format to human
     const amountToArrive = bigNumberArithmetic(session.withdrawAmount, info.partialFee, "-")
     if (bigNumberComparison(amountToArrive, "0", ">")) {
-      message = `The *withdrawal* of _${amountToHumanString(session.withdrawAmount)}_ will incur a ` +
-        `*fee* of _${amountToHumanString(info.partialFee)}_. A total of *${amountToHumanString(amountToArrive)}* ` +
+      message = `The *withdrawal* of _${amountToHumanString(session.withdrawAmount)}_ will incur an approximate ` +
+        `*fee* of _${amountToHumanString(info.partialFee)}_. A total of ~*${amountToHumanString(amountToArrive)}* ` +
         `should arrive in your wallet:\n\n*${user.wallet.address}*\n\nDo you wish to proceed with the withdrawal?`
     }
     else {
@@ -126,7 +126,7 @@ const withdrawFunds = async (ctx: CustomContext) => {
     user)
   if (!success) {
     const reply = "An error occured with the withdrawal. Please try again. If this issue persists, " +
-      "please contact @xxx on telegram."
+      `please contact an admin at ${botParams.settings.telegramGroupLink} on telegram.`
     const inlineKeyboard = new InlineKeyboard()
     links = botParams.settings
       .getExtrinsicLinks(

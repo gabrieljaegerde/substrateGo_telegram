@@ -1,10 +1,10 @@
 import { Composer } from "grammy"
 import { CustomContext } from "../../types/CustomContext.js"
-import { botParams, getKeyboard } from "../../config.js"
+import { botParams, cancelCollectInlineKeyboard, getKeyboard } from "../../config.js"
 //import prom from "./metrics.js"
 import Treasure, { ITreasure } from "../models/treasure.js"
 import { resetSession, asyncFilter, distance } from "../../tools/utils.js"
-import { collectTreasure } from "../finder/collectTreasure.js"
+//import { collectTreasure } from "../finder/collectTreasure.js"
 import { listUserRewardsMiddleware } from "../finder/menus/listUserRewardsMenu.js"
 import Location, { ILocation } from "../models/location.js"
 import { editNameReward } from "../finder/editNameReward.js"
@@ -20,9 +20,24 @@ export const finderComposer = new Composer<CustomContext>()
 
 finderComposer.hears("📷 Collect treasure", async (ctx) => {
     if (ctx.chat.type == "private") {
+        const session = await ctx.session
         await resetSession(ctx)
+        session.treasure = null
+        const progressMessage = "Collection Progress:\n*Send QR* -> Fees"
+        await ctx.reply(
+            progressMessage,
+            {
+                reply_markup: { remove_keyboard: true },
+                parse_mode: "Markdown",
+            }
+        )
+        const message = `Please send me a picture of the QR Code you wish to add.`
+        await ctx.reply(message, {
+            reply_markup: cancelCollectInlineKeyboard, parse_mode: "Markdown"
+        })
+        session.collectStep = "qr";
         const reply = `Please send me a picture of the treasure's QR Code.`
-        return collectTreasure.replyWithMarkdown(ctx, reply)
+        //return collectTreasure.replyWithMarkdown(ctx, reply)
     }
 })
 
@@ -49,7 +64,8 @@ finderComposer.hears("🕵🏾‍♂️ Finder Mode", async (ctx: CustomContext)
         const message = "You have entered 🕵🏾‍♂️ *finder* mode.\n\nHere you can:\n• *collect* treasures 📷\n" +
             "• *find* treasures 🔍\n• and *view* your found treasures 🎁\n\n_Each time you collect a treasure, " +
             `an NFT gets created on the ${botParams.settings.network.name} blockchain. These prove your ownership of ` +
-            "the treasures and can be freely traded on the open market._"
+            "the treasures and can be freely traded on the open market._\n\n" +
+            `Join ${botParams.settings.telegramGroupLink} to meet other treasure hunters!`
         await ctx.reply(
             message,
             {
@@ -103,7 +119,7 @@ finderComposer.on("message:location", async (ctx) => {
                     currDistance = distance(userLocation, curr.location, "K")
                 return (prevDistance < currDistance) ? prev : curr
             })
-            const message = `The closest treasure (not collected by you yet) is ` +
+            const message = `The closest treasure (that has not collected by you yet) is ` +
                 `*${Math.round(distance(userLocation, nearest.location, "K") * 100) / 100}km* away.\n\n` +
                 `This treasure has been collected by *${await nearest.howManyCollected()}* others so far.\n\n` +
                 `Hint: *${nearest.hint}*\n\n` +
@@ -141,7 +157,7 @@ finderComposer.on("message:location", async (ctx) => {
 
 finderComposer.use(editNameReward.middleware())
 
-finderComposer.use(collectTreasure.middleware())
+//finderComposer.use(collectTreasure.middleware())
 
 finderComposer.use(listCollectedMiddleware)
 

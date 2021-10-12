@@ -40,7 +40,7 @@ listNonCollected.chooseIntoSubmenu(
         return true
       return false
     },
-    buttonText: async (ctx, key) => {
+    buttonText: async (ctx: CustomContext, key) => {
       const session = await ctx.session
       if (key === "")
         return
@@ -59,7 +59,8 @@ listNonCollected.chooseIntoSubmenu(
     columns: 1,
     getCurrentPage: async (ctx) => {
       const session = await ctx.session
-      return session.nonCollectedRewardsPage},
+      return session.nonCollectedRewardsPage
+    },
     setPage: async (ctx, page) => {
       const session = await ctx.session
       session.nonCollectedRewardsPage = page

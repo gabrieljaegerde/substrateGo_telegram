@@ -30,6 +30,9 @@ export const botParams: BotParams = {
 export const cancelSetupInlineKeyboard = new InlineKeyboard()
   .text("Cancel Setup")
 
+  export const cancelCollectInlineKeyboard = new InlineKeyboard()
+  .text("Cancel Collection")
+
 export const cancelSetupKeyboard = new Keyboard()
   .text("Cancel Setup")
 
@@ -40,7 +43,6 @@ const creatorKeyboard = new Keyboard()
   .text("💎 Create treasure 💎").row()
   .text("✏️ Edit treasures").text("📊 View stats").row()
   .text("\u2B05 Back to main menu")
-
 
 const finderKeyboard = new Keyboard()
   .text("📷 Collect treasure").requestLocation("🔍 Find treasures").row()

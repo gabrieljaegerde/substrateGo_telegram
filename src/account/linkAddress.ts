@@ -6,6 +6,8 @@ import _ from "lodash"
 import User, { IUser } from "../models/user.js"
 import Wallet, { IWallet } from "../models/wallet.js"
 import { CustomContext } from "../../types/CustomContext.js"
+import { encodeAddress } from "@polkadot/util-crypto"
+
 
 export const linkAddress = async (ctx: CustomContext) => {
     const user: IUser = await User.findOne({ chatId: ctx.chat.id })
@@ -25,6 +27,7 @@ export const linkAddress = async (ctx: CustomContext) => {
     }
     await user.wallet.setPassword()
     await user.save()
+    console.log("ad", botParams.account.address)
     const { value, tokenString } = amountToHuman(user.wallet.password,
       parseInt(botParams.settings.network.decimals) - parseInt(botParams.settings.pwordDigitsToAdd))
     const message = "Please make a *transfer* of exactly \n\n`" + value + "` " + tokenString +
@@ -32,7 +35,7 @@ export const linkAddress = async (ctx: CustomContext) => {
       `are the rightful owner of the wallet. Do NOT share this amount with anyone!)` +
       "\n\n*FROM* the address you registered:" +
       `*\n\n${user.wallet.address}\n\n*` +
-      "*TO* this address: \n\n`" + botParams.settings.depositAddress + "`\n\n" +
+      "*TO* this address: \n\n`" + botParams.account.address + "`\n\n" +
       "As soon as a transfer comes in, I will credit your account.\n\n" +
       "Please note that the password expires in 15 minutes! After which you will have to generate " +
       "a new one by clicking on '🔗 Link address' in the menu again." +

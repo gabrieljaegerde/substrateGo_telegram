@@ -1,15 +1,3 @@
-function getEventLinks(network, index, block) {
-  const links = []
-  links.push([
-    ["subscan", `https://${network.toLowerCase()}.subscan.io/extrinsic/${block}-${index}`],
-    [
-      "polkascan",
-      `https://polkascan.io/${network.toLowerCase()}/transaction/${block}-${index}`,
-    ],
-  ])
-  return links
-}
-
 function getExtrinsicLinks(network, txHash) {
   const links = []
   links.push([
@@ -24,7 +12,7 @@ function getExtrinsicLinks(network, txHash) {
 }
 
 function getExtrinsicLinksBlock(network, index, block) {
-  const links = []
+  var links = []
   links.push([
     ["subscan", `https://${network.toLowerCase()}.subscan.io/extrinsic/${block}-${index}`]
     // ,
@@ -39,41 +27,36 @@ function getExtrinsicLinksBlock(network, index, block) {
 export const getSettings = () => {
   const settings = {
     network: {
-      name: "Westend",
-      prefix: "42",
+      name: "Kusama",
+      prefix: "0",
       decimals: "12",
-      token: "WND",
+      token: "KSM",
     },
-    startMsg:
-      "Created by Gabriel Jaeger.\n\n",
-    validatorsMessage:
-      'To tip me:\n\nThank you!',
-    getEventLinks: getEventLinks,
     getExtrinsicLinks: getExtrinsicLinks,
     getExtrinsicLinksBlock: getExtrinsicLinksBlock,
-    keyboard: {
-      addqr: "Add new QR Code",
-      genqr: "Generate QR Code",
-      stats: "View Stats",
-      col: "Add/edit collection(s)",
-      scanqr: "Scan QR Code",
-      find: "Find prey",
-      addadr: "Add/edit address",
-      addbal: "View balance",
-    },
     botToken: process.env.BOT_TOKEN,
-    botUsername: "polkadotGo_bot",
+    botUsername: "kusamaGo_bot",
+    
     codeLength: 20,
-    pwordLower: 10000, //0.1wmd
-    pwordUpper: 11000, //0.11wmd
-    pwordDigitsToAdd: "7", 
-    creatorReward: "10000000000", //0.01wmd
-    defaultFile: "QmaQCd7pS56AbgbdA8eqZQZqRwhWD8cjDUbAdni9UQ8yEA",
-    cidPlaceholder: "ipfs://ipfs/bafkreihiwzspn4d335fmeejqak476lhuqp5kaoulshyrosjkum3c3gko4i",
-    collectionSymbol: "Wesys",
-    collectionId: "62cf4ac95b7ed1a660-WESYS",
-    depositAddress: process.env.DEPOSIT_ADDRESS.toString(),
-    charityChatId: 1000000000000,
+    pwordLower: 10000, //0.001wmd
+    pwordUpper: 11000, //0.0011wmd
+    pwordDigitsToAdd: "5",
+    creatorReward: "100000000", //0.0001ksm
+    //upload a default file to pinata manually first, then paste the cid here
+    defaultFile: process.env.DEFAULT_FILE.toString(),
+    //only the length has to match. actual content irrelevant
+    cidPlaceholder: process.env.CID_PLACEHOLDER.toString(),
+    collectionSymbol: process.env.COLLECTION_SYMBOL.toString(),
+    collectionId: process.env.COLLECTION_ID.toString(),
+    //wallet may have an initial balance, to cover collection creation fees for example.
+    walletStartFunds: "99205842522",
+    //create a user account to deposit all non-transferrable funds to that are unassigned
+    //assign a chat id that is impossible to exist on telegram.
+    charityChatId: 100000000000000,
+    adminChatId: 523582952,
+    telegramGroupLink: "t.me/kusamaGo",
+    defaultHint: "If you look hard enough, you will find it.",
+    defaultDescription: "This a treasure from the global NFT treasure hunt game. Join us: t.me/kusamaGo"
   }
   return settings
 }

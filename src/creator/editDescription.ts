@@ -23,7 +23,7 @@ const editDescription = new StatelessQuestion("ec", async (ctx: CustomContext) =
             resize_keyboard: true
         },
     })
-    listCreatedMiddleware.replyToContext(ctx, `lc/b:${session.treasureId}/`)
+    listCreatedMiddleware.replyToContext(ctx, `lc/i:${session.treasureId}/`)
 })
 
 export {

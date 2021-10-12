@@ -17,7 +17,7 @@ const listCreated = new MenuTemplate(async (ctx: CustomContext) => {
 })
 
 listCreated.chooseIntoSubmenu(
-  "b",
+  "i",
   async (ctx: any) => {
     const session = await ctx.session
     if (!session.userCreated || session.userCreated.length === 0)
@@ -33,9 +33,9 @@ listCreated.chooseIntoSubmenu(
       if (
         !session ||
         !session.userCreated ||
-        session.userCreated.length == 0
+        session.userCreated.length === 0
       )
-        true
+        return true
       return false
     },
     maxRows: 5,

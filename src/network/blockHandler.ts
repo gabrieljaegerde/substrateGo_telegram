@@ -1,16 +1,10 @@
 import { botParams } from "../../config.js"
 import { deposit } from "./accountHandler.js"
-//import prom from "../../metrics.js"
+import { encodeAddress } from "@polkadot/util-crypto"
 
-// const lastBlockGauge = new prom.Gauge({
-//   name: "substrate_bot_last_block",
-//   help: "metric_help",
-// })
-
-export const fetchEventsAtBlock = async (blockNumber: number)=> {
+export const fetchEventsAtBlock = async (blockNumber: number) => {
   const blockHash = await botParams.api.rpc.chain.getBlockHash(blockNumber)
   const events = await botParams.api.query.system.events.at(blockHash)
-
   if (events.length > 0) {
     try {
       await newEventsHandler(events, currentBlock)
@@ -46,10 +40,18 @@ export const newHeaderHandler = async (header, provider) => {
 
 const newEventsHandler = async (events, currentBlock) => {
   if (events.length > 0) {
+
     const depositEvents = events.filter(record => {
-      //maybe better to get account public address instead of settings.deposit
+      if (record.event.section === "balances" && record.event.method === "Transfer" && record.event.data[1]) {
+        console.log("record.event.data[1].toString()", record.event.data[1].toString())
+        console.log("botParams.account.address", botParams.account.address)
+        console.log("botParams.account.address2", botParams.account.publicKey)
+        console.log("encodeAddress(botParams.account.address, 2)", encodeAddress(botParams.account.address, 2))
+        console.log("encodeAddress(botParams.account.address, 0)", encodeAddress(botParams.account.address, 0))
+      }
+
       return record.event.section === "balances" && record.event.method === "Transfer" &&
-        record.event.data[1].toString() === botParams.account.address
+        record.event.data[1].toString() === encodeAddress(botParams.account.address, botParams.settings.network.prefix)
     })
     depositEvents.forEach(event => {
       try {

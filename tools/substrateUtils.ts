@@ -2,7 +2,6 @@ import { KeyringPair } from "@polkadot/keyring/types";
 import { Keyring } from "@polkadot/api"
 import { SubmittableExtrinsic } from "@polkadot/api/types";
 import { ISubmittableResult } from "@polkadot/types/types";
-import { CodecHash, Balance } from "@polkadot/types/interfaces";
 import { botParams } from "../config.js"
 import { bigNumberArithmetic, bigNumberComparison } from "./utils.js";
 import { IUser } from "../src/models/user.js";
@@ -11,7 +10,7 @@ import { cryptoWaitReady } from "@polkadot/util-crypto";
 
 export const getApi = async (): Promise<ApiPromise> => {
   await cryptoWaitReady()
-  const wsNodeUri = process.env.WS_NODE_URI || "ws://127.0.0.1:9944/"
+  const wsNodeUri = "ws://127.0.0.1:9944/" //process.env.WS_NODE_URI || 
   const wsProvider = new WsProvider(wsNodeUri)
   const api = await ApiPromise.create({ provider: wsProvider })
   return api
@@ -29,7 +28,7 @@ export const sendAndFinalize = async (
 ): Promise<{
   block: number;
   success: boolean;
-  hash: CodecHash;
+  hash: string;
   included: any[];
   finalized: any[];
 }> => {
@@ -43,6 +42,7 @@ export const sendAndFinalize = async (
       async ({ events = [], status, dispatchError }) => {
         if (status.isInBlock) {
           console.log(`status: ${status}`)
+          
           success = dispatchError ? false : true;
           console.log(
             `📀 Transaction ${tx.meta.name} included at blockHash ${status.asInBlock} [success = ${success}]`
@@ -57,7 +57,7 @@ export const sendAndFinalize = async (
             `💯 Transaction ${tx.meta.name}(..) Finalized at blockHash ${status.asFinalized}`
           );
           finalized = [...events];
-          const hash = status.hash;
+          const hash = tx.hash.toHex();
           unsubscribe();
           resolve({ success, hash, included, finalized, block });
         } else if (status.isReady) {
@@ -74,18 +74,21 @@ export const allowWithdrawal = async (api: ApiPromise,
   amount: string,
   users: Array<IUser>,
   withdrawer: IUser): Promise<boolean> => {
-  let totalUserBalance = "0"
+  let allUsersBalance = "0"
   for (const user of users) {
-    if (user._id.toString() !== withdrawer._id.toString()){
-      totalUserBalance = bigNumberArithmetic(totalUserBalance, await user.getBalance(), "+")
+    if (!withdrawer || user._id.toString() !== withdrawer._id.toString()){
+      allUsersBalance = bigNumberArithmetic(allUsersBalance, user.getBalance(), "+")
     }
   }
-  //remove this line later!!!!!!
-  totalUserBalance = bigNumberArithmetic(totalUserBalance, "3313140896807", "+")
+  //in case there was a start balance on the wallet
+  allUsersBalance = bigNumberArithmetic(allUsersBalance, botParams.settings.walletStartFunds, "+")
   const { data: botWalletBalance } = await api.query.system.account(botParams.account.address);
   const botBalanceAfterWithdrawal = bigNumberArithmetic(botWalletBalance.free.toString(), amount, "-")
+  console.log("botWalletBalance", botWalletBalance.free.toString())
+  console.log("allUsersBalance", allUsersBalance)
+  console.log("botBalanceAfterWithdrawal", botBalanceAfterWithdrawal)
   //user can only max withdraw their balance
-  const everythingAddsUp = bigNumberComparison(botBalanceAfterWithdrawal, totalUserBalance, ">=")
+  const everythingAddsUp = bigNumberComparison(botBalanceAfterWithdrawal, allUsersBalance, ">=")
   return everythingAddsUp
 }
 

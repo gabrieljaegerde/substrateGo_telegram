@@ -37,8 +37,8 @@ editTreasureMenu.interact("\uD83D\uDDBC Edit NFT", "enf", {
         //await deleteMenuFromContext(ctx)
         const message = `Please send me the new NFT file.\n\n` +
             `_Warning! Any file uploaded will be stored on the blockchain ` +
-            `and_ *CANNOT* _be removed. Please ensure you don't upload any private` +
-            `files.`
+            `and_ *CANNOT* _be removed. Please ensure you don't upload any private ` +
+            `files._`
         editFile.replyWithMarkdown(ctx, message)
         return true
     },

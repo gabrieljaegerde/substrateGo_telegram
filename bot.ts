@@ -2,8 +2,7 @@ import { Bot, lazySession, GrammyError, HttpError } from "grammy"
 import { hydrateFiles } from "@grammyjs/files";
 import { botParams, getKeyboard } from "./config.js"
 import { claimNftMiddleware } from "./src/finder/menus/claimNftMenu.js"
-import { prepareCollection } from "./src/finder/collectTreasure.js"
-//import prom from "./metrics.js"
+import { prepareCollection, router as collectRouter } from "./src/finder/collectTreasure.js"
 import User, { IUser } from "./src/models/user.js"
 import Treasure from "./src/models/treasure.js"
 import Qr from "./src/models/qr.js"
@@ -17,26 +16,24 @@ import { accountComposer } from "./src/composers/accountComposer.js";
 import { creatorComposer } from "./src/composers/creatorComposer.js";
 import { finderComposer } from "./src/composers/finderComposer.js";
 import { apiThrottler } from "@grammyjs/transformer-throttler";
+import { run, sequentialize } from "@grammyjs/runner";
 
-// const telegramBotUpdates = new prom.Counter({
-//   name: "substrate_bot_telegram_updates",
-//   help: "metric_help",
-// })
-
-// define shape of our session
-
-
-// flavor the context type to include sessions
-
-export const run = async (params): Promise<Bot> => {
+export const start = async (): Promise<Bot> => {
   /*
    *   BOT initialization
    */
   const bot = new Bot<CustomContext>(botParams.settings.botToken)
+  const getSessionKey = (ctx: CustomContext) => {
+    return ctx.chat?.id.toString();
+  }
+
+  bot.use(sequentialize(getSessionKey));
+
   bot.api.config.use(apiThrottler())
   const { db } = mongoose.connection
   bot.use(
     lazySession({
+      getSessionKey,
       initial(): SessionData {
         return {
           menu: null,
@@ -63,7 +60,8 @@ export const run = async (params): Promise<Bot> => {
           code: null,
           nft: null,
           hideClaimButtons: null,
-          createStep: ""
+          createStep: "",
+          collectStep: ""
         };
       },
       storage: new sessionAdapter(db),
@@ -71,10 +69,6 @@ export const run = async (params): Promise<Bot> => {
   );
 
   bot.api.config.use(hydrateFiles(bot.token))
-
-  bot.use(accountComposer)
-
-  bot.use(creatorComposer)
 
   bot.command("start", async (ctx: CustomContext) => {
     if (ctx.chat.type == "private") {
@@ -106,7 +100,9 @@ export const run = async (params): Promise<Bot> => {
           "by clicking on '🛠️ Account Settings' in the menu below.\n\n" +
           "_Under no circumstances shall the creators of this bot be held responsible " +
           "for lost, stolen or misdirected funds. Please use the bot with caution " +
-          "and only ever transfer small amounts to the bots deposit wallet._"
+          "and only ever transfer small amounts to the bots deposit wallet._\n\n" +
+          "This bot is currently running in BETA mode!!! Do not expect it to be bug free. Kindly " +
+          `report any bugs to an admin in ${botParams.settings.telegramGroupLink}`
         await ctx.reply(
           message,
           {
@@ -126,8 +122,6 @@ export const run = async (params): Promise<Bot> => {
           const code = ctx.message.text.replace("/start", "").replace(/\s/g, "")
           const userIsCreator: boolean = await Qr.exists({ code: code, creator: ctx.chat.id })
           const treasureExists: boolean = await Treasure.exists({ code: code })
-          console.log("userIsCreator", userIsCreator)
-          console.log("code7", code)
           //trying to create a treasure
           if (userIsCreator && !treasureExists) {
             const { treasure, createStep } = await prepareSetup(ctx, code)
@@ -136,10 +130,11 @@ export const run = async (params): Promise<Bot> => {
             return
           }
           else {
-            session.code = code
-            if (await prepareCollection(ctx)) {
-              return claimNftMiddleware.replyToContext(ctx)
-            }
+            const { treasure, collectStep } = await prepareCollection(ctx, code)
+            session.treasure = treasure
+            session.collectStep = collectStep
+            if (treasure)
+              await claimNftMiddleware.replyToContext(ctx)
           }
         }
       }
@@ -205,9 +200,13 @@ export const run = async (params): Promise<Bot> => {
     }
   })
 
- /*
-  *   Handle callback query data: could be cancel setup event from router
-  */
+  bot.use(accountComposer)
+
+  bot.use(creatorComposer)
+
+  /*
+   *   Handle callback query data: could be cancel setup event from router
+   */
   bot.on("callback_query:data", async (ctx: CustomContext, next) => {
     if (ctx.update.callback_query.data === "Cancel Setup") {
       const session = await ctx.session
@@ -221,12 +220,27 @@ export const run = async (params): Promise<Bot> => {
         },
       })
     }
+    else if (ctx.update.callback_query.data === "Cancel Collection") {
+      console.log("in bot cancel")
+      const session = await ctx.session
+      session.collectStep = ""
+      await ctx.answerCallbackQuery()
+      const message = "Collection Canceled"
+      await ctx.reply(message, {
+        reply_markup: {
+          keyboard: (await getKeyboard(ctx)).build(),
+          resize_keyboard: true
+        },
+      })
+    }
     console.log("Unknown button event with payload", ctx.callbackQuery.data);
     await ctx.answerCallbackQuery(); // remove loading animation
     return next()
   })
   //order important! 
   bot.use(createRouter)
+
+  bot.use(collectRouter)
 
   bot.use(finderComposer)
 
@@ -245,7 +259,10 @@ export const run = async (params): Promise<Bot> => {
       console.error("Unknown error:", e);
     }
   });
-  bot.start()
+  run(bot)
   console.log(new Date(), "Bot started as", bot)
+  // process.once('SIGINT', () => {
+  //   bot.stop()});
+  // process.once('SIGTERM', () => bot.stop());
   return bot
 }

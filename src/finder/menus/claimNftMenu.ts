@@ -1,6 +1,5 @@
 import { MenuTemplate, MenuMiddleware, deleteMenuFromContext } from "grammy-inline-menu"
 import { botParams, getKeyboard } from "../../../config.js"
-import { Markup } from "telegraf"
 import { getTransactionCost, mintAndSend } from "../../network/accountHandler.js"
 import pkg from 'rmrk-tools';
 const { NFT } = pkg;
@@ -11,15 +10,22 @@ import User, { IUser } from "../../models/user.js"
 import fetch from "node-fetch"
 import { encodeAddress } from "@polkadot/util-crypto"
 import { pinSingleMetadataWithoutFile, unpin } from "../../../tools/pinataUtils.js"
-import { InputFile } from "grammy"
+import { InlineKeyboard, InputFile } from "grammy"
 import { CustomContext } from "../../../types/CustomContext.js"
 import { INftProps } from "../../../types/NftProps.js";
 
 const claimNft = new MenuTemplate(async (ctx: CustomContext) => {
+    console.log("here2")
     const session = await ctx.session
     session.hideClaimButtons = false
+
     const loadMessage = await botParams.bot.api.sendMessage(ctx.chat.id, "Loading...")
-    const treasure: ITreasure = await Treasure.findOne({ code: session.code })
+    const treasure: ITreasure = session.treasure//await Treasure.findOne({ code: session.code })
+    if (!treasure) {
+        session.hideClaimButtons = true
+        console.error("no session.treasure")
+        return "an error occurred..."
+    }
     const reward: IReward = await Reward.findOne({ finder: ctx.chat.id, treasureId: treasure._id })
     const user: IUser = await User.findOne({ chatId: ctx.chat.id })
     //can sn only be 8 digits?
@@ -47,9 +53,9 @@ const claimNft = new MenuTemplate(async (ctx: CustomContext) => {
     botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
     const userBalance = user.getBalance()
     if (bigNumberComparison(info.partialFee, userBalance, ">")) {
-        const message = `Receiving the NFT in your wallet will incur a total ` +
+        const message = `Receiving the NFT in your wallet will incur an approximate total ` +
             `*fee* of _${amountToHumanString(bigNumberArithmetic(info.partialFee, botParams.settings.creatorReward, "+"))}_\n\n` +
-            `*Network fee:* _${amountToHumanString(info.partialFee)}_\n*Creator Reward:* _${amountToHumanString(botParams.settings.creatorReward)}_\n\n`
+            `*Network fee (approx.):* _${amountToHumanString(info.partialFee)}_\n*Creator Reward:* _${amountToHumanString(botParams.settings.creatorReward)}_\n\n`
         await ctx.reply(
             message,
             {
@@ -62,16 +68,16 @@ const claimNft = new MenuTemplate(async (ctx: CustomContext) => {
         )
         session.hideClaimButtons = true
         const reply = `This fee exceeds your current balance of _${amountToHumanString(userBalance)}_. Please top up your account ` +
-        `by going to the main menu and clicking on _'Account Settings'_.\n\n` +
-        `_I have saved this treasure for you and you can still claim it within the next 30 days. ` +
-        `To claim it, simply click on '🎁 My treasures' in the Finder menu._`
+            `by going to the main menu and clicking on _'Account Settings'_.\n\n` +
+            `_I have saved this treasure for you and you can still claim it within the next 30 days. ` +
+            `To claim it, simply click on '🎁 My treasures' in the Finder menu._`
         return { text: reply, parse_mode: 'Markdown' }
     }
-    const reply = `Receiving the NFT in your wallet will incur a total ` +
+    const reply = `Receiving the NFT in your wallet will incur an approximate total ` +
         `*fee* of _${amountToHumanString(bigNumberArithmetic(info.partialFee, botParams.settings.creatorReward, "+"))}_\n\n` +
-        `*Network fee:* _${amountToHumanString(info.partialFee)}_\n*Creator Reward:* _${amountToHumanString(botParams.settings.creatorReward)}_\n\n` +
+        `*Network fee (approx.):* _${amountToHumanString(info.partialFee)}_\n*Creator Reward:* _${amountToHumanString(botParams.settings.creatorReward)}_\n\n` +
         `Do you wish to proceed?`
-   
+
     return { text: reply, parse_mode: 'Markdown' }
 })
 
@@ -82,7 +88,7 @@ claimNft.interact("Proceed", "sp", {
         const user: IUser = await User.findOne({ chatId: ctx.chat.id })
         const treasure: ITreasure = await Treasure.findOne({ code: session.code })
         const reward: IReward = await Reward.findOne({ finder: user.chatId, treasureId: treasure._id })
-        const creator: IUser = await User.findOne({ chatId: treasure.creator })
+        let creator: IUser = await User.findOne({ chatId: treasure.creator })
         try {
             const metadataCid = await pinSingleMetadataWithoutFile(treasure.file, `Reward:${reward._id}`, {
                 description: treasure.description,
@@ -141,11 +147,14 @@ claimNft.interact("Proceed", "sp", {
                 await user.save()
 
                 //add creator-reward ($) to creator balance
+                //need to fetch creator again in case user = creator. otherwise user.save() overwritten
+                if (user._id.toString() === creator._id.toString())
+                    creator = await User.findOne({ chatId: treasure.creator })
                 creator.addReward()
                 await creator.save()
 
                 //set finder-reward (NFT) as collected
-                reward.setCollected(hash.toString(), block, metadataCid)
+                reward.setCollected(hash, block, metadataCid)
                 //save all db changes
                 await reward.save()
 
@@ -157,6 +166,9 @@ claimNft.interact("Proceed", "sp", {
                     .sendMessage(creator.chatId, `Treasure '${treasure.name}' was just collected.\n\n` +
                         `${amountToHumanString(botParams.settings.creatorReward)} credited to your account.`)
                 //send message to finder
+                const successMessage = "Success. The NFT has been minted and sent to your wallet.\n" +
+                    `You can find it in 'My treasures' under the name: ${reward.name}`
+                const inlineKeyboard = new InlineKeyboard()
                 const links = botParams.settings
                     .getExtrinsicLinks(
                         botParams.settings.network.name,
@@ -164,13 +176,11 @@ claimNft.interact("Proceed", "sp", {
                     )
                     .map(row => {
                         return row.map(link => {
-                            return Markup.button.url(link[0], link[1])
+                            return inlineKeyboard.url(link[0], link[1])
                         })
                     })
-                const sucessMessage = "Success. The NFT has been minted and sent to your wallet.\n" +
-                    `You can find it in 'My treasures' under the name: ${reward.name}`
                 await botParams.bot.api
-                    .sendMessage(ctx.chat.id, sucessMessage, Markup.inlineKeyboard(links))
+                    .sendMessage(ctx.chat.id, successMessage, { reply_markup: inlineKeyboard, parse_mode: "Markdown" })
                 const response: any = await fetch(reward.file.replace('ipfs://', 'https://ipfs.io/'))
                 const json: any = await response.json()
                 await botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id)
@@ -236,8 +246,9 @@ claimNft.interact("Proceed", "sp", {
 
 claimNft.interact("Cancel", "sc", {
     do: async (ctx: CustomContext) => {
+        console.log("in cancel")
         const session = await ctx.session
-        session.remark = null
+        session.collectStep = ""
         await deleteMenuFromContext(ctx)
         const message = "You have *not* claimed this treasure.\n\n" +
             "I have saved it for you and you can still claim it within the next *30 days*.\n\n" +

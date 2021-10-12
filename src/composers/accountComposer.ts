@@ -73,9 +73,9 @@ accountComposer.hears("📪 Add address", async (ctx: CustomContext) => {
         }
         else {
             const message = "Please enter your wallet address with which you wish to top up " +
-                "your account (to pay for minting and transaction fees). Your NFTs will " +
-                "also be sent to this address. Each address can only be linked to " +
-                "1 telegram account at a time!"
+                "your account (to pay for minting and transaction fees).\n\n_Your NFTs will " +
+                "also be sent to this address._\n\n*Each address can only be linked to " +
+                "1 telegram account at a time!*"
             enterAddress.replyWithMarkdown(ctx, message)
         }
         return

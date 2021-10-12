@@ -6,6 +6,7 @@ import { listUserRewardsMiddleware } from "./listUserRewardsMenu.js"
 import { editNameReward } from "../editNameReward.js"
 import Reward, { IReward } from "../../models/reward.js"
 import { CustomContext } from "../../../types/CustomContext.js"
+import { InlineKeyboard } from "grammy"
 
 const showCollectedItem = new MenuTemplate(async (ctx: CustomContext) => {
   const session = await ctx.session
@@ -51,6 +52,9 @@ showCollectedItem.interact("Show blockchain transaction", "sbt", {
   do: async (ctx: CustomContext) => {
     const session = await ctx.session
     await deleteMenuFromContext(ctx)
+    const message = "What tool would you like to use to view the " +
+      "transaction that created this NFT on the blockchain?"
+    const inlineKeyboard = new InlineKeyboard()
     const links = botParams.settings
       .getExtrinsicLinks(
         botParams.settings.network.name,
@@ -58,13 +62,12 @@ showCollectedItem.interact("Show blockchain transaction", "sbt", {
       )
       .map(row => {
         return row.map(link => {
-          return Markup.button.url(link[0], link[1])
+          return inlineKeyboard.url(link[0], link[1])
         })
       })
-    const message = "What tool would you like to use to view the " +
-      "transaction that created this NFT on the blockchain?"
     await botParams.bot.api
-      .sendMessage(ctx.chat.id, message, Markup.inlineKeyboard(links))
+      .sendMessage(ctx.chat.id, message, { reply_markup: inlineKeyboard, parse_mode: "Markdown" })
+
     listUserRewardsMiddleware.replyToContext(ctx, `lur/lco/a:${session.reward._id}/`)
     return false
   },

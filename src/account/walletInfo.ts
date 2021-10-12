@@ -25,7 +25,7 @@ const walletInfo = new MenuTemplate(async (ctx: CustomContext) => {
   if (userWallet.linked) {
     text += "\n\n\u2705 The wallet with address " + shortAddr + " is currently linked to this account. You can " +
       `now go ahead and make a transfer from it to the deposit address of this bot: ` +
-      "\n\n`" + botParams.settings.depositAddress + "`\n\nYour transfer amount " +
+      "\n\n`" + botParams.account.address + "`\n\nYour transfer amount " +
       `will then be automatically credited to your balance.`
   }
   else {
