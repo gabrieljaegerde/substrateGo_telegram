@@ -1,8 +1,11 @@
-import { SessionData } from './SessionData'
-import { Api, Bot, Context, lazySession, LazySessionFlavor, GrammyError, HttpError } from "grammy"
-import { hydrateFiles, FileFlavor, FileApiFlavor } from "@grammyjs/files";
+import { SessionData } from './SessionData';
+import { Api, Context, LazySessionFlavor } from "grammy";
+import { FileFlavor, FileApiFlavor } from "@grammyjs/files";
 
-export type CustomContext = Context & LazySessionFlavor<SessionData> & FileFlavor<Context> & FileApiFlavor<Api>;
+export type CustomContext = Context
+    & LazySessionFlavor<SessionData>
+    & FileFlavor<Context>
+    & FileApiFlavor<Api>;
 
 
 

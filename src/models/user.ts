@@ -1,8 +1,8 @@
-import mongoose, { Document } from "mongoose"
+import mongoose, { Document } from "mongoose";
 import { bigNumberArithmetic, bigNumberComparison } from "../../tools/utils.js";
-import { WalletSchema } from "./wallet.js"
-import { botParams } from "../../config.js"
-import { IWallet } from "./wallet.js"
+import { WalletSchema } from "./wallet.js";
+import { botParams } from "../../config.js";
+import { IWallet } from "./wallet.js";
 
 export enum USER_TYPES {
     PRIVATE = "private",
@@ -21,7 +21,7 @@ export interface IUser extends Document {
     totalRewardBalance: string;
     rewardBalance: string;
     wallet: IWallet;
-    oldWallets: Array<IWallet>;
+    oldWallets: IWallet[];
     blocked: boolean;
     getBalance(): string;
     balanceGreaterThan(amount: string, userBalance?: string): boolean;
@@ -32,7 +32,7 @@ export interface IUser extends Document {
     addReward();
 }
 
-const Schema = mongoose.Schema
+const Schema = mongoose.Schema;
 const UserSchema = new Schema(
     {
         firstName: {
@@ -92,54 +92,54 @@ const UserSchema = new Schema(
 
 UserSchema.methods.getBalance = function (this: IUser): string {
     return bigNumberArithmetic(this.wallet && this.wallet.balance ?
-        this.wallet.balance : "0", this.rewardBalance, "+")
-}
+        this.wallet.balance : "0", this.rewardBalance, "+");
+};
 
 UserSchema.methods.balanceGreaterThanOrEqual = function (this: IUser, amount: string, userBalance?: string): boolean {
     if (userBalance) {
-        return bigNumberComparison(userBalance, amount, ">=")
+        return bigNumberComparison(userBalance, amount, ">=");
     }
-    return bigNumberComparison(this.getBalance(), amount, ">=")
-}
+    return bigNumberComparison(this.getBalance(), amount, ">=");
+};
 
 UserSchema.methods.balanceGreaterThan = function (this: IUser, amount: string, userBalance?: string): boolean {
     if (userBalance) {
-        return bigNumberComparison(userBalance, amount, ">")
+        return bigNumberComparison(userBalance, amount, ">");
     }
-    return bigNumberComparison(this.getBalance(), amount, ">")
-}
+    return bigNumberComparison(this.getBalance(), amount, ">");
+};
 
 UserSchema.methods.withdrawalAllowed = function (this: IUser, amount: string, userBalance?: string): boolean {
     if (userBalance) {
-        return this.balanceGreaterThanOrEqual(amount, userBalance)
+        return this.balanceGreaterThanOrEqual(amount, userBalance);
     }
-    const balance = this.getBalance()
-    return this.balanceGreaterThanOrEqual(amount, balance)
-}
+    const balance = this.getBalance();
+    return this.balanceGreaterThanOrEqual(amount, balance);
+};
 
 UserSchema.methods.mintAllowed = function (this: IUser, amount: string, userBalance?: string): boolean {
     if (userBalance) {
-        return this.balanceGreaterThan(amount, userBalance)
+        return this.balanceGreaterThan(amount, userBalance);
     }
-    const balance = this.getBalance()
-    return this.balanceGreaterThan(amount, balance)
-}
+    const balance = this.getBalance();
+    return this.balanceGreaterThan(amount, balance);
+};
 
 UserSchema.methods.subtractFromBalance = function (this: IUser, amount: string) {
-    const coverableByRewards = bigNumberArithmetic(this.rewardBalance, amount, "-")
+    const coverableByRewards = bigNumberArithmetic(this.rewardBalance, amount, "-");
     if (bigNumberComparison(coverableByRewards, "0", "<")) {
-        this.rewardBalance = "0"
+        this.rewardBalance = "0";
         //since coverableByRewards is -ve this is actually subtraction
-        this.wallet.balance = bigNumberArithmetic(this.wallet.balance, coverableByRewards, "+")
+        this.wallet.balance = bigNumberArithmetic(this.wallet.balance, coverableByRewards, "+");
     }
     else {
-        this.rewardBalance = coverableByRewards
+        this.rewardBalance = coverableByRewards;
     }
-}
+};
 
 UserSchema.methods.addReward = function (this: IUser) {
-    this.rewardBalance = bigNumberArithmetic(this.rewardBalance, botParams.settings.creatorReward, "+")
-    this.totalRewardBalance = bigNumberArithmetic(this.totalRewardBalance, botParams.settings.creatorReward, "+")
-}
+    this.rewardBalance = bigNumberArithmetic(this.rewardBalance, botParams.settings.creatorReward, "+");
+    this.totalRewardBalance = bigNumberArithmetic(this.totalRewardBalance, botParams.settings.creatorReward, "+");
+};
 
 export default mongoose.model<IUser>('user', UserSchema);

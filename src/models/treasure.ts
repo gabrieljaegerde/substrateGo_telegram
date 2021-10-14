@@ -1,8 +1,8 @@
-import mongoose, { Document } from "mongoose"
-import Reward from "./reward.js"
-import { LocationSchema } from "./location.js"
-import { ILocation } from "./location.js"
-import { IReward } from "./reward.js"
+import mongoose, { Document } from "mongoose";
+import Reward from "./reward.js";
+import { LocationSchema } from "./location.js";
+import { ILocation } from "./location.js";
+import { IReward } from "./reward.js";
 
 export interface ITreasure extends Document {
     createdAt: Date;
@@ -18,7 +18,7 @@ export interface ITreasure extends Document {
     checkIfAlreadyCollected(userId: number): Promise<boolean>;
 }
 
-const Schema = mongoose.Schema
+const Schema = mongoose.Schema;
 const TreasureSchema = new Schema(
     {
         name: {
@@ -55,16 +55,16 @@ const TreasureSchema = new Schema(
         }
     },
     { timestamps: true }
-)
+);
 
 TreasureSchema.methods.howManyCollected = async function (this: ITreasure): Promise<number> {
-    const allRewards: Array<IReward> = await Reward.find({ treasureId: this._id, collected: true })
-    return allRewards.length
-}
+    const allRewards: IReward[] = await Reward.find({ treasureId: this._id, collected: true });
+    return allRewards.length;
+};
 
 TreasureSchema.methods.checkIfAlreadyCollected = async function (this: ITreasure, userId: number): Promise<boolean> {
-    const reward: IReward = await Reward.findOne({ treasureId: this._id, finder: userId })
-    return reward ? true : false
-}
+    const reward: IReward = await Reward.findOne({ treasureId: this._id, finder: userId });
+    return reward ? true : false;
+};
 
 export default mongoose.model<ITreasure>('treasure', TreasureSchema);

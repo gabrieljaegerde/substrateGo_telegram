@@ -1,17 +1,17 @@
-import { Bot, lazySession, GrammyError, HttpError } from "grammy"
+import { Bot, lazySession, GrammyError, HttpError } from "grammy";
 import { hydrateFiles } from "@grammyjs/files";
-import { botParams, getKeyboard } from "./config.js"
-import { claimNftMiddleware } from "./src/finder/menus/claimNftMenu.js"
-import { prepareCollection, router as collectRouter } from "./src/finder/collectTreasure.js"
-import User, { IUser } from "./src/models/user.js"
-import Treasure from "./src/models/treasure.js"
-import Qr from "./src/models/qr.js"
-import mongoose from "mongoose"
-import { resetSession } from "./tools/utils.js"
+import { botParams, getKeyboard } from "./config.js";
+import { claimNftMiddleware } from "./src/finder/menus/claimNftMenu.js";
+import { prepareCollection, router as collectRouter } from "./src/finder/collectTreasure.js";
+import User, { IUser } from "./src/models/user.js";
+import Treasure from "./src/models/treasure.js";
+import Qr from "./src/models/qr.js";
+import mongoose from "mongoose";
+import { resetSession } from "./tools/utils.js";
 import { sessionAdapter } from "./tools/sessionAdapter.js";
-import type { CustomContext } from './types/CustomContext'
-import type { SessionData } from './types/SessionData'
-import { prepareSetup, router as createRouter } from './src/creator/addTreasure.js'
+import type { CustomContext } from './types/CustomContext';
+import type { SessionData } from './types/SessionData';
+import { prepareSetup, router as createRouter } from './src/creator/addTreasure.js';
 import { accountComposer } from "./src/composers/accountComposer.js";
 import { creatorComposer } from "./src/composers/creatorComposer.js";
 import { finderComposer } from "./src/composers/finderComposer.js";
@@ -22,15 +22,15 @@ export const start = async (): Promise<Bot> => {
   /*
    *   BOT initialization
    */
-  const bot = new Bot<CustomContext>(botParams.settings.botToken)
+  const bot = new Bot<CustomContext>(botParams.settings.botToken);
   const getSessionKey = (ctx: CustomContext) => {
     return ctx.chat?.id.toString();
-  }
+  };
 
   bot.use(sequentialize(getSessionKey));
 
-  bot.api.config.use(apiThrottler())
-  const { db } = mongoose.connection
+  bot.api.config.use(apiThrottler());
+  const { db } = mongoose.connection;
   bot.use(
     lazySession({
       getSessionKey,
@@ -39,11 +39,6 @@ export const start = async (): Promise<Bot> => {
           menu: null,
           treasureLocation: null,
           treasure: null,
-          guideStep: null,
-          guideMessageChatId: null,
-          guideMessageMessageId: null,
-          editMode: null,
-          showMode: null,
           wallet: null,
           reward: null,
           userCreated: null,
@@ -51,7 +46,6 @@ export const start = async (): Promise<Bot> => {
           withdrawAmount: null,
           hideWithdrawButtons: null,
           createdPage: null,
-          remark: null,
           userNonCollectedRewards: null,
           userCollectedRewards: null,
           nonCollectedRewardsPage: null,
@@ -68,14 +62,14 @@ export const start = async (): Promise<Bot> => {
     })
   );
 
-  bot.api.config.use(hydrateFiles(bot.token))
+  bot.api.config.use(hydrateFiles(bot.token));
 
   bot.command("start", async (ctx: CustomContext) => {
     if (ctx.chat.type == "private") {
-      await resetSession(ctx)
-      const session = await ctx.session
-      const user: IUser = await User.findOne({ chatId: ctx.chat.id })
-      let message
+      await resetSession(ctx);
+      const session = await ctx.session;
+      const user: IUser = await User.findOne({ chatId: ctx.chat.id });
+      let message: string;
       //normal start
       if (!user) {
         await new User({
@@ -88,13 +82,17 @@ export const start = async (): Promise<Bot> => {
           wallet: null,
           oldWallets: [],
           blocked: false
-        }).save()
+        }).save();
+      }
+      if (user && user.blocked) {
+        user.blocked = false;
+        await user.save();
       }
       //dont show message when user is passing in qrcode and not new
       if (!user || user && ctx.message.text === "/start") {
         message = `Welcome to *${botParams.settings.network.name}Go*:\nthe global *NFT Treasure Hunt* game 💰.\n\n` +
-          "With this bot you can easily:\n• *create* NFT treasures 💎 _and hide them all around the world 🌏 for others " +
-          "to find._\n• hunt and *collect* NFT treasures 🎁.\n\n" +
+          "With this bot you can easily:\n• *create* NFT treasures 🗞️ _and hide them all around the world 🌏 for others " +
+          "to find._\n• find and *collect* NFT treasures 🛍️.\n\n" +
           "There are no fees to use this bot except the automatic network fees.\n\n" +
           `Please start by connecting a ${botParams.settings.network.name} wallet to this account ` +
           "by clicking on '🛠️ Account Settings' in the menu below.\n\n" +
@@ -102,7 +100,7 @@ export const start = async (): Promise<Bot> => {
           "for lost, stolen or misdirected funds. Please use the bot with caution " +
           "and only ever transfer small amounts to the bots deposit wallet._\n\n" +
           "This bot is currently running in BETA mode!!! Do not expect it to be bug free. Kindly " +
-          `report any bugs to an admin in ${botParams.settings.telegramGroupLink}`
+          `report any bugs to an admin in ${botParams.settings.telegramGroupLink}`;
         await ctx.reply(
           message,
           {
@@ -112,42 +110,42 @@ export const start = async (): Promise<Bot> => {
             },
             parse_mode: "Markdown",
           }
-        )
+        );
       }
 
       if (ctx.message.text !== "/start") {
         {
           //the QR code id is sent in with the /start command.
           //seperate the id out
-          const code = ctx.message.text.replace("/start", "").replace(/\s/g, "")
-          const userIsCreator: boolean = await Qr.exists({ code: code, creator: ctx.chat.id })
-          const treasureExists: boolean = await Treasure.exists({ code: code })
+          const code = ctx.message.text.replace("/start", "").replace(/\s/g, "");
+          const userIsCreator: boolean = await Qr.exists({ code: code, creator: ctx.chat.id });
+          const treasureExists: boolean = await Treasure.exists({ code: code });
           //trying to create a treasure
           if (userIsCreator && !treasureExists) {
-            const { treasure, createStep } = await prepareSetup(ctx, code)
-            session.treasure = treasure
-            session.createStep = createStep
-            return
+            const { treasure, createStep } = await prepareSetup(ctx, code);
+            session.treasure = treasure;
+            session.createStep = createStep;
+            return;
           }
           else {
-            const { treasure, collectStep } = await prepareCollection(ctx, code)
-            session.treasure = treasure
-            session.collectStep = collectStep
+            const { treasure, collectStep } = await prepareCollection(ctx, code);
+            session.treasure = treasure;
+            session.collectStep = collectStep;
             if (treasure)
-              await claimNftMiddleware.replyToContext(ctx)
+              await claimNftMiddleware.replyToContext(ctx);
           }
         }
       }
     }
-  })
+  });
 
   /*
    *   /menu command handler
    */
   bot.command("menu", async (ctx: CustomContext) => {
     if (ctx.chat.type == "private") {
-      await resetSession(ctx)
-      const message = "Here you go"
+      await resetSession(ctx);
+      const message = "Here you go";
       await ctx.reply(
         message,
         {
@@ -157,36 +155,36 @@ export const start = async (): Promise<Bot> => {
           },
           parse_mode: "Markdown",
         }
-      )
+      );
     }
-  })
+  });
 
   /*
    *   /stats command handler
    */
-  const antispamOn = {}
+  const antispamOn = {};
   bot.command("stats", async (ctx: CustomContext) => {
     if (ctx.chat.type == "group" || ctx.chat.type == "supergroup") {
       if (!antispamOn[ctx.chat.id]) {
-        antispamOn[ctx.chat.id] = true
-        setTimeout(() => (antispamOn[ctx.chat.id] = false), 60000)
+        antispamOn[ctx.chat.id] = true;
+        setTimeout(() => (antispamOn[ctx.chat.id] = false), 60000);
         //todo: send bot stats
       } else {
-        ctx.reply("Time limit 1 min for /stats command")
+        ctx.reply("Time limit 1 min for /stats command");
       }
     }
-  })
+  });
 
   /*
    *   React bot on 'Back to main menu' message
    */
 
-  bot.hears("\u2B05 Back to main menu", async (ctx: CustomContext) => {
+  bot.hears("⬅️ Back to main menu", async (ctx: CustomContext) => {
     if (ctx.chat.type == "private") {
-      await resetSession(ctx)
-      const session = await ctx.session
-      session.menu = "main"
-      const message = "Welcome home 🏠"
+      await resetSession(ctx);
+      const session = await ctx.session;
+      session.menu = "main";
+      const message = "Welcome home 🏠";
       await ctx.reply(
         message,
         {
@@ -196,62 +194,68 @@ export const start = async (): Promise<Bot> => {
           },
           parse_mode: "Markdown",
         }
-      )
+      );
     }
-  })
+  });
 
-  bot.use(accountComposer)
+  bot.use(accountComposer);
 
-  bot.use(creatorComposer)
+  bot.use(creatorComposer);
 
   /*
    *   Handle callback query data: could be cancel setup event from router
    */
   bot.on("callback_query:data", async (ctx: CustomContext, next) => {
-    if (ctx.update.callback_query.data === "Cancel Setup") {
-      const session = await ctx.session
-      session.createStep = ""
-      await ctx.answerCallbackQuery()
-      const message = "Setup Canceled"
+    if (ctx.update.callback_query.data === "❌ Cancel Setup") {
+      const session = await ctx.session;
+      session.createStep = "";
+      await ctx.answerCallbackQuery();
+      const message = "Setup Canceled";
       await ctx.reply(message, {
         reply_markup: {
           keyboard: (await getKeyboard(ctx)).build(),
           resize_keyboard: true
         },
-      })
+      });
     }
-    else if (ctx.update.callback_query.data === "Cancel Collection") {
-      console.log("in bot cancel")
-      const session = await ctx.session
-      session.collectStep = ""
-      await ctx.answerCallbackQuery()
-      const message = "Collection Canceled"
+    else if (ctx.update.callback_query.data === "❌ Cancel Collection") {
+      const session = await ctx.session;
+      session.collectStep = "";
+      await ctx.answerCallbackQuery();
+      const message = "Collection Canceled";
       await ctx.reply(message, {
         reply_markup: {
           keyboard: (await getKeyboard(ctx)).build(),
           resize_keyboard: true
         },
-      })
+      });
     }
     console.log("Unknown button event with payload", ctx.callbackQuery.data);
     await ctx.answerCallbackQuery(); // remove loading animation
-    return next()
-  })
+    return next();
+  });
   //order important! 
-  bot.use(createRouter)
+  bot.use(createRouter);
 
-  bot.use(collectRouter)
+  bot.use(collectRouter);
 
-  bot.use(finderComposer)
+  bot.use(finderComposer);
 
   /*
    *   Collect and show in console all bot errors
    */
-  bot.catch((err) => {
+  bot.catch(async (err) => {
     const ctx = err.ctx;
     console.error(`Error while handling update ${ctx.update.update_id}:`);
     const e = err.error;
     if (e instanceof GrammyError) {
+      if (e.description.includes("bot was blocked by the user")) {
+        const user: IUser = await User.findOne({ chatId: e.payload.chat_id });
+        user.blocked = true;
+        await user.save();
+        console.log(new Date(), `Bot was blocked by user with chatid ${e.payload.chat_id}`);
+        return;
+      }
       console.error("Error in request:", e.description);
     } else if (e instanceof HttpError) {
       console.error("Could not contact Telegram:", e);
@@ -259,10 +263,10 @@ export const start = async (): Promise<Bot> => {
       console.error("Unknown error:", e);
     }
   });
-  run(bot)
-  console.log(new Date(), "Bot started as", bot)
+  run(bot);
+  console.log(new Date(), "Bot started as", bot);
   // process.once('SIGINT', () => {
   //   bot.stop()});
   // process.once('SIGTERM', () => bot.stop());
-  return bot
-}
+  return bot;
+};

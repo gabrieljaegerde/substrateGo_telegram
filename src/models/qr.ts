@@ -1,11 +1,11 @@
-import mongoose, { Document } from "mongoose"
+import mongoose, { Document } from "mongoose";
 
 export interface IQr extends Document {
     code: string;
     creator: number;
 }
 
-const Schema = mongoose.Schema
+const Schema = mongoose.Schema;
 const QrSchema = new Schema(
     {
         code: {

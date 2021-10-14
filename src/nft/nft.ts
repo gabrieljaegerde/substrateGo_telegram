@@ -1,7 +1,7 @@
-import { botParams } from "../../config.js"
-import { NFT, Collection } from "rmrk-tools"
-import { u8aToHex } from "@polkadot/util"
-import { encodeAddress } from "@polkadot/util-crypto"
+import { botParams } from "../../config.js";
+import { NFT, Collection } from "rmrk-tools";
+import { u8aToHex } from "@polkadot/util";
+import { encodeAddress } from "@polkadot/util-crypto";
 import { pinSingleMetadataFromDir } from "../../tools/pinataUtils.js";
 import { sendAndFinalize } from "../../tools/substrateUtils.js";
 
@@ -11,15 +11,15 @@ export const createCollection = async () => {
       u8aToHex(botParams.account.publicKey),
       botParams.settings.collectionSymbol
     );
-    console.log("collection Id: ", collectionId)
+    console.log("collection Id: ", collectionId);
 
     const collectionMetadataCid = await pinSingleMetadataFromDir(
       "/assets",
-      "preview.png",
-      "DevTest",
+      "kusamaGo.png",
+      "KusamaGo - Gen1",
       {
-        description: "Do something.",
-        external_url: "https://subylo.com",
+        description: "KusamaGo - Generation One",
+        external_url: "https://substrateGo/kusama.com",
         properties: {},
       }
     );
@@ -38,7 +38,7 @@ export const createCollection = async () => {
       botParams.account
     );
     console.log("COLLECTION CREATION REMARK: ", ItemsCollection.create());
-    console.log("subby collection created at block: ", block);
+    console.log("Collection created at block: ", block);
 
     return block;
   } catch (error: any) {
@@ -46,6 +46,7 @@ export const createCollection = async () => {
   }
 };
 
+//this function will be run once to set up the collection and test nft creation.
 async function mintNFT() {
   try {
     const collectionId = Collection.generateId(
@@ -53,15 +54,15 @@ async function mintNFT() {
       botParams.settings.collectionSymbol
     );
 
-    await createCollection()
+    await createCollection();
 
     const metadataCid = await pinSingleMetadataFromDir(
       "/assets",
-      "preview.png",
+      "defaultNFT.png",
       `Test NFT`,
       {
         description: `This is the Test NFT!`,
-        external_url: "https://subylo.com",
+        external_url: botParams.settings.externalUrl,
         properties: {
           rarity: {
             type: "string",
@@ -76,7 +77,7 @@ async function mintNFT() {
       collection: collectionId,
       symbol: `tester_1`,
       transferable: 1,
-      sn: `2`.padStart(8, "0"),
+      sn: `3`.padStart(8, "0"),
       owner: encodeAddress(botParams.account.address, 2),
       metadata: metadataCid,
     });
@@ -93,4 +94,4 @@ async function mintNFT() {
 
 export {
   mintNFT,
-}
+};

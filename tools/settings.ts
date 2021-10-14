@@ -1,5 +1,5 @@
 function getExtrinsicLinks(network, txHash) {
-  const links = []
+  const links = [];
   links.push([
     ["subscan", `https://${network.toLowerCase()}.subscan.io/extrinsic/${txHash}`]
     // ,
@@ -7,12 +7,12 @@ function getExtrinsicLinks(network, txHash) {
     //   "polkascan",
     //   `https://polkascan.io/${network.toLowerCase()}/transaction/${block}-${index}`,
     // ],
-  ])
-  return links
+  ]);
+  return links;
 }
 
 function getExtrinsicLinksBlock(network, index, block) {
-  var links = []
+  const links = [];
   links.push([
     ["subscan", `https://${network.toLowerCase()}.subscan.io/extrinsic/${block}-${index}`]
     // ,
@@ -20,8 +20,8 @@ function getExtrinsicLinksBlock(network, index, block) {
     //   "polkascan",
     //   `https://polkascan.io/${network.toLowerCase()}/transaction/${block}-${index}`,
     // ],
-  ])
-  return links
+  ]);
+  return links;
 }
 
 export const getSettings = () => {
@@ -36,7 +36,6 @@ export const getSettings = () => {
     getExtrinsicLinksBlock: getExtrinsicLinksBlock,
     botToken: process.env.BOT_TOKEN,
     botUsername: "kusamaGo_bot",
-    
     codeLength: 20,
     pwordLower: 10000, //0.001wmd
     pwordUpper: 11000, //0.0011wmd
@@ -49,14 +48,15 @@ export const getSettings = () => {
     collectionSymbol: process.env.COLLECTION_SYMBOL.toString(),
     collectionId: process.env.COLLECTION_ID.toString(),
     //wallet may have an initial balance, to cover collection creation fees for example.
-    walletStartFunds: "99205842522",
+    walletStartFunds: "94826126970",
     //create a user account to deposit all non-transferrable funds to that are unassigned
     //assign a chat id that is impossible to exist on telegram.
     charityChatId: 100000000000000,
     adminChatId: 523582952,
     telegramGroupLink: "t.me/kusamaGo",
     defaultHint: "If you look hard enough, you will find it.",
-    defaultDescription: "This a treasure from the global NFT treasure hunt game. Join us: t.me/kusamaGo"
-  }
-  return settings
-}
+    defaultDescription: "This is a treasure from the global NFT treasure hunt game. Join us: t.me/kusamaGo",
+    externalUrl: "https://substrateGo/kusama.com"
+  };
+  return settings;
+};

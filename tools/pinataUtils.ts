@@ -19,7 +19,7 @@ export type StreamPinata = Readable & {
 
 const limit = pLimit(1);
 
-const pinFileStreamToIpfs = async (file: StreamPinata, name?: string) => {
+const pinFileStreamToIpfs = async (file: StreamPinata, name?: string): Promise<string> => {
     const options = { ...defaultOptions, pinataMetadata: { name } };
     const result = await botParams.pinata.pinFileToIPFS(file, options);
     return result.IpfsHash;
@@ -44,7 +44,7 @@ export const pinSingleMetadataFromDir = async (
     path: string,
     name: string,
     metadataBase: Partial<NFTMetadata>,
-) => {
+): Promise<string> => {
     try {
         const imageFile = await fsPromises.readFile(`${process.cwd()}${dir}/${path}`);
         if (!imageFile) {
@@ -72,11 +72,11 @@ export const pinSingleMetadata = async (
     buffer: Buffer,
     name: string,
     metadataBase: Partial<NFTMetadata>,
-) => {
+): Promise<string> => {
     try {
         if (!buffer) {
             throw new Error('No image file');
-        }        
+        }
         const stream: StreamPinata = Readable.from(buffer);
         stream.path = "treasure_file.png";
         const imageCid = await pinFileStreamToIpfs(stream, name);
@@ -97,7 +97,7 @@ export const pinSingleMetadataWithoutFile = async (
     imageCid: string,
     name: string,
     metadataBase: Partial<NFTMetadata>,
-) => {
+): Promise<string> => {
     try {
         const metadata: NFTMetadata = { ...metadataBase, name, image: `ipfs://ipfs/${imageCid}` };
         const metadataCid = await uploadAndPinIpfsMetadata(metadata);
@@ -114,11 +114,11 @@ export const pinSingleMetadataWithoutFile = async (
 export const pinSingleFile = async (
     buffer: Buffer,
     name: string,
-) => {
+): Promise<string> => {
     try {
         if (!buffer) {
             throw new Error('No image file');
-        }        
+        }
         const stream: StreamPinata = Readable.from(buffer);
         stream.path = "treasure_file.png";
         const imageCid = await pinFileStreamToIpfs(stream, name);
@@ -131,15 +131,15 @@ export const pinSingleFile = async (
     }
 };
 
-export const unpin = async (cid: string) => {
+export const unpin = async (cid: string): Promise<string> => {
     try {
         const status = await botParams.pinata.unpin(cid.replace("ipfs://ipfs/", ""));
-        return status
+        return status;
     } catch (error) {
         console.log(error);
         console.log(JSON.stringify(error));
         return '';
     }
-}
+};
 
 

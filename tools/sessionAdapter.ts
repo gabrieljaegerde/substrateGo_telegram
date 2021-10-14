@@ -1,13 +1,13 @@
 import { StorageAdapter } from 'grammy';
 
 export class sessionAdapter<T> implements StorageAdapter<T> {
-    private collection: any
+    private collection: any;
 
     constructor(db) {
-        this.collection = db.collection("sessions")
+        this.collection = db.collection("sessions");
     }
 
-    async read(key: string) {
+    async read(key: string): Promise<T> {
         const session = await this.collection.findOne({ key });
 
         if (session === null || session === undefined) {
@@ -16,10 +16,9 @@ export class sessionAdapter<T> implements StorageAdapter<T> {
         return JSON.parse(session.value) as unknown as T;
     }
 
-    async write(key: string, data: T) {
+    async write(key: string, data: T): Promise<void> {
         const session = await this.collection.findOne({ key }, { select: ['key'] });
         const value = JSON.stringify(data);
-        console.log(`value: ${value} \n`)
 
         if (session !== null && session !== undefined) {
             await this.collection.updateOne({ key }, { $set: { value } }, { upsert: true });
@@ -28,7 +27,7 @@ export class sessionAdapter<T> implements StorageAdapter<T> {
         }
     }
 
-    async delete(key: string) {
+    async delete(key: string): Promise<void> {
         await this.collection.delete({ key });
     }
 }

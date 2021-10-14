@@ -1,11 +1,11 @@
-import mongoose from "mongoose"
+import mongoose from "mongoose";
 
 export interface ILocation {
     latitude: number;
     longitude: number;
 }
 
-const Schema = mongoose.Schema
+const Schema = mongoose.Schema;
 export const LocationSchema = new Schema(
     {
         latitude: {

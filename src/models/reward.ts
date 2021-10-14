@@ -1,4 +1,4 @@
-import mongoose, { Types, Document } from "mongoose"
+import mongoose, { Types, Document } from "mongoose";
 
 export interface IReward extends Document {
     createdAt: Date;
@@ -11,10 +11,11 @@ export interface IReward extends Document {
     txHash?: string;
     block?: number;
     file?: string;
+    description: string;
     setCollected(txHash: string, block: number, metadataCid: string);
 }
 
-const Schema = mongoose.Schema
+const Schema = mongoose.Schema;
 const RewardSchema = new Schema(
     {
         treasureId: {
@@ -52,20 +53,24 @@ const RewardSchema = new Schema(
         file: {
             type: String,
             required: false
+        },
+        description: {
+            type: String,
+            required: true
         }
     },
     { timestamps: true },
-)
+);
 
 RewardSchema.methods.setCollected = function (this: IReward,
     txHash: string,
     block: number,
     metadataCid: string) {
-    this.collected = true
-    this.dateCollected = new Date()
-    this.txHash = txHash
-    this.block = block
-    this.file = metadataCid
-}
+    this.collected = true;
+    this.dateCollected = new Date();
+    this.txHash = txHash;
+    this.block = block;
+    this.file = metadataCid;
+};
 
 export default mongoose.model<IReward>('reward', RewardSchema);
