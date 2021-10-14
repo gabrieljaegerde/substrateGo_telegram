@@ -15,7 +15,6 @@ import { CustomContext } from "../../../types/CustomContext.js";
 import { INftProps } from "../../../types/NftProps.js";
 
 const claimNft = new MenuTemplate(async (ctx: CustomContext) => {
-    console.log("here2");
     const session = await ctx.session;
     session.hideClaimButtons = false;
 
@@ -39,9 +38,7 @@ const claimNft = new MenuTemplate(async (ctx: CustomContext) => {
         symbol: treasure.name,
     };
     const nft = new NFT(nftProps);
-    console.log("nft-11", nft);
     session.nft = nftProps;
-    console.log("nft0", session.nft);
     const remarks: string[] = [];
     remarks.push(nft.mint());
     const info = await getTransactionCost(
@@ -132,7 +129,6 @@ claimNft.interact("Proceed", "sp", {
                 console.error("empty metadataCid");
                 throw Error;
             }
-            console.log("nft1", session.nft);
             session.nft.metadata = metadataCid;
 
             const remarks: string[] = [];

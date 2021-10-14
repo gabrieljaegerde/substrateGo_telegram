@@ -75,7 +75,6 @@ export const prepareSetup = async (ctx: CustomContext, code: string):
 
 export const router = new Router<CustomContext>(async (ctx: CustomContext) => {
     const session = await ctx.session;
-    console.log("step", session.createStep);
     return session.createStep;
 });
 

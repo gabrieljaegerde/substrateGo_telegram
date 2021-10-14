@@ -76,7 +76,6 @@ class SubstrateBot {
 
     //setup remark listener for minting listener
     const consolidateFunction = async (remarks) => {
-      console.log("remarks: ", remarks);
       const consolidator = new Consolidator(2, new RemarkStorageAdapter(botParams.remarkStorage));
       return consolidator.consolidate(remarks);
     };
@@ -94,7 +93,6 @@ class SubstrateBot {
           await botParams.bot.api
             .sendMessage(botParams.settings.adminChatId, `Invalid Remark: ${JSON.stringify(val.invalid)}`);
         }
-        console.log(val);
       });
     };
     await startListening();

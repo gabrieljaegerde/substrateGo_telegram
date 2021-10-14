@@ -19,7 +19,7 @@ export const createCollection = async () => {
       "KusamaGo - Gen1",
       {
         description: "KusamaGo - Generation One",
-        external_url: "https://substrateGo/kusama.com",
+        external_url: botParams.settings.externalUrl,
         properties: {},
       }
     );
@@ -47,7 +47,7 @@ export const createCollection = async () => {
 };
 
 //this function will be run once to set up the collection and test nft creation.
-async function mintNFT() {
+export const mintNFT = async() => {
   try {
     const collectionId = Collection.generateId(
       u8aToHex(botParams.account.publicKey),
@@ -61,7 +61,7 @@ async function mintNFT() {
       "defaultNFT.png",
       `Test NFT`,
       {
-        description: `This is the Test NFT!`,
+        description: `This is a Test NFT!`,
         external_url: botParams.settings.externalUrl,
         properties: {
           rarity: {
@@ -77,7 +77,7 @@ async function mintNFT() {
       collection: collectionId,
       symbol: `tester_1`,
       transferable: 1,
-      sn: `3`.padStart(8, "0"),
+      sn: `1`.padStart(8, "0"),
       owner: encodeAddress(botParams.account.address, 2),
       metadata: metadataCid,
     });
@@ -91,7 +91,3 @@ async function mintNFT() {
     console.error(error);
   }
 }
-
-export {
-  mintNFT,
-};

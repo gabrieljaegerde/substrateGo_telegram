@@ -31,7 +31,6 @@ showCollectedItem.interact("🌈 Show NFT", "sn", {
     await deleteMenuFromContext(ctx);
     const loadMessage = await botParams.bot.api
       .sendMessage(ctx.chat.id, "Loading...");
-    console.log("file", session.reward.file.replace('ipfs://', 'https://ipfs.io/'));
     const response: Response = await fetch(session.reward.file.replace('ipfs://', 'https://ipfs.io/'));
     const json: any = await response.json();
     await botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id);
