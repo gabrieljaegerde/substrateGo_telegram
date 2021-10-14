@@ -1,74 +1,93 @@
-import { botParams } from "../../config.js"
-import { NFT, Collection } from "rmrk-tools"
-import { u8aToHex } from "@polkadot/util"
-import { encodeAddress, decodeAddress } from "@polkadot/util-crypto"
+import { botParams } from "../../config.js";
+import { NFT, Collection } from "rmrk-tools";
+import { u8aToHex } from "@polkadot/util";
+import { encodeAddress } from "@polkadot/util-crypto";
+import { pinSingleMetadataFromDir } from "../../tools/pinataUtils.js";
+import { sendAndFinalize } from "../../tools/substrateUtils.js";
 
-async function mintNFT(){
-  console.log("in")
-  const collectionMetadata = {
-      description:
-        "WestendG",
-      attributes: [],
-      external_url: "random_link",
-      image: "non_yet",
-    };
-  const collMdHash = "QmQsMDPAyb9EVkS81jYDDFnKh421xA6SrxpjasQJMBtSrV";
-  const remarks = [];
-  // Create collection
-  const collectionSymbol = "GONOW1";
-  const collectionId = Collection.generateId(
-    u8aToHex(botParams.account.publicKey),
-    "GONOW2"
-  );
-  let mintingAccount = botParams.account;
-  let decoded = decodeAddress(mintingAccount.address);
-  let address = mintingAccount.address//encodeAddress(decoded, 0);
-  /*
-  readonly block: number;
-  readonly max: number;
-  issuer: string;
-  readonly symbol: string;
-  readonly id: string;
-  readonly metadata: string;
-  changes: Change[] = [];*/
-  const eggCollection = new Collection(
-      0,
-      0,
-      address,
-      collectionSymbol,
-      collectionId,
-      `ipfs://ipfs/${collMdHash}`
+export const createCollection = async () => {
+  try {
+    const collectionId = Collection.generateId(
+      u8aToHex(botParams.account.publicKey),
+      botParams.settings.collectionSymbol
     );
-  console.log("eggCollection: ", eggCollection)
-  remarks.push(eggCollection.create())
-  const txs = [];
-  let nftProps = {
-    "block": 0,
-    "collection": collectionId,
-    "symbol": "string12",
-    "transferable": 1,
-    "sn": new Date().getTime().toString(),
-    "metadata": `ipfs://ipfs/s`
-  }
-  const nft = new NFT(
-    nftProps
-  );
-  console.log("nft: ", nft)
-  remarks.push(nft.mint());
+    console.log("collection Id: ", collectionId);
 
-  for (const remark of remarks) {
-    txs.push(botParams.api.tx.system.remark(remark));
-  }
-
-  await botParams.api.tx.utility
-    .batchAll(txs)
-    .signAndSend(botParams.account, ({ status }) => {
-      if (status.isInBlock) {
-        console.log(`included in ${status.asInBlock}`);
+    const collectionMetadataCid = await pinSingleMetadataFromDir(
+      "/assets",
+      "kusamaGo.png",
+      "KusamaGo - Gen1",
+      {
+        description: "KusamaGo - Generation One",
+        external_url: botParams.settings.externalUrl,
+        properties: {},
       }
-    });
-}
+    );
 
-export {
-  mintNFT,
+    const ItemsCollection = new Collection(
+      0,
+      0,
+      encodeAddress(botParams.account.address, 2),
+      botParams.settings.collectionSymbol,
+      collectionId,
+      collectionMetadataCid
+    );
+
+    const { block } = await sendAndFinalize(
+      botParams.api.tx.system.remark(ItemsCollection.create()),
+      botParams.account
+    );
+    console.log("COLLECTION CREATION REMARK: ", ItemsCollection.create());
+    console.log("Collection created at block: ", block);
+
+    return block;
+  } catch (error: any) {
+    console.error(error);
+  }
+};
+
+//this function will be run once to set up the collection and test nft creation.
+export const mintNFT = async() => {
+  try {
+    const collectionId = Collection.generateId(
+      u8aToHex(botParams.account.publicKey),
+      botParams.settings.collectionSymbol
+    );
+
+    await createCollection();
+
+    const metadataCid = await pinSingleMetadataFromDir(
+      "/assets",
+      "defaultNFT.png",
+      `Test NFT`,
+      {
+        description: `This is a Test NFT!`,
+        external_url: botParams.settings.externalUrl,
+        properties: {
+          rarity: {
+            type: "string",
+            value: "common",
+          },
+        },
+      }
+    );
+
+    const nft = new NFT({
+      block: 0,
+      collection: collectionId,
+      symbol: `tester_1`,
+      transferable: 1,
+      sn: `1`.padStart(8, "0"),
+      owner: encodeAddress(botParams.account.address, 2),
+      metadata: metadataCid,
+    });
+
+    const remark = nft.mint();
+    const tx = botParams.api.tx.system.remark(remark);
+    const { block } = await sendAndFinalize(tx, botParams.account);
+    console.log("Test NFT minted at block: ", block);
+    return block;
+  } catch (error: any) {
+    console.error(error);
+  }
 }

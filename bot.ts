@@ -1,443 +1,272 @@
-import { Telegraf, Markup } from "telegraf"
-import { botParams, getKeyboard } from "./config.js"
-import { addWallet } from "./src/wallet/add.js"
-import { editWalletMiddleware, enterAddress } from "./src/wallet/edit.js"
-import { bigNumberArithmetic, amountToHumanString, getAccountDetails } from "./src/wallet/walletHelpers.js"
-import { enterAmount, withdrawBalanceMiddleware } from "./src/wallet/withdraw.js"
-import { depositMiddleware, linkAddress } from "./src/wallet/deposit.js"
-import { addTreasure, uploadQr } from "./src/treasure/creator/addTreasure.js"
-import { listScannedMiddleware } from "./src/treasure/finder/listScanned.js"
-import { listCreatedMiddleware } from "./src/treasure/creator/listCreated.js"
-import { editMessage } from "./src/treasure/creator/editMessage.js"
-import { editNameTreasure } from "./src/treasure/creator/editNameTreasure.js"
-import { editNameScanned } from "./src/treasure/finder/editNameScanned.js"
-import { claimNftMiddleware } from "./src/nft/claimNft.js"
-import { collectTreasure, getTreasure } from "./src/treasure/finder/collectTreasure.js"
-import { createTreasureMiddleware } from "./src/treasure/creator/createTreasure.js"
-import { listCollectedMiddleware } from "./src/treasure/finder/listCollected.js"
-import { listNonCollectedMiddleware } from "./src/treasure/finder/listNonCollected.js"
-//import prom from "./metrics.js"
-import _ from "lodash"
-import { fastTrackGet } from "./src/treasure/finder/collectTreasure.js"
-import LocalSession from 'telegraf-session-local'
-import { editNFT } from "./src/nft/editNFT.js"
-import { createTreasureGuideMiddleware } from "./src/treasure/creator/createTreasureGuide.js"
-import { findClosest, findTreasuresMiddleware } from "./src/treasure/finder/findTreasures.js"
-import { IUser } from "./src/types.js"
+import { Bot, lazySession, GrammyError, HttpError } from "grammy";
+import { hydrateFiles } from "@grammyjs/files";
+import { botParams, getKeyboard } from "./config.js";
+import { claimNftMiddleware } from "./src/finder/menus/claimNftMenu.js";
+import { prepareCollection, router as collectRouter } from "./src/finder/collectTreasure.js";
+import User, { IUser } from "./src/models/user.js";
+import Treasure from "./src/models/treasure.js";
+import Qr from "./src/models/qr.js";
+import mongoose from "mongoose";
+import { resetSession } from "./tools/utils.js";
+import { sessionAdapter } from "./tools/sessionAdapter.js";
+import type { CustomContext } from './types/CustomContext';
+import type { SessionData } from './types/SessionData';
+import { prepareSetup, router as createRouter } from './src/creator/addTreasure.js';
+import { accountComposer } from "./src/composers/accountComposer.js";
+import { creatorComposer } from "./src/composers/creatorComposer.js";
+import { finderComposer } from "./src/composers/finderComposer.js";
+import { apiThrottler } from "@grammyjs/transformer-throttler";
+import { run, sequentialize } from "@grammyjs/runner";
 
-// const telegramBotUpdates = new prom.Counter({
-//   name: "substrate_bot_telegram_updates",
-//   help: "metric_help",
-// })
-
-export const run = async function (params) {
+export const start = async (): Promise<Bot> => {
   /*
    *   BOT initialization
    */
-  const bot = new Telegraf(botParams.settings.botToken)
-  bot.use(await(new LocalSession({ database: process.env.LOCAL_STORAGE_DB_FILE_PATH })).middleware())
+  const bot = new Bot<CustomContext>(botParams.settings.botToken);
+  const getSessionKey = (ctx: CustomContext) => {
+    return ctx.chat?.id.toString();
+  };
 
-  /*
-   *   Message on command /start (Hello msg)
-   */
-  bot.start(async (ctx: any) => {
+  bot.use(sequentialize(getSessionKey));
+
+  bot.api.config.use(apiThrottler());
+  const { db } = mongoose.connection;
+  bot.use(
+    lazySession({
+      getSessionKey,
+      initial(): SessionData {
+        return {
+          menu: null,
+          treasureLocation: null,
+          treasure: null,
+          wallet: null,
+          reward: null,
+          userCreated: null,
+          treasureId: null,
+          withdrawAmount: null,
+          hideWithdrawButtons: null,
+          createdPage: null,
+          userNonCollectedRewards: null,
+          userCollectedRewards: null,
+          nonCollectedRewardsPage: null,
+          collectedRewardsPage: null,
+          treasureToClaim: null,
+          code: null,
+          nft: null,
+          hideClaimButtons: null,
+          createStep: "",
+          collectStep: ""
+        };
+      },
+      storage: new sessionAdapter(db),
+    })
+  );
+
+  bot.api.config.use(hydrateFiles(bot.token));
+
+  bot.command("start", async (ctx: CustomContext) => {
     if (ctx.chat.type == "private") {
-      botParams.db.read()
-      botParams.db.chain = _.chain(botParams.db.data)
-      var user: IUser = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-      var message
+      await resetSession(ctx);
+      const session = await ctx.session;
+      const user: IUser = await User.findOne({ chatId: ctx.chat.id });
+      let message: string;
       //normal start
-      if (ctx.message.text === "/start") {
+      if (!user) {
+        await new User({
+          firstName: ctx.chat.first_name,
+          username: ctx.chat.username,
+          chatId: ctx.chat.id,
+          type: ctx.chat.type,
+          totalRewardBalance: "0",
+          rewardBalance: "0",
+          wallet: null,
+          oldWallets: [],
+          blocked: false
+        }).save();
+      }
+      if (user && user.blocked) {
+        user.blocked = false;
+        await user.save();
+      }
+      //dont show message when user is passing in qrcode and not new
+      if (!user || user && ctx.message.text === "/start") {
         message = `Welcome to *${botParams.settings.network.name}Go*:\nthe global *NFT Treasure Hunt* game 💰.\n\n` +
-          "With this bot you can easily:\n• *create* NFT treasures 💎 _and hide them all around the world 🌏 for others " +
-          "to find._\n• hunt and *collect* NFT treasures 🎁.\n\n" +
+          "With this bot you can easily:\n• *create* NFT treasures 🗞️ _and hide them all around the world 🌏 for others " +
+          "to find._\n• find and *collect* NFT treasures 🛍️.\n\n" +
           "There are no fees to use this bot except the automatic network fees.\n\n" +
           `Please start by connecting a ${botParams.settings.network.name} wallet to this account ` +
           "by clicking on '🛠️ Account Settings' in the menu below.\n\n" +
           "_Under no circumstances shall the creators of this bot be held responsible " +
           "for lost, stolen or misdirected funds. Please use the bot with caution " +
-          "and only ever transfer small amounts to the bots deposit wallet._"
+          "and only ever transfer small amounts to the bots deposit wallet._\n\n" +
+          "This bot is currently running in BETA mode!!! Do not expect it to be bug free. Kindly " +
+          `report any bugs to an admin in ${botParams.settings.telegramGroupLink}`;
+        await ctx.reply(
+          message,
+          {
+            reply_markup: {
+              keyboard: (await getKeyboard(ctx)).build(),
+              resize_keyboard: true
+            },
+            parse_mode: "Markdown",
+          }
+        );
       }
-      //if user arrived at this bot by scannning treasure QR
-      else {
-        //if user exists in db -> not new user
-        if (user) {
-          message = "For future reference: You can directly scan QR Codes in here by hitting " +
-            "'Scan Qr' in the menu below. "
-        }
-        //new user
-        else {
-          message = "Welcome new user! It seems like you have stumbled accross one of our " +
-            `QR Codes. What you just found is a *${botParams.settings.network.name}Go* ` +
-            "treasure!!! A lucky bird 🦩 you are...\n\n" +
-            `*${botParams.settings.network.name}Go*: the global *NFT Treasure Hunt* game 💰\n\n` +
-            "With this bot you can easily:\n• *create* NFT treasures 💎 _and hide them all around the world 🌏 for others " +
-            "to find._\n• hunt and *collect* NFT treasures 🎁.\n\n" +
-            "There are no fees to use this bot except the automatic network fees.\n\n" +
-            `Please start by connecting a ${botParams.settings.network.name} wallet to this account ` +
-            "by clicking on '🛠️ Account Settings' in the menu below.\n\n" +
-            "_Under no circumstances shall the creators of this bot be held responsible " +
-            "for lost, stolen or misdirected funds. Please use the bot with caution " +
-            "and only ever transfer small amounts to the bots deposit wallet._"
-        }
-        //the QR code id is sent in with the /start command.
-        //seperate the id out
-        var qrId = ctx.message.text.replace("/start", "").replace(/\s/g, "")
-        user = {
-          first_name: ctx.chat.first_name,
-          username: ctx.chat.username,
-          chatid: ctx.chat.id,
-          type: ctx.chat.type,
-          totalRewardBalance: "0",
-          rewardBalance: "0",
-          wallet: null,
-          oldWallets: [],
-          blocked: false,
-          timestamp: new Date().toString()
-        }
-        botParams.db.chain.get("users").push(user).value()
-        botParams.db.write()
-      }
-      //if new user -> add to db
-      if (!user) {
-        user = {
-          first_name: ctx.chat.first_name,
-          username: ctx.chat.username,
-          chatid: ctx.chat.id,
-          type: ctx.chat.type,
-          totalRewardBalance: "0",
-          rewardBalance: "0",
-          wallet: null,
-          oldWallets: [],
-          blocked: false,
-          timestamp: new Date().toString()
-        }
-        botParams.db.chain.get("users").push(user).value()
-        await botParams.db.write()
-      }
-      await ctx.replyWithMarkdown(
-        message,
-        Markup.keyboard(getKeyboard(ctx)).resize()
-      )
+
       if (ctx.message.text !== "/start") {
-        fastTrackGet(ctx, qrId)
+        {
+          //the QR code id is sent in with the /start command.
+          //seperate the id out
+          const code = ctx.message.text.replace("/start", "").replace(/\s/g, "");
+          const userIsCreator: boolean = await Qr.exists({ code: code, creator: ctx.chat.id });
+          const treasureExists: boolean = await Treasure.exists({ code: code });
+          //trying to create a treasure
+          if (userIsCreator && !treasureExists) {
+            const { treasure, createStep } = await prepareSetup(ctx, code);
+            session.treasure = treasure;
+            session.createStep = createStep;
+            return;
+          }
+          else {
+            const { treasure, collectStep } = await prepareCollection(ctx, code);
+            session.treasure = treasure;
+            session.collectStep = collectStep;
+            if (treasure)
+              await claimNftMiddleware.replyToContext(ctx);
+          }
+        }
       }
-      return
     }
-  })
+  });
 
   /*
    *   /menu command handler
    */
-  bot.command("menu", async (ctx: any) => {
+  bot.command("menu", async (ctx: CustomContext) => {
     if (ctx.chat.type == "private") {
-      let reply = "Here you go"
-      ctx.replyWithMarkdown(
-        reply,
-        Markup.keyboard(getKeyboard(ctx)).resize()
-      )
+      await resetSession(ctx);
+      const message = "Here you go";
+      await ctx.reply(
+        message,
+        {
+          reply_markup: {
+            keyboard: (await getKeyboard(ctx)).build(),
+            resize_keyboard: true
+          },
+          parse_mode: "Markdown",
+        }
+      );
     }
-  })
+  });
 
   /*
    *   /stats command handler
    */
-  const antispamOn = {}
-  bot.command("stats", async (ctx: any) => {
+  const antispamOn = {};
+  bot.command("stats", async (ctx: CustomContext) => {
     if (ctx.chat.type == "group" || ctx.chat.type == "supergroup") {
       if (!antispamOn[ctx.chat.id]) {
-        antispamOn[ctx.chat.id] = true
-        setTimeout(() => (antispamOn[ctx.chat.id] = false), 60000)
+        antispamOn[ctx.chat.id] = true;
+        setTimeout(() => (antispamOn[ctx.chat.id] = false), 60000);
         //todo: send bot stats
       } else {
-        ctx.reply("Time limit 1 min for /stats command")
+        ctx.reply("Time limit 1 min for /stats command");
       }
     }
-  })
-
-  /*
-   *   React bot on 'View stats' message
-   */
-
-  bot.hears("📊 View stats", ctx => {
-    if (ctx.chat.type == "private") {
-      botParams.db.read()
-      botParams.db.chain = _.chain(botParams.db.data)
-      var user: IUser = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-      var userTreasures = botParams.db.chain.get("treasures").filter({ creator: ctx.chat.id }).value()
-      var userTreasuresScanned = botParams.db.chain.get("scanned").filter((item) => userTreasures.some(treasure => treasure.id === item.qrId)).value()
-      var groupedScanned = _.groupBy(userTreasuresScanned, 'qrId')
-      var groupedScannedLengths = []
-      for (var treasure in groupedScanned) {
-        groupedScannedLengths.push({ name: userTreasures.find(treas => treas.id === treasure).name, length: groupedScanned[treasure].length })
-      }
-      var message = "";
-      if (userTreasuresScanned.length > 0) {
-        message = `Your ${userTreasures.length} treasures have already been collected ${userTreasuresScanned.length} times.\n\n`
-        groupedScannedLengths.forEach(function (item) {
-          message += `Treasure '${item.name}' was collected ${item.length} time(s).\n`
-        })
-      }
-      else if (userTreasuresScanned.length == 0 && userTreasures.length > 0) {
-        message = `Your treasures have not been collected yet.`
-      }
-      else {
-        message = `You do not have any treasures yet. Go and create some today!`
-      }
-      ctx.replyWithMarkdown(
-        message,
-        Markup.keyboard(getKeyboard(ctx)).resize()
-      )
-      return
-    }
-  })
-
-  /*
-   *   React bot on 'Collect treasure' message
-   */
-
-  bot.hears("📷 Collect treasure", ctx => {
-    if (ctx.chat.type == "private") {
-      collectTreasure(ctx)
-    }
-  })
-
-  /*
-   *   React bot on 'Create treasure' message
-   */
-
-  bot.hears("💎 Create treasure 💎", ctx => {
-    if (ctx.chat.type == "private") {
-      createTreasureMiddleware.replyToContext(ctx)
-    }
-  })
-
-  /*
-   *   React bot on 'Edit address' message
-   */
-
-  bot.hears("\uD83D\uDCEA Edit address", ctx => {
-    if (ctx.chat.type == "private") {
-      botParams.db.read()
-      botParams.db.chain = _.chain(botParams.db.data)
-      var user: IUser = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-      var replyMsg = `Current Address:\n_${user.wallet.address}_\n\n` +
-        `Enter new ${botParams.settings.network.name} address:`
-      enterAddress.replyWithMarkdown(ctx, replyMsg)
-      //addWallet(ctx)
-      //addWalletMiddleware.setSpecific(ctx)
-    }
-  })
-
-  /*
-   *   React bot on 'Add address' message
-   */
-
-  bot.hears("\uD83D\uDCEA Add address", ctx => {
-    if (ctx.chat.type == "private") {
-      addWallet(ctx)
-      //addWalletMiddleware.setSpecific(ctx)
-    }
-  })
-
-  /*
-   *   React bot on 'My treasures' message
-   */
-
-  bot.hears("🎁 My treasures", ctx => {
-    if (ctx.chat.type == "private") {
-      listScannedMiddleware.replyToContext(ctx)
-    }
-  })
-
-  /*
-   *   React bot on 'Withdraw' message
-   */
-
-  bot.hears("\uD83E\uDDFE Withdraw", ctx => {
-    if (ctx.chat.type == "private") {
-      botParams.db.read()
-      botParams.db.chain = _.chain(botParams.db.data)
-      var user: IUser = botParams.db.chain.get("users").find({ chatid: ctx.chat.id }).value()
-      var userBalance = bigNumberArithmetic(user.wallet.balance ? user.wallet.balance : "0", user.rewardBalance, "+")
-      let replyMsg = `Your balance: *${amountToHumanString(userBalance)}*\n\nHow much would you ` +
-        `like to withdraw?\n\n_Please use '.' notation instead of commas. e.g. 0.02 or 0.5 or 1.4 etc._`
-      enterAmount.replyWithMarkdown(ctx, replyMsg)
-      //withdrawBalanceMiddleware.replyToContext(ctx)
-    }
-  })
-
-  /*
-   *   React bot on '🔗 Link address' message
-   */
-
-  bot.hears("🔗 Link address", ctx => {
-    if (ctx.chat.type == "private") {
-      linkAddress(ctx)
-    }
-  })
-
-  /*
-   *   React bot on 'Deposit' message
-   */
-
-  bot.hears("\u26A0 Deposit \u26A0", ctx => {
-    if (ctx.chat.type == "private") {
-      depositMiddleware.replyToContext(ctx)
-    }
-  })
-
-  /*
-   *   React bot on 'Edit treasures' message
-   */
-
-  bot.hears("✏️ Edit treasures", async (ctx: any) => {
-    if (ctx.chat.type == "private") {
-      listCreatedMiddleware.replyToContext(ctx)
-    }
-  })
-
-  /*
-   *   React bot on 'Creator Mode' message
-   */
-
-  bot.hears("🧙🏻‍♀️ Creator Mode", (ctx: any) => {
-    if (ctx.chat.type == "private") {
-      ctx.session.menu = "creator"
-      ctx.replyWithMarkdown(
-        "You have entered 🧙🏻‍♀️ *creator* mode.\n\nHere you can:\n• *create* new treasures💎\n" +
-        "• *edit* treasures✏️\n" +
-        "• and *track* their performance📊.\n\n_Each time a user collects your treasures, you receive a " +
-        `small reward (${amountToHumanString(botParams.settings.creatorReward)}). The NFT treasure ` +
-        `sent to the finders is customizable by you. Go create awesome treasures and earn!_`,
-        Markup.keyboard(getKeyboard(ctx)).resize()
-      )
-    }
-  })
-
-  /*
-   *   React bot on 'Finder Mode' message
-   */
-
-  bot.hears("🕵🏾‍♂️ Finder Mode", async (ctx: any) => {
-    if (ctx.chat.type == "private") {
-      ctx.session.menu = "finder"
-      ctx.replyWithMarkdown(
-        "You have entered 🕵🏾‍♂️ *finder* mode.\n\nHere you can:\n• *collect* treasures 📷\n" +
-        "• *find* treasures 🔍\n• and *view* your found treasures 🎁\n\n_Each time you collect a treasure, " +
-        `an NFT gets created on the ${botParams.settings.network.name}. These prove your ownership of ` +
-        "the treasures and can be freely traded on the open market._",
-        Markup.keyboard(getKeyboard(ctx)).resize()
-      )
-    }
-  })
-
-  /*
-   *   React bot on 'Account Settings' message
-   */
-  var regex = new RegExp(/.*Account Settings.*/i)
-  bot.hears(regex, async (ctx: any) => {
-    if (ctx.chat.type == "private") {
-      ctx.session.menu = "account"
-      await ctx.replyWithMarkdown(
-        "Welcome to your 🛠️ Account Settings. Let me give you some quick info.",
-        Markup.keyboard(getKeyboard(ctx)).resize()
-      )
-      depositMiddleware.replyToContext(ctx)
-    }
-  })
+  });
 
   /*
    *   React bot on 'Back to main menu' message
    */
 
-  bot.hears("\u2B05 Back to main menu", (ctx: any) => {
+  bot.hears("⬅️ Back to main menu", async (ctx: CustomContext) => {
     if (ctx.chat.type == "private") {
-      ctx.session.menu = "main"
-      ctx.replyWithMarkdown(
-        "Welcome home 🏠",
-        Markup.keyboard(getKeyboard(ctx)).resize()
-      )
+      await resetSession(ctx);
+      const session = await ctx.session;
+      session.menu = "main";
+      const message = "Welcome home 🏠";
+      await ctx.reply(
+        message,
+        {
+          reply_markup: {
+            keyboard: (await getKeyboard(ctx)).build(),
+            resize_keyboard: true
+          },
+          parse_mode: "Markdown",
+        }
+      );
     }
-  })
+  });
+
+  bot.use(accountComposer);
+
+  bot.use(creatorComposer);
 
   /*
-   *   React bot on 'Find treasures' message
+   *   Handle callback query data: could be cancel setup event from router
    */
-
-  bot.hears("🔍 Find treasures", async (ctx: any) => {
-    if (ctx.chat.type == "private") {
-      findTreasuresMiddleware.replyToContext(ctx)
+  bot.on("callback_query:data", async (ctx: CustomContext, next) => {
+    if (ctx.update.callback_query.data === "❌ Cancel Setup") {
+      const session = await ctx.session;
+      session.createStep = "";
+      await ctx.answerCallbackQuery();
+      const message = "Setup Canceled";
+      await ctx.reply(message, {
+        reply_markup: {
+          keyboard: (await getKeyboard(ctx)).build(),
+          resize_keyboard: true
+        },
+      });
     }
-  })
+    else if (ctx.update.callback_query.data === "❌ Cancel Collection") {
+      const session = await ctx.session;
+      session.collectStep = "";
+      await ctx.answerCallbackQuery();
+      const message = "Collection Canceled";
+      await ctx.reply(message, {
+        reply_markup: {
+          keyboard: (await getKeyboard(ctx)).build(),
+          resize_keyboard: true
+        },
+      });
+    }
+    console.log("Unknown button event with payload", ctx.callbackQuery.data);
+    await ctx.answerCallbackQuery(); // remove loading animation
+    return next();
+  });
+  //order important! 
+  bot.use(createRouter);
 
-  bot.use(findTreasuresMiddleware)
+  bot.use(collectRouter);
 
-  bot.use(depositMiddleware)
-
-  bot.use(createTreasureMiddleware)
-
-  bot.use(createTreasureGuideMiddleware)
-
-  bot.use(uploadQr.middleware())
-
-  bot.use(findClosest.middleware())
-
-  bot.use(editMessage.middleware())
-
-  bot.use(editNameTreasure.middleware())
-
-  bot.use(editNameScanned.middleware())
-
-  bot.use(editNFT.middleware())
-
-  bot.use(getTreasure.middleware())
-
-  //bot.use(Telegraf.log())
-
-  bot.use(listCreatedMiddleware)
-
-  bot.use(listCollectedMiddleware)
-
-  bot.use(listScannedMiddleware)
-
-  bot.use(editWalletMiddleware)
-
-  bot.use(listNonCollectedMiddleware)
-
-  bot.use(withdrawBalanceMiddleware)
-
-  bot.use(claimNftMiddleware)
-
-  bot.use(enterAddress.middleware())
-
-  bot.use(enterAmount.middleware())
+  bot.use(finderComposer);
 
   /*
    *   Collect and show in console all bot errors
-   *   except 'message is not modified' & 'message to edit not found'
    */
-  bot.catch(error => {
-    if (
-      (error as any).message.includes("message is not modified") ||
-      (error as any).message.includes("message to edit not found")
-    ) {
-      return
+  bot.catch(async (err) => {
+    const ctx = err.ctx;
+    console.error(`Error while handling update ${ctx.update.update_id}:`);
+    const e = err.error;
+    if (e instanceof GrammyError) {
+      if (e.description.includes("bot was blocked by the user")) {
+        const user: IUser = await User.findOne({ chatId: e.payload.chat_id });
+        user.blocked = true;
+        await user.save();
+        console.log(new Date(), `Bot was blocked by user with chatid ${e.payload.chat_id}`);
+        return;
+      }
+      console.error("Error in request:", e.description);
+    } else if (e instanceof HttpError) {
+      console.error("Could not contact Telegram:", e);
+    } else {
+      console.error("Unknown error:", e);
     }
-    console.log(new Date(), "Error", error)
-  })
-
-
-  //Initialization of all menus
-  // bot.use((ctx, next) => {
-  //   if (ctx.callbackQuery) {
-  //     //console.log('callback data just happened', ctx.callbackQuery.data)
-  //   }
-  //   return next()
-  // })
-
-  //menu.init()?
-  await bot.launch()
-  console.log(new Date(), "Bot started as", bot.botInfo.username)
-  return bot
-}
+  });
+  run(bot);
+  console.log(new Date(), "Bot started as", bot);
+  // process.once('SIGINT', () => {
+  //   bot.stop()});
+  // process.once('SIGTERM', () => bot.stop());
+  return bot;
+};
