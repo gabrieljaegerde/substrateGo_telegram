@@ -39,7 +39,7 @@
   ],
   "exports": "./index.js",
   "version": "1.0.0",
-  "repository": "https://github.com/gabrieljaegerde/substrateGo",
+  "repository": "https://github.com/gabrieljaegerde/substrateGo_telegram",
   "author": "Gabriel Jaeger",
   "scripts": {
     "lint": "eslint . --ext .ts",
