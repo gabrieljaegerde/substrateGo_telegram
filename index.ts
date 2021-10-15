@@ -15,7 +15,6 @@ import { createCharityUser, send } from "./tools/utils.js";
 import { initAccount, getApi } from "./tools/substrateUtils.js";
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
-import { mintNFT } from "./src/nft/nft.js";
 import { LowSync } from "lowdb/lib";
 
 dotenv.config();
@@ -107,7 +106,6 @@ class SubstrateBot {
       //handle error here
       console.log(err);
     }
-    await mintNFT()
     this.invalidateCacheInterval = setInterval(() => {
       [...alreadyReceived.entries()].forEach(key => {
         const dateMinuteAgo = new Date();
