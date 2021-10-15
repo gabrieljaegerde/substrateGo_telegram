@@ -28,7 +28,7 @@ export const getSettings = () => {
   const settings = {
     network: {
       name: "Kusama",
-      prefix: "0",
+      prefix: "2",
       decimals: "12",
       token: "KSM",
     },
