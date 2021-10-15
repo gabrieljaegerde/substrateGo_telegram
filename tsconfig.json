@@ -2,7 +2,7 @@
     "compilerOptions": {
         "outDir": "./dist",
         "lib": [
-            "DOM",
+            "DOM"
         ],
         "target": "ES2017",
         "module": "ES2020",
@@ -19,8 +19,11 @@
             ]
         }
     },
-    // "files": [
-    //     "src/*.ts",
-    //     "src/**/*.ts"
-    // ]
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "**/*.spec.ts"
+    ]
 }
