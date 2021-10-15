@@ -87,10 +87,10 @@ class SubstrateBot {
       });
       const subscriber = listener.initialiseObservable();
       subscriber.subscribe(async (val) => {
-        if (val.invalid && val.invalid.length > 0) {
-          await botParams.bot.api
-            .sendMessage(botParams.settings.adminChatId, `Invalid Remark: ${JSON.stringify(val.invalid)}`);
-        }
+        // if (val.invalid && val.invalid.length > 0) {
+        //   await botParams.bot.api
+        //     .sendMessage(botParams.settings.adminChatId, `Invalid Remark: ${JSON.stringify(val.invalid)}`);
+        // }
       });
     };
     await startListening();
