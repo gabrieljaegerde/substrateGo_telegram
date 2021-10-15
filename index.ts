@@ -3,14 +3,13 @@ import { newHeaderHandler } from "./src/network/blockHandler.js";
 import { alreadyReceived } from "./src/network/accountHandler.js";
 import { getSettings } from "./tools/settings.js";
 //import prom from "./metrics.js"
-import pkg from 'rmrk-tools';
-const { Consolidator, RemarkListener } = pkg;
+import { Consolidator, RemarkListener } from "rmrk-tools";
 import { blockCountAdapter } from "./tools/blockCountAdapter.js";
 import { RemarkStorageAdapter } from "./tools/remarkStorageAdapter.js";
 import pinataSDK from "@pinata/sdk";
 import dotenv from "dotenv";
 import User, { IUser } from "./src/models/user.js";
-import { Header } from '@polkadot/types/interfaces';
+import { Header } from "@polkadot/types/interfaces";
 import * as bot from "./bot.js";
 import { createCharityUser, send } from "./tools/utils.js";
 import { initAccount, getApi } from "./tools/substrateUtils.js";

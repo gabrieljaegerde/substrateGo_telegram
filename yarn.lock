@@ -837,9 +837,9 @@
   "version" "2.0.0"
 
 "async@^3.1.0":
-  "integrity" "sha512-TR2mEZFVOj2pLStYxLht7TyfuRzaydfpxr3k9RpHIzMgw7A64dzsdqCxH1WJyQdoe8T10nDXd9wnEigmiuHIZw=="
-  "resolved" "https://registry.npmjs.org/async/-/async-3.2.0.tgz"
-  "version" "3.2.0"
+  "integrity" "sha512-XdD5lRO/87udXCMC9meWdYiR+Nq6ZjUfXidViUZGu2F1MO4T3XwZ1et0hb2++BgLfhyJwy44BGB/yx80ABx8hg=="
+  "resolved" "https://registry.npmjs.org/async/-/async-3.2.1.tgz"
+  "version" "3.2.1"
 
 "asynckit@^0.4.0":
   "integrity" "sha1-x57Zf380y48robyXkLzDZkdLS3k="
@@ -1126,9 +1126,9 @@
   "version" "0.0.1"
 
 "core-util-is@~1.0.0":
-  "integrity" "sha1-tf1UIgqivFq1eqtxQMlAdUUDwac="
-  "resolved" "https://registry.npmjs.org/core-util-is/-/core-util-is-1.0.2.tgz"
-  "version" "1.0.2"
+  "integrity" "sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ=="
+  "resolved" "https://registry.npmjs.org/core-util-is/-/core-util-is-1.0.3.tgz"
+  "version" "1.0.3"
 
 "create-error@^0.3.1":
   "integrity" "sha1-aYECRaYp5lRDK/BDdzYAA6U1GiM="
@@ -1486,11 +1486,6 @@
   "resolved" "https://registry.npmjs.org/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz"
   "version" "2.0.6"
 
-"fast-safe-stringify@^2.0.4":
-  "integrity" "sha512-lXatBjf3WPjmWD6DpIZxkeSsCOwqI0maYMpgDlx8g4U2qi4lbjA9oH/HD2a87G+KfsUmo5WbJFmqBZlPxtptag=="
-  "resolved" "https://registry.npmjs.org/fast-safe-stringify/-/fast-safe-stringify-2.0.8.tgz"
-  "version" "2.0.8"
-
 "fastq@^1.6.0":
   "integrity" "sha512-YpkpUnK8od0o1hmeSc7UUs/eB/vIPWJYjKck2QKIzAf71Vm1AAQ3EbuZB3g2JIy+pg+ERD0vqI79KyZiB2e2Nw=="
   "resolved" "https://registry.npmjs.org/fastq/-/fastq-1.13.0.tgz"
@@ -1803,9 +1798,9 @@
   "version" "7.0.0"
 
 "is-stream@^2.0.0":
-  "integrity" "sha512-XCoy+WlUr7d1+Z8GgSuXmpuUFC9fOhRXglJMx+dwLKTkL44Cjd4W1Z5P+BQZpr+cR93aGP4S/s7Ftw6Nd/kiEw=="
-  "resolved" "https://registry.npmjs.org/is-stream/-/is-stream-2.0.0.tgz"
-  "version" "2.0.0"
+  "integrity" "sha512-hFoiJiTl63nn+kstHGBtewWSKnQLpyb155KHheA1l39uvtO9nWIop1p3udqPcUd/xbF1VLMO4n7OI6p7RbngDg=="
+  "resolved" "https://registry.npmjs.org/is-stream/-/is-stream-2.0.1.tgz"
+  "version" "2.0.1"
 
 "is-typedarray@^1.0.0":
   "integrity" "sha1-5HnICFjfDBsR3dppQPlgEfzaSpo="
@@ -1836,9 +1831,9 @@
     "whatwg-fetch" "^3.4.1"
 
 "it-all@^1.0.5":
-  "integrity" "sha512-ygD4kA4vp8fi+Y+NBgEKt6W06xSbv6Ub/0V8d1r3uCyJ9Izwa1UspkIOlqY9fOee0Z1w3WRo1+VWyAU4DgtufA=="
-  "resolved" "https://registry.npmjs.org/it-all/-/it-all-1.0.5.tgz"
-  "version" "1.0.5"
+  "integrity" "sha512-3cmCc6Heqe3uWi3CVM/k51fa/XbMFpQVzFoDsV0IZNHSQDyAXl3c4MjHkFX5kF3922OGj7Myv1nSEUgRtcuM1A=="
+  "resolved" "https://registry.npmjs.org/it-all/-/it-all-1.0.6.tgz"
+  "version" "1.0.6"
 
 "jimp@^0.16.1":
   "integrity" "sha512-+EKVxbR36Td7Hfd23wKGIeEyHbxShZDX6L8uJkgVW3ESA9GiTEPK08tG1XI2r/0w5Ch0HyJF5kPqF9K7EmGjaw=="
@@ -1888,6 +1883,23 @@
   "integrity" "sha1-nbe1lJatPzz+8wp1FC0tkwrXJlE="
   "resolved" "https://registry.npmjs.org/json-stable-stringify-without-jsonify/-/json-stable-stringify-without-jsonify-1.0.1.tgz"
   "version" "1.0.1"
+
+"json-stream-stringify@git+https://github.com/Yuripetusko/json-stream-stringify.git#build":
+  "resolved" "git+ssh://git@github.com/Yuripetusko/json-stream-stringify.git#ed3d32a6b5c085e6486f49e0dd2458facdec1b76"
+  "version" "2.0.3"
+
+"jsonparse@^1.2.0":
+  "integrity" "sha1-P02uSpH6wxX3EGL4UhzCOfE2YoA="
+  "resolved" "https://registry.npmjs.org/jsonparse/-/jsonparse-1.3.1.tgz"
+  "version" "1.3.1"
+
+"JSONStream@^1.3.5":
+  "integrity" "sha512-E+iruNOY8VV9s4JEbe1aNEm6MiszPRr/UfcHMz0TQh1BXSxHK+ASV1R6W4HpjBhSeS+54PIsAMCBmwD06LLsqQ=="
+  "resolved" "https://registry.npmjs.org/JSONStream/-/JSONStream-1.3.5.tgz"
+  "version" "1.3.5"
+  dependencies:
+    "jsonparse" "^1.2.0"
+    "through" ">=2.2.7 <3"
 
 "kareem@2.3.2":
   "integrity" "sha512-STHz9P7X2L4Kwn72fA4rGyqyXdmrMSdxqHx9IXon/FXluXieaFA6KJ2upcHAHxQPQ0LeM/OjLrhFxifHewOALQ=="
@@ -1950,14 +1962,14 @@
   "version" "4.17.21"
 
 "logform@^2.2.0":
-  "integrity" "sha512-N0qPlqfypFx7UHNn4B3lzS/b0uLqt2hmuoa+PpuXNYgozdJYAyauF5Ky0BWVjrxDlMWiT3qN4zPq3vVAfZy7Yg=="
-  "resolved" "https://registry.npmjs.org/logform/-/logform-2.2.0.tgz"
-  "version" "2.2.0"
+  "integrity" "sha512-graeoWUH2knKbGthMtuG1EfaSPMZFZBIrhuJHhkS5ZseFBrc7DupCzihOQAzsK/qIKPQaPJ/lFQFctILUY5ARQ=="
+  "resolved" "https://registry.npmjs.org/logform/-/logform-2.3.0.tgz"
+  "version" "2.3.0"
   dependencies:
     "colors" "^1.2.1"
-    "fast-safe-stringify" "^2.0.4"
     "fecha" "^4.2.0"
     "ms" "^2.1.1"
+    "safe-stable-stringify" "^1.1.0"
     "triple-beam" "^1.3.0"
 
 "lowdb@^2.1.0":
@@ -2172,9 +2184,9 @@
     "varint" "^5.0.0"
 
 "multiformats@^9.4.2":
-  "integrity" "sha512-sCNjBP/NPCeQu83Mst8IQZq9+HuR7Catvk/m7CeH0r/nupsU6gM7GINf5E1HCDRxDeU+Cgda/WPmcwQhYs3dyA=="
-  "resolved" "https://registry.npmjs.org/multiformats/-/multiformats-9.4.3.tgz"
-  "version" "9.4.3"
+  "integrity" "sha512-EOJL02/kv+FD5hoItMhKgkYUUruJYMYFq4NQ6YkCh3jVQ5CuHo+OKdHeR50hAxEQmXQ9yvrM9BxLIk42xtfwnQ=="
+  "resolved" "https://registry.npmjs.org/multiformats/-/multiformats-9.4.8.tgz"
+  "version" "9.4.8"
 
 "multihashes@^1.0.1":
   "integrity" "sha512-S27Tepg4i8atNiFaU5ZOm3+gl3KQlUanLs/jWcBxQHFttgq+5x1OgbQmf2d8axJ/48zYGBd/wT9d723USMFduw=="
@@ -2195,9 +2207,9 @@
     "varint" "^5.0.0"
 
 "nanoid@^3.1.23":
-  "integrity" "sha512-FiB0kzdP0FFVGDKlRLEQ1BgDzU87dy5NnzjeW9YZNt+/c3+q82EQDUwniSAUxp/F0gFNI1ZhKU1FqYsMuqZVnw=="
-  "resolved" "https://registry.npmjs.org/nanoid/-/nanoid-3.1.23.tgz"
-  "version" "3.1.23"
+  "integrity" "sha512-zJpuPDwOv8D2zq2WRoMe1HsfZthVewpel9CAvTfc/2mBD1uUT/agc5f7GHGWXlYkFvi1mVxe4IjvP2HNrop7nQ=="
+  "resolved" "https://registry.npmjs.org/nanoid/-/nanoid-3.1.30.tgz"
+  "version" "3.1.30"
 
 "natural-compare@^1.4.0":
   "integrity" "sha1-Sr6/7tdUHywnrPspvbvRXI1bpPc="
@@ -2484,15 +2496,17 @@
     "hash-base" "^3.0.0"
     "inherits" "^2.0.1"
 
-"rmrk-tools@^2.0.4":
-  "integrity" "sha512-Zl0JtN4/sfsTDurDfOy9YE63AoBiZBdbxxVAP5vzb82QCqT/MQHjs/Em1TT1J1cxBzD7WJE/QOcApnVQ4pMlwA=="
-  "resolved" "https://registry.npmjs.org/rmrk-tools/-/rmrk-tools-2.0.4.tgz"
-  "version" "2.0.4"
+"rmrk-tools@^2.0.19":
+  "integrity" "sha512-+9iIu7WmTniMxcPQ/C/fxguVdk2LVyTTM/PL3xXB43zDQ64HabC7mCk9QLtvRIHVEstaTcSm+0zCHLTautiUOA=="
+  "resolved" "https://registry.npmjs.org/rmrk-tools/-/rmrk-tools-2.0.19.tgz"
+  "version" "2.0.19"
   dependencies:
     "chalk" "^4.1.0"
     "emoji-regex" "^9.2.2"
     "isomorphic-fetch" "^3.0.0"
     "it-all" "^1.0.5"
+    "json-stream-stringify" "git+https://github.com/Yuripetusko/json-stream-stringify.git#build"
+    "JSONStream" "^1.3.5"
     "nanoid" "^3.1.23"
     "superstruct" "^0.14.2"
     "uint8arrays" "^2.1.3"
@@ -2521,6 +2535,11 @@
   "integrity" "sha512-Gd2UZBJDkXlY7GbJxfsE8/nvKkUEU1G38c1siN6QP6a9PT9MmHB8GnpscSmMJSoF8LOIrt8ud/wPtojys4G6+g=="
   "resolved" "https://registry.npmjs.org/safe-buffer/-/safe-buffer-5.1.2.tgz"
   "version" "5.1.2"
+
+"safe-stable-stringify@^1.1.0":
+  "integrity" "sha512-ERq4hUjKDbJfE4+XtZLFPCDi8Vb1JqaxAPTxWFLBx8XcAlf9Bda/ZJdVezs/NAfsMQScyIlUMx+Yeu7P7rx5jw=="
+  "resolved" "https://registry.npmjs.org/safe-stable-stringify/-/safe-stable-stringify-1.1.1.tgz"
+  "version" "1.1.1"
 
 "saslprep@^1.0.0":
   "integrity" "sha512-/MY/PEMbk2SuY5sScONwhUDsV2p77Znkb/q3nSVstq/yQzYJOH/Azh29p9oJLsl3LnQwSvZDKagDGBsBwSooag=="
@@ -2721,6 +2740,11 @@
   "resolved" "https://registry.npmjs.org/text-table/-/text-table-0.2.0.tgz"
   "version" "0.2.0"
 
+"through@>=2.2.7 <3":
+  "integrity" "sha1-DdTJ/6q8NXlgsbckEV1+Doai4fU="
+  "resolved" "https://registry.npmjs.org/through/-/through-2.3.8.tgz"
+  "version" "2.3.8"
+
 "timm@^1.6.1":
   "integrity" "sha512-IjZc9KIotudix8bMaBW6QvMuq64BrJWFs1+4V0lXwWGQZwH+LnX87doAYhem4caOEusRP9/g6jVDQmZ8XOk1nw=="
   "resolved" "https://registry.npmjs.org/timm/-/timm-1.7.1.tgz"
@@ -2807,9 +2831,9 @@
   "version" "4.4.3"
 
 "uint8arrays@^2.1.3":
-  "integrity" "sha512-k+yuEWEHQG/TuRaxL+JVEe8IBqyU5dhDkw+CISCDccOcW90dIju0A6i0Iwav0MK7kg73FZpowqOByS5e/B6GYA=="
-  "resolved" "https://registry.npmjs.org/uint8arrays/-/uint8arrays-2.1.7.tgz"
-  "version" "2.1.7"
+  "integrity" "sha512-Q9/hhJa2836nQfEJSZTmr+pg9+cDJS9XEAp7N2Vg5MzL3bK/mkMVfjscRGYruP9jNda6MAdf4QD/y78gSzkp6A=="
+  "resolved" "https://registry.npmjs.org/uint8arrays/-/uint8arrays-2.1.10.tgz"
+  "version" "2.1.10"
   dependencies:
     "multiformats" "^9.4.2"
 
