@@ -199,32 +199,31 @@ export class RemarkStorageAdapter implements IConsolidatorAdapter {
 
   public async updateNFTMint(nft: NFT): Promise<void> {
     await this.db.read();
-    let nftDb: NFTConsolidated = this.db.data.nfts.find(({ id }) => id === nft.getId());
-    nftDb = {
+    this.db.data.nfts.push({
       ...nft,
       symbol: nft.symbol,
       id: nft.getId(),
-    };
+    });
     await this.db.write();
   }
 
   public async updateCollectionMint(collection: CollectionConsolidated): Promise<CollectionConsolidated> {
     await this.db.read();
-    let collectionDb: CollectionConsolidated = this.db.data.collections.find(({ id }) => id === collection.id);
-    collectionDb = collection;
+    this.db.data.collections.push(collection);
     await this.db.write();
-    return collectionDb;
+    const collectionDb = await this.getCollectionById(collection.id);
+    return collectionDb
   }
 
   public async updateBase(base: Base): Promise<BaseConsolidated> {
     await this.db.read();
-    let baseDb: BaseConsolidated = this.db.data.bases.find(({ id }) => id === base.getId());
-    baseDb = {
+    this.db.data.bases.push({
       ...base,
       id: base.getId(),
-    };
+    });
     await this.db.write();
-    return baseDb;
+    const baseDb = await this.getBaseById(base.getId());
+    return baseDb
   }
 
   public async updateBaseThemeAdd(
@@ -273,7 +272,7 @@ export class RemarkStorageAdapter implements IConsolidatorAdapter {
     return this.db.data.nfts.find(({ id }) => id === NFTId);
   }
 
-  public async getCollectionById(collectionId: string): Promise<CollectionConsolidated>  {
+  public async getCollectionById(collectionId: string): Promise<CollectionConsolidated> {
     await this.db.read();
     return this.db.data.collections.find(({ id }) => id === collectionId);
   }

@@ -107,7 +107,7 @@ class SubstrateBot {
       //handle error here
       console.log(err);
     }
-    //await mintNFT()
+    await mintNFT()
     this.invalidateCacheInterval = setInterval(() => {
       [...alreadyReceived.entries()].forEach(key => {
         const dateMinuteAgo = new Date();
