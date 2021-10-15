@@ -24,7 +24,7 @@
     "qrcode": "^1.4.4",
     "qrcode-reader": "^1.0.4",
     "random-number-csprng": "^1.0.2",
-    "rmrk-tools": "^2.0.4"
+    "rmrk-tools": "^2.0.19"
   },
   "deprecated": false,
   "type": "module",

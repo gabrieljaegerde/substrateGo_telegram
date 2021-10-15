@@ -1,8 +1,7 @@
 import { MenuTemplate, MenuMiddleware, deleteMenuFromContext } from "grammy-inline-menu";
 import { botParams, getKeyboard } from "../../../config.js";
 import { getTransactionCost, mintAndSend } from "../../network/accountHandler.js";
-import pkg from 'rmrk-tools';
-const { NFT } = pkg;
+import { NFT } from "rmrk-tools";
 import { amountToHumanString, bigNumberArithmetic, bigNumberComparison } from "../../../tools/utils.js";
 import Treasure, { ITreasure } from "../../models/treasure.js";
 import Reward, { IReward } from "../../models/reward.js";
