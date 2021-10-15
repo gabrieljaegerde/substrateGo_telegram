@@ -48,7 +48,7 @@ export const getSettings = () => {
     collectionSymbol: process.env.COLLECTION_SYMBOL.toString(),
     collectionId: process.env.COLLECTION_ID.toString(),
     //wallet may have an initial balance, to cover collection creation fees for example.
-    walletStartFunds: "94826126970",
+    walletStartFunds: process.env.START_FUNDS.toString(),
     //create a user account to deposit all non-transferrable funds to that are unassigned
     //assign a chat id that is impossible to exist on telegram.
     charityChatId: 100000000000000,
