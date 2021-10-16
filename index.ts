@@ -15,7 +15,6 @@ import { createCharityUser, send } from "./tools/utils.js";
 import { initAccount, getApi } from "./tools/substrateUtils.js";
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
-import { mintNFT } from "./src/nft/nft.js";
 import { LowSync } from "lowdb/lib";
 
 dotenv.config();
@@ -88,10 +87,10 @@ class SubstrateBot {
       });
       const subscriber = listener.initialiseObservable();
       subscriber.subscribe(async (val) => {
-        if (val.invalid && val.invalid.length > 0) {
-          await botParams.bot.api
-            .sendMessage(botParams.settings.adminChatId, `Invalid Remark: ${JSON.stringify(val.invalid)}`);
-        }
+        // if (val.invalid && val.invalid.length > 0) {
+        //   await botParams.bot.api
+        //     .sendMessage(botParams.settings.adminChatId, `Invalid Remark: ${JSON.stringify(val.invalid)}`);
+        // }
       });
     };
     await startListening();
@@ -107,7 +106,6 @@ class SubstrateBot {
       //handle error here
       console.log(err);
     }
-    //await mintNFT()
     this.invalidateCacheInterval = setInterval(() => {
       [...alreadyReceived.entries()].forEach(key => {
         const dateMinuteAgo = new Date();

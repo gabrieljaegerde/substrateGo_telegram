@@ -2,6 +2,7 @@ import { botParams, getKeyboard } from "../../config.js";
 import { amountToHuman } from "../../tools/utils.js";
 import User, { IUser } from "../models/user.js";
 import { CustomContext } from "../../types/CustomContext.js";
+import { encodeAddress } from "@polkadot/util-crypto";
 
 export const linkAddress = async (ctx: CustomContext): Promise<void> => {
   const user: IUser = await User.findOne({ chatId: ctx.chat.id });
@@ -28,7 +29,8 @@ export const linkAddress = async (ctx: CustomContext): Promise<void> => {
     `are the rightful owner of the wallet. Do NOT share this amount with anyone!)` +
     "\n\n*FROM* the address you registered:" +
     `*\n\n${user.wallet.address}\n\n*` +
-    "*TO* this address: \n\n`" + botParams.account.address + "`\n\n" +
+    "*TO* this address: \n\n`" + encodeAddress(botParams.account.address, botParams.settings.network.prefix) + 
+    "`\n\n" +
     "As soon as a transfer comes in, I will credit your account.\n\n" +
     "Please note that the password expires in 15 minutes! After which you will have to generate " +
     "a new one by clicking on '🔗 Link address' in the menu again." +

@@ -27,7 +27,7 @@ export const createCollection = async () => {
     const ItemsCollection = new Collection(
       0,
       0,
-      encodeAddress(botParams.account.address, 2),
+      encodeAddress(botParams.account.address, botParams.settings.network.prefix),
       botParams.settings.collectionSymbol,
       collectionId,
       collectionMetadataCid
@@ -78,7 +78,7 @@ export const mintNFT = async() => {
       symbol: `tester_1`,
       transferable: 1,
       sn: `1`.padStart(8, "0"),
-      owner: encodeAddress(botParams.account.address, 2),
+      owner: encodeAddress(botParams.account.address, botParams.settings.network.prefix),
       metadata: metadataCid,
     });
 

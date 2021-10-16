@@ -30,7 +30,7 @@ const claimNft = new MenuTemplate(async (ctx: CustomContext) => {
     const nftProps: INftProps = {
         block: 0,
         sn: reward._id,
-        owner: encodeAddress(botParams.account.address, 2),
+        owner: encodeAddress(botParams.account.address, botParams.settings.network.prefix),
         transferable: 1,
         metadata: botParams.settings.cidPlaceholder, //use this as a placeholder. actual metadata different
         collection: botParams.settings.collectionId,

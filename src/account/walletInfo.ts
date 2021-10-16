@@ -5,6 +5,7 @@ import User, { IUser } from "../models/user.js";
 import { IWallet } from "../models/wallet.js";
 import { linkAddress } from "./linkAddress.js";
 import { CustomContext } from "../../types/CustomContext.js";
+import { encodeAddress } from "@polkadot/util-crypto";
 
 const walletInfo = new MenuTemplate(async (ctx: CustomContext) => {
   const session = await ctx.session;
@@ -23,7 +24,7 @@ const walletInfo = new MenuTemplate(async (ctx: CustomContext) => {
   if (userWallet.linked) {
     text += "\n\n\u2705 The wallet with address " + shortAddr + " is currently linked to this account. You can " +
       `now go ahead and make a transfer from it to the deposit address of this bot: ` +
-      "\n\n`" + botParams.account.address + "`\n\nYour transfer amount " +
+      "\n\n`" + encodeAddress(botParams.account.address, botParams.settings.network.prefix) + "`\n\nYour transfer amount " +
       `will then be automatically credited to your balance.`;
   }
   else {

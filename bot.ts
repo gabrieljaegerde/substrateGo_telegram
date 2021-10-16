@@ -143,7 +143,7 @@ export const start = async (): Promise<Bot> => {
    *   /menu command handler
    */
   bot.command("menu", async (ctx: CustomContext) => {
-    if (ctx.chat.type == "private") {
+    if (ctx.chat.type == "private") {      
       await resetSession(ctx);
       const message = "Here you go";
       await ctx.reply(

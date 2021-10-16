@@ -114,14 +114,14 @@ export const getKeyboard = async (ctx: CustomContext): Promise<Keyboard> => {
     case "main":
       if (user.wallet && user.wallet.address && user.wallet.linked) {
         return getMainLinkedKeyboard(amountToHumanString(
-          userBalance, 2));
+          userBalance, 4));
       }
       else if (user.wallet && user.wallet.address && !user.wallet.linked) {
         return getMainNoLinkedKeyboard(amountToHumanString(
-          userBalance, 2));
+          userBalance, 4));
       }
       else if (!user.wallet && bigNumberComparison(user.rewardBalance, "0", ">")) {
-        return getMainRewardBalanceKeyboard(amountToHumanString(user.rewardBalance, 2));
+        return getMainRewardBalanceKeyboard(amountToHumanString(user.rewardBalance, 4));
       }
       return mainKeyboard;
     default:

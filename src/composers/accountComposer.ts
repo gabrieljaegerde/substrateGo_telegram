@@ -90,7 +90,7 @@ accountComposer.hears("🧾 Withdraw", async (ctx: CustomContext) => {
     if (ctx.chat.type == "private") {
         await resetSession(ctx);
         const user: IUser = await User.findOne({ chatId: ctx.chat.id });
-        const replyMsg = `Your balance: *${amountToHumanString(user.getBalance())}*\n\nHow much would you ` +
+        const replyMsg = `Your balance:\n*${amountToHumanString(user.getBalance(), 12)}*\n\nHow much would you ` +
             `like to withdraw?\n\n_Please use '.' notation instead of commas. e.g. 0.02 or 0.5 or 1.4 etc._`;
         enterWithdrawAmount.replyWithMarkdown(ctx, replyMsg);
         //withdrawBalanceMiddleware.replyToContext(ctx)
