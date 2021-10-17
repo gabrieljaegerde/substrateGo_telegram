@@ -132,7 +132,7 @@ claimNft.interact("Proceed", "sp", {
 
             const remarks: string[] = [];
             const nft = new NFT(session.nft);
-            remarks.push(nft.mint());
+            remarks.push(nft.mint(user.wallet.address));
 
             const { block, success, hash, fee, topupRequired } = await mintAndSend(remarks, user);
             if (success) {
