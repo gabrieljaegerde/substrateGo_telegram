@@ -11,7 +11,7 @@ export const generateQr = async (ctx: CustomContext): Promise<void> => {
         let id;
         let qr: IQr;
         do {
-            id = crypto.randomBytes(parseInt(botParams.settings.codeLength)).toString("hex");
+            id = crypto.randomBytes(parseInt(botParams.settings.codeLength)/2).toString("hex");
             qr = await Qr.findOne({ code: id });
         } while (qr);
         const codeLink = `https://t.me/${botParams.settings.botUsername}?start=` + id;

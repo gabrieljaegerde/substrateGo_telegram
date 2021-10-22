@@ -122,13 +122,13 @@ export const start = async (): Promise<Bot> => {
           const treasureExists: boolean = await Treasure.exists({ code: code });
           //trying to create a treasure
           if (userIsCreator && !treasureExists) {
-            const { treasure, createStep } = await prepareSetup(ctx, code);
+            const { treasure, createStep } = await prepareSetup(ctx, code, false);
             session.treasure = treasure;
             session.createStep = createStep;
             return;
           }
           else {
-            const { treasure, collectStep } = await prepareCollection(ctx, code);
+            const { treasure, collectStep } = await prepareCollection(ctx, code, false);
             session.treasure = treasure;
             session.collectStep = collectStep;
             if (treasure)
