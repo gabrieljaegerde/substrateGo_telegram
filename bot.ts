@@ -143,7 +143,7 @@ export const start = async (): Promise<Bot> => {
    *   /menu command handler
    */
   bot.command("menu", async (ctx: CustomContext) => {
-    if (ctx.chat.type == "private") {      
+    if (ctx.chat.type == "private") {
       await resetSession(ctx);
       const message = "Here you go";
       await ctx.reply(
@@ -222,7 +222,9 @@ export const start = async (): Promise<Bot> => {
       const session = await ctx.session;
       session.collectStep = "";
       await ctx.answerCallbackQuery();
-      const message = "Collection Canceled";
+      const message = "Collection Canceled.\n\n" +
+        `_I have saved this treasure for you and you can still claim it within the next 30 days. ` +
+        `To claim it, simply click on '🛍️ My treasures' in the Finder menu._`;
       await ctx.reply(message, {
         reply_markup: {
           keyboard: (await getKeyboard(ctx)).build(),
