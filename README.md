@@ -44,7 +44,9 @@ Head on over to [Pinata](https://www.pinata.cloud/) to generate and API key.
 Create a mongodb with [atlas](https://www.mongodb.com/atlas/database) for example.
 
 ```npm install```
+
 ```tsc```
+
 ```node dist/index.js```
 
 ### License
