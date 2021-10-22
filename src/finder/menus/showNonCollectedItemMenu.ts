@@ -14,7 +14,7 @@ export const showNonCollectedItem = new MenuTemplate(async (ctx: CustomContext) 
   const creator = await treasure.getCreator();
   const info = `Treasure: *${reward.name}*\nCreator: *${creator._id}*\n\n` +
     `This treasure will expire on ${reward.expiry.toDateString()}. Claim it before then!`;
-  return info;
+    return { text: info, parse_mode: "Markdown" };
 });
 
 showNonCollectedItem.interact("Claim", "vnc", {
