@@ -16,7 +16,7 @@ export const generateQr = async (ctx: CustomContext): Promise<void> => {
         } while (qr);
         const codeLink = `https://t.me/${botParams.settings.botUsername}?start=` + id;
         const url = await QRCode.toDataURL(codeLink);
-        const qrImage = await decorateQr(Buffer.from(url.split(',')[1], 'base64'));
+        const qrImage = await decorateQr(Buffer.from(url.split(',')[1], 'base64'), id);
         const message = "Go ahead and *print* this sticker now.\n\n_Once you have placed it somewhere, " +
             "click on_ *'🗞️ Create treasure 🗞️'* _again " +
             "and move on to_ *Step 2: 'Add Treasure'*_, to link it to a location._";
