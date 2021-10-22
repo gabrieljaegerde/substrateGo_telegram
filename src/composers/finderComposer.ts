@@ -116,10 +116,12 @@ finderComposer.on("message:location", async (ctx) => {
                         currDistance = distance(userLocation, curr.location, "K");
                     return (prevDistance < currDistance) ? prev : curr;
                 });
+                const creator = await nearest.getCreator();
                 const message = `The closest treasure (that has not been collected by you yet) is ` +
                     `*${Math.round(distance(userLocation, nearest.location, "K") * 100) / 100}km* away.\n\n` +
                     `This treasure has been collected by *${await nearest.howManyCollected()}* others so far.\n\n` +
                     `Hint: *${nearest.hint}*\n\n` +
+                    `Creator: *${creator._id}*\n\n` +
                     `Treasure *${nearest.name}'s* location:`;
                 await ctx.reply(
                     message,

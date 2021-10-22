@@ -216,6 +216,7 @@ export const start = async (): Promise<Bot> => {
           keyboard: (await getKeyboard(ctx)).build(),
           resize_keyboard: true
         },
+        parse_mode: "Markdown",
       });
     }
     else if (ctx.update.callback_query.data === "❌ Cancel Collection") {
@@ -230,6 +231,7 @@ export const start = async (): Promise<Bot> => {
           keyboard: (await getKeyboard(ctx)).build(),
           resize_keyboard: true
         },
+        parse_mode: "Markdown",
       });
     }
     console.log("Unknown button event with payload", ctx.callbackQuery.data);

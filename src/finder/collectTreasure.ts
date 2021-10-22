@@ -28,7 +28,8 @@ export const prepareCollection = async (ctx: CustomContext, code: string, isScan
     }
     else if (!treasure && !isScan) {
         //exit
-        message = "That code does not belong to this bot...\n\n_If you entered it correctly, then this treasure is a fake._";
+        message = "That code does not belong to this bot... Please try again.\n\n" +
+            "_If you entered it correctly, then this treasure is a fake._";
         await ctx.reply(message, {
             reply_markup: cancelCollectInlineKeyboard, parse_mode: "Markdown"
         });

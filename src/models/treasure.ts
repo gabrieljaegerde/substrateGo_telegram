@@ -3,6 +3,8 @@ import Reward from "./reward.js";
 import { LocationSchema } from "./location.js";
 import { ILocation } from "./location.js";
 import { IReward } from "./reward.js";
+import User, { IUser } from "./user.js";
+
 
 export interface ITreasure extends Document {
     createdAt: Date;
@@ -16,6 +18,7 @@ export interface ITreasure extends Document {
     file: string;
     howManyCollected(): Promise<number>;
     checkIfAlreadyCollected(userId: number): Promise<boolean>;
+    getCreator(): Promise<IUser>;
 }
 
 const Schema = mongoose.Schema;
@@ -64,6 +67,10 @@ TreasureSchema.methods.howManyCollected = async function (this: ITreasure): Prom
 
 TreasureSchema.methods.checkIfAlreadyCollected = async function (this: ITreasure, userId: number): Promise<boolean> {
     return await Reward.exists({ treasureId: this._id, finder: userId });
+};
+
+TreasureSchema.methods.getCreator = async function (this: ITreasure): Promise<IUser> {
+    return await User.findOne({ chatId: this.creator });
 };
 
 export default mongoose.model<ITreasure>('treasure', TreasureSchema);

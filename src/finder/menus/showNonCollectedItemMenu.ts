@@ -2,6 +2,7 @@ import { MenuTemplate, deleteMenuFromContext, createBackMainMenuButtons } from "
 import { prepareCollection } from "../collectTreasure.js";
 import Treasure, { ITreasure } from "../../models/treasure.js";
 import Reward, { IReward } from "../../models/reward.js";
+import User, { IUser } from "../../models/user.js";
 import { claimNftMiddleware } from "./claimNftMenu.js";
 import { CustomContext } from "../../../types/CustomContext.js";
 
@@ -10,7 +11,9 @@ export const showNonCollectedItem = new MenuTemplate(async (ctx: CustomContext) 
   const reward: IReward = await Reward.findOne({ _id: ctx.match[1], finder: ctx.chat.id });
   const treasure: ITreasure = await Treasure.findOne({ _id: reward.treasureId });
   session.code = treasure.code;
-  const info = `This treasure (${reward.name}) will expire on ${reward.expiry.toDateString()}. Claim it before then!`;
+  const creator = await treasure.getCreator();
+  const info = `Treasure: *${reward.name}*\nCreator: *${creator._id}*\n\n` +
+    `This treasure will expire on ${reward.expiry.toDateString()}. Claim it before then!`;
   return info;
 });
 
