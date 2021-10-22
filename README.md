@@ -2,12 +2,12 @@
 
 **KusamaGo** is a global **NFT treasure hunt** game. 
 
-With this bot users can easily **create*** and **collect** treasures.
+With this bot users can easily **create** and **collect** treasures.
 
-Try it -> [kusamaGo](https://t.me/kusamaGo_bot)
+*Try it -> [kusamaGo](https://t.me/kusamaGo_bot)*
 ## Game Play
 
-KusamaGo is like **geo-caching with NFT rewards**.
+*KusamaGo is like **geo-caching with NFT rewards***.
 
 Users can take on roles of **Creator** and **Finder** interchangibly.
 
