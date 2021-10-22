@@ -63,8 +63,7 @@ TreasureSchema.methods.howManyCollected = async function (this: ITreasure): Prom
 };
 
 TreasureSchema.methods.checkIfAlreadyCollected = async function (this: ITreasure, userId: number): Promise<boolean> {
-    const reward: IReward = await Reward.findOne({ treasureId: this._id, finder: userId });
-    return reward ? true : false;
+    return await Reward.exists({ treasureId: this._id, finder: userId });
 };
 
 export default mongoose.model<ITreasure>('treasure', TreasureSchema);
