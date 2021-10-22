@@ -1,31 +1,32 @@
 # KusamaGo Telegram Bot
 
-KusamaGo is a global NFT treasure hunt game. 
-With this bot users can easily *create* and *collect* treasures.
+**KusamaGo** is a global **NFT treasure hunt** game. 
 
-Try it -> [kusamaGo](t.me/kusamaGo_bot)
+With this bot users can easily **create*** and **collect** treasures.
+
+Try it -> [kusamaGo](https://t.me/kusamaGo_bot)
 ## Game Play
 
-KusamaGo is like geo-caching with NFT rewards.
+KusamaGo is like **geo-caching with NFT rewards**.
 
-Users can take on roles of Creator and Finder interchangibly.
+Users can take on roles of **Creator** and **Finder** interchangibly.
 
-<img src="./assets/mainMenu.jpg?raw=true" width="250" alt="Main Menu">
+<img src="./assets/mainMenu.jpg?raw=true" width="200" alt="Main Menu">
 
-In creator mode users can create and edit treasures as well as track their progress. By editing a treasure, the creator can customize the NFT that users will receive when collecting the respective treasure.
+In **creator** mode users can **create** and **edit treasures** as well as track their progress. By editing a treasure, the creator can **customize** the **NFT** that users will receive when collecting their treasure.
 
-<img src="./assets/creatorMenu.jpg?raw=true" width="250" alt="Creator Menu">
+<img src="./assets/creatorMenu.jpg?raw=true" width="200" alt="Creator Menu">
 
-In the finder mode users have tools to find treasures near them. Treasures can easily be collected and collected treasures viewed. Collected treasures exist as NFTs on the Kusama blockchain.
+In the **finder** mode users have tools to find treasures near them. It's easy to **collect treasures** and view collected ones. Collected treasures exist as **NFTs** on the **Kusama** blockchain.
 
-<img src="./assets/finderMenu.jpg?raw=true" width="250" alt="Finder Menu">
+<img src="./assets/finderMenu.jpg?raw=true" width="200" alt="Finder Menu">
 
-Albeit low (a few USD cents), transactions on the Kusama chain incur a network cost. This cost is incurred when an NFT gets minted (at treasure collection) and to be paid by the collector. A user is therefore required to connect their account to their wallet before being able to collect treasures. The NFTs (for the treasures collected) will also be sent to that wallet. Any account related tasks can easily be take care of in the Account Settings
+Albeit low (a few USD cents), transactions on the Kusama chain incur a network cost. This **cost** is incurred when an **NFT** gets **minted** (at treasure collection) and to be paid by the collector. A user is therefore required to **connect** their account to their **wallet** before being able to collect treasures. The NFTs (for the treasures collected) will also be sent to that wallet. Any account related tasks can easily be take care of in the **Account Settings**
 
-<img src="./assets/accountSettings.jpg?raw=true" width="250" alt="Account Settings">
+<img src="./assets/accountSettings.jpg?raw=true" width="200" alt="Account Settings">
 
 ## Join us
-[Telegram Group](t.me/kusamaGo)
+[Telegram Group](https://t.me/kusamaGo)
 
 ## Future Projects
 1. Create a website with a world map of all the treasures.
