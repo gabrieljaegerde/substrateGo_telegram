@@ -8,19 +8,27 @@ import User, { IUser } from "../models/user.js";
 import Reward, { IReward } from "../models/reward.js";
 import { claimNftMiddleware } from "./menus/claimNftMenu.js";
 
-export const prepareCollection = async (ctx: CustomContext, code: string):
+export const prepareCollection = async (ctx: CustomContext, code: string, isScan: boolean):
     Promise<{ treasure: ITreasure, collectStep: string; }> => {
     const user: IUser = await User.findOne({ chatId: ctx.chat.id });
     //see if this qr id is registered in the db
     const treasure: ITreasure = await Treasure.findOne({ code: code });
-    let message;
+    let message: string;
     //qr not registered in db
-    if (!treasure) {
+    if (!treasure && isScan) {
         //exit
         message = "The QR Code you tried to scan, either does not belong to this bot, " +
-            "or has not been activated yet. If you think that I am mistaken, then please try again.\n\n" +
-            "It is likely that I was not able to correctly read the QR code in the last picture. So " +
-            "maybe just try sending a new one.";
+            "or has not been activated yet.\n\n_It's possible that I was not able to read the QR Code properly. " +
+            "Maybe try entering the code manually (alphanumeric below the QR Code)._";
+        await ctx.reply(message, {
+            reply_markup: cancelCollectInlineKeyboard, parse_mode: "Markdown"
+        });
+        return { treasure: null, collectStep: "qr" };
+
+    }
+    else if (!treasure && !isScan) {
+        //exit
+        message = "That code does not belong to this bot...\n\n_If you entered it correctly, then this treasure is a fake._";
         await ctx.reply(message, {
             reply_markup: cancelCollectInlineKeyboard, parse_mode: "Markdown"
         });
@@ -107,38 +115,49 @@ export const router = new Router<CustomContext>(async (ctx: CustomContext) => {
 router.route("qr", async (ctx: CustomContext) => {
     const session = await ctx.session;
     let message: string;
-    if (!ctx.message.photo) {
+    if (ctx.message.photo || ctx.message.text) {
+        let code: string;
+        if (ctx.message.photo) {
+            const photo = ctx.message.photo[ctx.message.photo.length - 1];
+            const fileId = photo.file_id;
+            const file = await ctx.getFile(fileId);
+            const url = file.getUrl();
+            const result = await scan(url);
 
-        message = `What you sent me is not a photo. I can only scan photos for QR codes.\n\nPlease send me a single photo (not file).`;
-        await ctx.reply(message, {
-            reply_markup: cancelCollectInlineKeyboard, parse_mode: "Markdown"
-        });
-        return;
-    }
-    if (ctx.message.photo) {
-        const photo = ctx.message.photo[ctx.message.photo.length - 1];
-        const fileId = photo.file_id;
-        const file = await ctx.getFile(fileId);
-        const url = file.getUrl();
-        const result = await scan(url);
-
-        if (result instanceof Error || result === "Error") {
-            message = "An error occured when scanning the QR Code. Please send me a new photo (" +
-                "it helps to crop the image so that only the QR Code is shown).\n\n" +
-                "_Should this error persist, you can also scan the QR Code with any QR Code reader and " +
-                "simply click on the link decrypted by the reader (and then the start button in the bot) " +
-                "to set up this treasure._";
-            await ctx.reply(message, {
-                reply_markup: cancelCollectInlineKeyboard, parse_mode: "Markdown"
-            });
-            return;
+            if (result instanceof Error || result === "Error") {
+                message = "An error occured when scanning the QR Code. Please send me a new photo or " +
+                    "alternatively send me the code below the QR Code as a text message.";
+                await ctx.reply(message, {
+                    reply_markup: cancelCollectInlineKeyboard, parse_mode: "Markdown"
+                });
+                return;
+            }
+            //remove bot url from qr code content
+            code = result.replace(`https://t.me/${botParams.settings.botUsername}?start=`, "");
         }
-        //remove bot url from qr code content
-        const code = result.replace(`https://t.me/${botParams.settings.botUsername}?start=`, "");
-        const { treasure, collectStep } = await prepareCollection(ctx, code);
+        else {
+            code = ctx.message.text;
+            if (code.length !== botParams.settings.codeLength) {
+                message = `I am expecting a ${botParams.settings.codeLength} character long alphanumeric code. ` +
+                    `The code you entered is ${code.length} characters long.`;
+                await ctx.reply(message, {
+                    reply_markup: cancelCollectInlineKeyboard, parse_mode: "Markdown"
+                });
+                return;
+            }
+        }
+        const { treasure, collectStep } = await prepareCollection(ctx, code, ctx.message.photo ? true : false);
         session.treasure = treasure;
         session.collectStep = collectStep;
         if (treasure)
             await claimNftMiddleware.replyToContext(ctx);
+    }
+    else {
+        message = `What you sent me is not a photo or text. I can only scan photos for QR codes ` +
+            `or read text messages with the code directly.`;
+        await ctx.reply(message, {
+            reply_markup: cancelCollectInlineKeyboard, parse_mode: "Markdown"
+        });
+        return;
     }
 });

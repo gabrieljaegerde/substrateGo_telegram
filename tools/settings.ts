@@ -36,7 +36,7 @@ export const getSettings = () => {
     getExtrinsicLinksBlock: getExtrinsicLinksBlock,
     botToken: process.env.BOT_TOKEN,
     botUsername: "kusamaGo_bot",
-    codeLength: 20,
+    codeLength: 40,
     pwordLower: 10000, //0.001wmd
     pwordUpper: 11000, //0.0011wmd
     pwordDigitsToAdd: "5",

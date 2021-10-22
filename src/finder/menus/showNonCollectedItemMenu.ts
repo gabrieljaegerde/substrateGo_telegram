@@ -18,7 +18,7 @@ showNonCollectedItem.interact("Claim", "vnc", {
   do: async (ctx: CustomContext) => {
     const session = await ctx.session;
     await deleteMenuFromContext(ctx);
-    const { treasure, collectStep } = await prepareCollection(ctx, session.code);
+    const { treasure, collectStep } = await prepareCollection(ctx, session.code, false);
     session.treasure = treasure;
     session.collectStep = collectStep;
     if (treasure)
