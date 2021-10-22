@@ -7,7 +7,7 @@ With this bot users can easily **create** and **collect** treasures.
 *Try it -> [kusamaGo](https://t.me/kusamaGo_bot)*
 ## Game Play
 
->*KusamaGo is like **geo-caching with NFT rewards***.
+>KusamaGo is like **geo-caching** with **NFT rewards**
 
 Users can take on roles of **Creator** and **Finder** interchangibly.
 
@@ -51,4 +51,4 @@ Create a mongodb with [atlas](https://www.mongodb.com/atlas/database) for exampl
 ```node dist/index.js```
 
 ### License
-MIT
+Apache License 2.0
