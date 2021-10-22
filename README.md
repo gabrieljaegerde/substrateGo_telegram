@@ -1,30 +1,53 @@
-# Telegram NFT Treasure Hunt Bot
+# KusamaGo Telegram Bot
 
-A bot to create and find NFT treasures on substrate networks.
+KusamaGo is a global NFT treasure hunt game. 
+With this bot users can easily *create* and *collect* treasures.
 
-Requirements:
-create an account on the Kusama chain.
-create a pinata account and api key.
-create a mongo db database (with e.g. atlas)
-create a collection
+Try it -> [kusamaGo](t.me/kusamaGo_bot)
+## Game Play
 
-npm install
+KusamaGo is like geo-caching with NFT rewards.
 
-create a .env file in the root directory with the following variables filled in
-REMARK_STORAGE_DB_FILE_PATH="db/remarkStorage.json"
-BOT_TOKEN="YOUR BOT TOKEN HERE"
-WS_NODE_URI="wss://kusama-rpc.polkadot.io/"
-MNEMONIC="YOUR KUSAMA ACCOUNTS MNEMONIC HERE"
-PINATA_API="YOUR PINATA API KEY HERE"
-PINATA_SECRET="YOUR PINATA SECRET HERE"
-MONGO_URI="YOUR MONGO URI HERE"
-COLLECTION_ID="YOUR COLLECTION ID HERE"
-COLLECTION_SYMBOL="YOUR COLLECTION SYMBOL HERE"
-CID_PLACEHOLDER="ipfs://ipfs/bafkreghiwzsxn1d3t5fm3ejqak476lhuqp5ka3u6shyqosj5umrc3gk14i"
-DEFAULT_FILE="bafkreifzao62rzi25uro4eyu7csr4v46pwi7ixslgra7wjol6l57v3oyea"
+Users can take on roles of Creator and Finder interchangibly.
 
-make the appropriate changes to settings.ts
+![Main Menu](./assets/mainMenu.jpg?raw=true)
 
-tsc
+In creator mode users can create and edit treasures as well as track their progress. By editing a treasure, the creator can customize the NFT that users will receive when collecting the respective treasure.
 
-node dist/index.js
+![Creator Menu](./assets/creatorMenu.jpg?raw=true)
+
+In the finder mode users have tools to find treasures near them. Treasures can easily be collected and collected treasures viewed. Collected treasures exist as NFTs on the Kusama blockchain.
+
+![Finder Menu](./assets/finderMenu.jpg?raw=true)
+
+Albeit low (a few USD cents), transactions on the Kusama chain incur a network cost. This cost is incurred when an NFT gets minted (at treasure collection) and to be paid by the collector. A user is therefore required to connect their account to their wallet before being able to collect treasures. The NFTs (for the treasures collected) will also be sent to that wallet. Any account related tasks can easily be take care of in the Account Settings
+
+![Account Settings](./assets/accountSettings.jpg?raw=true)
+
+## Join us
+[Telegram Group](t.me/kusamaGo)
+
+## Future Projects
+1. Create a website with a world map of all the treasures.
+2. Create a dApp.
+
+This project is open-source and your contributions more than welcome!!!
+
+## Installation
+##### Setting up a node
+While there are other alternatives, we recommend running a local dev [Kusama node](https://guide.kusama.network/docs/maintain-sync/)
+
+##### Create a pinata account
+Head on over to [Pinata](https://www.pinata.cloud/) to generate and API key.
+
+##### Creating a database
+Create a mongodb with [atlas](https://www.mongodb.com/atlas/database) for example.
+
+```npm install```
+
+```tsc```
+
+```node dist/index.js```
+
+### License
+MIT
