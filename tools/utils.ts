@@ -23,15 +23,17 @@ export const scan = async (url: string) => {
   }
 };
 
-export const decorateQr = async (url: Buffer) => {
+export const decorateQr = async (url: Buffer, code: string) => {
   try {
     const canvas = await Jimp.read("assets/sticker.png");
-    await canvas.resize(300, Jimp.AUTO);
+    canvas.resize(300, Jimp.AUTO);
     const qr = await Jimp.read(url);
     const logo = await Jimp.read(`assets/${botParams.settings.network.name}.png`);
     logo.resize(100, Jimp.AUTO);
-    canvas.composite(qr, 60, 95);
+    canvas.composite(qr, 60, 75);
     canvas.composite(logo, 5, 270);
+    const font = await Jimp.loadFont(Jimp.FONT_SANS_12_BLACK);
+    canvas.print(font, 15, 248, code);
     const buffer = await canvas.getBufferAsync(Jimp.MIME_PNG);
     return buffer;
   }

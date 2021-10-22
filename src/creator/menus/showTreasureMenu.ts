@@ -53,7 +53,7 @@ showTreasure.interact("🏙️ Show QR", "sq", {
         if (treasure) {
             const code = `https://t.me/${botParams.settings.botUsername}?start=` + treasure.code;
             const url = await QRCode.toDataURL(code);
-            const qrImage = await decorateQr(Buffer.from(url.split(',')[1], 'base64'));
+            const qrImage = await decorateQr(Buffer.from(url.split(',')[1], 'base64'), treasure.code);
             const message = `Treasure ${treasure.name}'s QR Code:`;
             await ctx.reply(message, {
                 reply_markup: {
