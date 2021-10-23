@@ -39,7 +39,7 @@ const claimNft = new MenuTemplate(async (ctx: CustomContext) => {
     const nft = new NFT(nftProps);
     session.nft = nftProps;
     const remarks: string[] = [];
-    remarks.push(nft.mint());
+    remarks.push(nft.mint(user.wallet.address));
     const info = await getTransactionCost(
         "nft",
         user.wallet.address,
@@ -136,7 +136,6 @@ claimNft.interact("Proceed", "sp", {
             const remarks: string[] = [];
             const nft = new NFT(session.nft);
             remarks.push(nft.mint(user.wallet.address));
-
             const { block, success, hash, fee, topupRequired } = await mintAndSend(remarks, user);
             if (success) {
                 //find user and decrease balance
