@@ -4,6 +4,8 @@ import fetch, { Response } from 'node-fetch';
 import { listUserRewardsMiddleware } from "./listUserRewardsMenu.js";
 import { editNameReward } from "../editNameReward.js";
 import Reward, { IReward } from "../../models/reward.js";
+import Treasure, { ITreasure } from "../../models/treasure.js";
+import { IUser } from "../../models/user.js";
 import { CustomContext } from "../../../types/CustomContext.js";
 import { InlineKeyboard, InputFile } from "grammy";
 
@@ -11,13 +13,15 @@ const showCollectedItem = new MenuTemplate(async (ctx: CustomContext) => {
   const session = await ctx.session;
   const reward: IReward = await Reward.findOne({ _id: ctx.match[1], finder: ctx.chat.id });
   session.reward = reward;
-  const allRewards: IReward[] = await Reward.find({ treasureId: reward.treasureId, collected: true });
-  let info = `_Name_: *${reward.name}*\n\nYou collected this ` +
+  const treasure: ITreasure = await Treasure.findOne({ _id: reward.treasureId });
+  const creator: IUser = await treasure.getCreator()
+  const collectedTimes = await treasure.howManyCollected();
+  let info = `_Name_: *${reward.name}*\n\n_Creator_: *${creator._id}*\n\nYou collected this ` +
     `treasure on *${reward.dateCollected.toDateString()}*.\n\n` +
     `_Description_: ${reward.description}\n\n`;
-  if (allRewards) {
-    info += `Treasure has been collected by *${allRewards.length - 1}* others.`;
-    if (allRewards.length == 1) {
+  if (collectedTimes) {
+    info += `Treasure has been collected by *${collectedTimes - 1}* others.`;
+    if (collectedTimes === 1) {
       info += `\n\nYour are the *ONLY* one that has collected this treasure so far!`;
     }
   }

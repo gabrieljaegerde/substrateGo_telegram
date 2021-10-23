@@ -49,12 +49,13 @@ const claimNft = new MenuTemplate(async (ctx: CustomContext) => {
     botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id);
     const userBalance = user.getBalance();
     const creator = await treasure.getCreator();
+    let message = `You are about to collect...\nTreasure: *${treasure.name}*\n` +
+        `Creator: *${creator._id}*\n\n` +
+        `Receiving the NFT in your wallet will incur an approximate total ` +
+        `*fee* of _${amountToHumanString(bigNumberArithmetic(info.partialFee.toString(), botParams.settings.creatorReward, "+"))}_\n\n` +
+        `*Network fee (approx.):* _${amountToHumanString(info.partialFee.toString())}_\n*Creator Reward:* _${amountToHumanString(botParams.settings.creatorReward)}_`;
+
     if (bigNumberComparison(info.partialFee.toString(), userBalance, ">")) {
-        const message = `You are about to collect:\nTreasure: *${treasure.name}*\n` +
-            `Creator: *${creator._id}*\n\n` +
-            `Receiving the NFT in your wallet will incur an approximate total ` +
-            `*fee* of _${amountToHumanString(bigNumberArithmetic(info.partialFee.toString(), botParams.settings.creatorReward, "+"))}_\n\n` +
-            `*Network fee (approx.):* _${amountToHumanString(info.partialFee.toString())}_\n*Creator Reward:* _${amountToHumanString(botParams.settings.creatorReward)}_\n\n`;
         await ctx.reply(
             message,
             {
@@ -72,12 +73,8 @@ const claimNft = new MenuTemplate(async (ctx: CustomContext) => {
             `To claim it, simply click on '🛍️ My treasures' in the Finder menu._`;
         return { text: reply, parse_mode: 'Markdown' };
     }
-    const reply = `Receiving the NFT in your wallet will incur an approximate total ` +
-        `*fee* of _${amountToHumanString(bigNumberArithmetic(info.partialFee.toString(), botParams.settings.creatorReward, "+"))}_\n\n` +
-        `*Network fee (approx.):* _${amountToHumanString(info.partialFee.toString())}_\n*Creator Reward:* _${amountToHumanString(botParams.settings.creatorReward)}_\n\n` +
-        `Do you wish to proceed?`;
-
-    return { text: reply, parse_mode: 'Markdown' };
+    message += `\n\nDo you wish to proceed?`
+    return { text: message, parse_mode: 'Markdown' };
 });
 
 claimNft.interact("Proceed", "sp", {

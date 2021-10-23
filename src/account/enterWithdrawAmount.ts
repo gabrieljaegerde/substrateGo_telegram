@@ -2,7 +2,7 @@ import { botParams, getKeyboard } from "../../config.js";
 import { amountToHumanString, bigNumberArithmetic, bigNumberComparison } from "../../tools/utils.js";
 import { StatelessQuestion } from "@grammyjs/stateless-question";
 import User, { IUser } from "../models/user.js";
-import { withdrawBalanceMiddleware } from "./withdraw.js";
+import { withdrawBalanceMiddleware } from "./menus/withdrawBalanceMenu.js";
 import { CustomContext } from "../../types/CustomContext.js";
 
 export const enterWithdrawAmount = new StatelessQuestion("amt", async (ctx: CustomContext) => {
