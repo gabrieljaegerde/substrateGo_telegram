@@ -65,7 +65,6 @@ class SubstrateBot {
       this.settings.network.token = networkProperties.tokenSymbol.toString();
     }
     botParams.settings = this.settings;
-    botParams.bot = await bot.start();
     await createCharityUser();
 
     //setup block listener for transaction listener
@@ -120,6 +119,7 @@ class SubstrateBot {
       botParams.bot = await bot.start();
     else {
       await createGoCollection();
+      process.exit()
     }
   }
 
