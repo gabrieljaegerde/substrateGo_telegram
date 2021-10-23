@@ -21,7 +21,6 @@ const showCollectedItem = new MenuTemplate(async (ctx: CustomContext) => {
       info += `\n\nYour are the *ONLY* one that has collected this treasure so far!`;
     }
   }
-  //todo: add more info regarding treasure
   return { text: info, parse_mode: "Markdown" };
 });
 
