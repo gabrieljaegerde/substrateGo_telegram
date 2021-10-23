@@ -1,4 +1,7 @@
-# KusamaGo Telegram Bot
+<p float="left">
+  <img src="./assets/logo.jpeg" width="50" />
+  <h1>KusamaGo Telegram Bot</h1>
+</p>
 
 **KusamaGo** is a global **NFT treasure hunt** game. 
 
