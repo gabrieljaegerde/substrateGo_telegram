@@ -16,6 +16,7 @@ import { initAccount, getApi } from "./tools/substrateUtils.js";
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { LowSync } from "lowdb/lib";
+import { createGoCollection } from "./tools/startScripts/createGoCollection.js";
 
 dotenv.config();
 
@@ -115,6 +116,11 @@ class SubstrateBot {
         }
       });
     }, 60000);
+    if (process.env.SETUP_COMPLETE === "true")
+      botParams.bot = await bot.start();
+    else {
+      await createGoCollection();
+    }
   }
 
   async stop() {

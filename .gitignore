@@ -1,7 +1,9 @@
 .env
 node_modules/
 todo.js
-db/*
+db/treasureItems.json
+db/remarkStorage.json
+db/officialAccounts.json
 .DS_Store
 metrics.js
 dist/
