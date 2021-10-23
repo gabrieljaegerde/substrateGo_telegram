@@ -1,10 +1,10 @@
 import { MenuTemplate, MenuMiddleware, deleteMenuFromContext } from "grammy-inline-menu";
-import { botParams } from "../../config.js";
-import { amountToHumanString } from "../../tools/utils.js";
-import User, { IUser } from "../models/user.js";
-import { IWallet } from "../models/wallet.js";
-import { linkAddress } from "./linkAddress.js";
-import { CustomContext } from "../../types/CustomContext.js";
+import { botParams } from "../../../config.js";
+import { amountToHumanString } from "../../../tools/utils.js";
+import User, { IUser } from "../../models/user.js";
+import { IWallet } from "../../models/wallet.js";
+import { linkAddress } from "../linkAddress.js";
+import { CustomContext } from "../../../types/CustomContext.js";
 import { encodeAddress } from "@polkadot/util-crypto";
 
 const walletInfo = new MenuTemplate(async (ctx: CustomContext) => {

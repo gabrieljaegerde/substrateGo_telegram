@@ -1,16 +1,16 @@
-import { botParams, getKeyboard } from "../../config.js";
+import { botParams, getKeyboard } from "../../../config.js";
 import {
   MenuTemplate,
   MenuMiddleware,
   createBackMainMenuButtons,
   deleteMenuFromContext
 } from "grammy-inline-menu";
-import { withdraw, getTransactionCost } from "../network/accountHandler.js";
-import { amountToHumanString, bigNumberArithmetic, bigNumberComparison } from "../../tools/utils.js";
-import User, { IUser } from "../models/user.js";
+import { withdraw, getTransactionCost } from "../../network/accountHandler.js";
+import { amountToHumanString, bigNumberArithmetic, bigNumberComparison } from "../../../tools/utils.js";
+import User, { IUser } from "../../models/user.js";
 import { InlineKeyboard } from "grammy";
-import { enterWithdrawAmount } from "./enterWithdrawAmount.js";
-import { CustomContext } from "../../types/CustomContext.js";
+import { enterWithdrawAmount } from "../enterWithdrawAmount.js";
+import { CustomContext } from "../../../types/CustomContext.js";
 
 //create submenu for withdrawal
 const withdrawBalance = new MenuTemplate(async (ctx: CustomContext) => {

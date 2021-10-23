@@ -2,13 +2,13 @@ import { Composer } from "grammy";
 import { CustomContext } from "../../types/CustomContext.js";
 import { botParams, getKeyboard } from "../../config.js";
 import { enterAddress } from "../account/enterAddress.js";
-import { withdrawBalanceMiddleware } from "../account/withdraw.js";
+import { withdrawBalanceMiddleware } from "../account/menus/withdrawBalanceMenu.js";
 import { enterWithdrawAmount } from "../account/enterWithdrawAmount.js";
-import { walletInfoMiddleware } from "../account/walletInfo.js";
+import { walletInfoMiddleware } from "../account/menus/walletInfoMenu.js";
 import { linkAddress } from "../account/linkAddress.js";
 //import prom from "./metrics.js"
 import User, { IUser } from "../models/user.js";
-import { resetSession, amountToHumanString } from "../../tools/utils.js";
+import { resetSession, amountToHumanString, amountToHuman } from "../../tools/utils.js";
 
 export const accountComposer = new Composer<CustomContext>();
 
@@ -90,10 +90,10 @@ accountComposer.hears("🧾 Withdraw", async (ctx: CustomContext) => {
     if (ctx.chat.type == "private") {
         await resetSession(ctx);
         const user: IUser = await User.findOne({ chatId: ctx.chat.id });
-        const replyMsg = `Your balance:\n*${amountToHumanString(user.getBalance(), 12)}*\n\nHow much would you ` +
+        const { value, tokenString } = amountToHuman(user.getBalance(), 12);
+        const replyMsg = "Your balance:\n`" + value + "` " + tokenString + "\n\nHow much would you " +
             `like to withdraw?\n\n_Please use '.' notation instead of commas. e.g. 0.02 or 0.5 or 1.4 etc._`;
         enterWithdrawAmount.replyWithMarkdown(ctx, replyMsg);
-        //withdrawBalanceMiddleware.replyToContext(ctx)
     }
 });
 
