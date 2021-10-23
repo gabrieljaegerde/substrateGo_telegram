@@ -1,7 +1,7 @@
 import { MenuTemplate, MenuMiddleware, deleteMenuFromContext } from "grammy-inline-menu";
 import { botParams, getKeyboard } from "../../../config.js";
 import { getTransactionCost, mintAndSend } from "../../network/accountHandler.js";
-import { NFT } from "rmrk-tools";
+import { Collection, NFT } from "rmrk-tools";
 import { amountToHumanString, bigNumberArithmetic, bigNumberComparison } from "../../../tools/utils.js";
 import Treasure, { ITreasure } from "../../models/treasure.js";
 import Reward, { IReward } from "../../models/reward.js";
@@ -12,6 +12,7 @@ import { pinSingleMetadataWithoutFile, unpin } from "../../../tools/pinataUtils.
 import { InlineKeyboard, InputFile } from "grammy";
 import { CustomContext } from "../../../types/CustomContext.js";
 import { INftProps } from "../../../types/NftProps.js";
+import { u8aToHex } from "@polkadot/util";
 
 const claimNft = new MenuTemplate(async (ctx: CustomContext) => {
     const session = await ctx.session;
@@ -26,14 +27,17 @@ const claimNft = new MenuTemplate(async (ctx: CustomContext) => {
     }
     const reward: IReward = await Reward.findOne({ finder: ctx.chat.id, treasureId: treasure._id });
     const user: IUser = await User.findOne({ chatId: ctx.chat.id });
-    //can sn only be 8 digits?
+    const collectionId = Collection.generateId(
+        u8aToHex(botParams.account.publicKey),
+        botParams.settings.collectionSymbol
+    );
     const nftProps: INftProps = {
         block: 0,
         sn: reward._id,
         owner: encodeAddress(botParams.account.address, botParams.settings.network.prefix),
         transferable: 1,
         metadata: botParams.settings.cidPlaceholder, //use this as a placeholder. actual metadata different
-        collection: botParams.settings.collectionId,
+        collection: collectionId,
         symbol: treasure.name,
     };
     const nft = new NFT(nftProps);
