@@ -17,6 +17,7 @@ import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { LowSync } from "lowdb/lib";
 import { createGoCollection } from "./tools/startScripts/createGoCollection.js";
+import mongoose from "mongoose";
 
 dotenv.config();
 
@@ -115,16 +116,18 @@ class SubstrateBot {
         }
       });
     }, 60000);
-    if (process.env.SETUP_COMPLETE === "true")
-      botParams.bot = await bot.start();
+    if (process.env.SETUP_COMPLETE === "true") {
+      const { runnerHandle, tBot } = await bot.start();
+      botParams.bot = tBot;
+      botParams.runnerHandle = runnerHandle;
+    }
     else {
       await createGoCollection();
-      process.exit()
+      process.exit();
     }
   }
 
   async stop() {
-    await botParams.bot.stop();
     clearInterval(this.invalidateCacheInterval);
     const users: IUser[] = await User.find({});
     const alert = `🚧🚧🚧🚧🚧🚧🚧🚧🚧\nThe bot will be down for an undetermined amount of time for *maintenance*.\n\n` +
@@ -136,7 +139,11 @@ class SubstrateBot {
         await send(user.chatId, alert);
       }
     }
-    process.exit();
+    await botParams.runnerHandle.stop();
+    console.log("bot stopped.");
+    await mongoose.connection.close(false);
+    console.log('MongoDb connection closed.');
+    process.exit(0);
   }
 }
 

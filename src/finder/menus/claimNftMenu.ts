@@ -13,6 +13,7 @@ import { InlineKeyboard, InputFile } from "grammy";
 import { CustomContext } from "../../../types/CustomContext.js";
 import { INftProps } from "../../../types/NftProps.js";
 import { u8aToHex } from "@polkadot/util";
+import { postCollectionMiddleware } from "./postCollectionMenu.js";
 
 const claimNft = new MenuTemplate(async (ctx: CustomContext) => {
     const session = await ctx.session;
@@ -156,49 +157,24 @@ claimNft.interact("Proceed", "sp", {
                 //save all db changes
                 await reward.save();
 
-
                 await deleteMenuFromContext(ctx);
 
                 //send message to creator
                 await botParams.bot.api
                     .sendMessage(creator.chatId, `Treasure '${treasure.name}' was just collected.\n\n` +
                         `${amountToHumanString(botParams.settings.creatorReward)} credited to your account.`);
-                //send message to finder
-                const successMessage = "Success. The NFT has been minted and sent to your wallet.\n" +
-                    `You can find it in 'My treasures' under the name: ${reward.name}`;
-                const inlineKeyboard = new InlineKeyboard();
-                botParams.settings
-                    .getExtrinsicLinks(
-                        botParams.settings.network.name,
-                        hash
-                    )
-                    .map(row => {
-                        return row.map(link => {
-                            return inlineKeyboard.url(link[0], link[1]);
-                        });
-                    });
-                await botParams.bot.api
-                    .sendMessage(ctx.chat.id, successMessage, { reply_markup: inlineKeyboard, parse_mode: "Markdown" });
                 await botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id);
-                const loadNFTMessage = await botParams.bot.api.sendMessage(ctx.chat.id, "Loading NFT...");
-                const response: Response = await fetch(reward.file.replace('ipfs://', 'https://ipfs.io/'));
-                const json: any = await response.json();
-                const message = `Treasure '${treasure.name}' NFT:`;
-                await ctx.reply(message, {
+                //send message to finder
+                const successMessage = "Success. The NFT has been minted and sent to your wallet.";
+                await ctx.reply(successMessage, {
                     reply_markup: {
                         keyboard: (await getKeyboard(ctx)).build(),
                         resize_keyboard: true
                     },
                     parse_mode: "Markdown",
                 });
-                const image_link = json.image.replace('ipfs://', 'https://ipfs.io/');
-                //directly loading image times out inside replyWithPhoto
-                const image = await fetch(image_link);
-                const arrayBuffer = await image.arrayBuffer();
-                const buffer = Buffer.from(arrayBuffer);
-                await ctx.replyWithPhoto(new InputFile(buffer));
-                await botParams.bot.api.deleteMessage(loadNFTMessage.chat.id, loadNFTMessage.message_id);
-                //await ctx.replyWithPhoto(json.image.replace('ipfs://', 'https://ipfs.io/'));
+                session.reward = reward
+                await postCollectionMiddleware.replyToContext(ctx);
                 return false;
             }
             //if cannot cover transaction cost

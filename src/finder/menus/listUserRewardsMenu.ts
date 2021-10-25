@@ -33,8 +33,5 @@ listUserRewards.submenu('🧸 View collected', 'lco', listCollected);
 
 listUserRewards.submenu('🎁 View non-collected', 'lnco', listNonCollected);
 
-const listUserRewardsMiddleware = new MenuMiddleware('lur/', listUserRewards);
+export const listUserRewardsMiddleware = new MenuMiddleware('lur/', listUserRewards);
 
-export {
-  listUserRewardsMiddleware
-};

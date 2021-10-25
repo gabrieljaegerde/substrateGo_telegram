@@ -33,7 +33,10 @@ export const decorateQr = async (url: Buffer, code: string) => {
     canvas.composite(qr, 60, 75);
     canvas.composite(logo, 5, 270);
     const font = await Jimp.loadFont(Jimp.FONT_SANS_12_BLACK);
-    canvas.print(font, 15, 248, code);
+    canvas.print(font, 0, 248, {
+      text: code,
+      alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER
+    }, canvas.bitmap.width, canvas.bitmap.height);
     const buffer = await canvas.getBufferAsync(Jimp.MIME_PNG);
     return buffer;
   }

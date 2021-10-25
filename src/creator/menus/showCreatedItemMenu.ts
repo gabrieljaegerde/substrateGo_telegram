@@ -44,7 +44,7 @@ showCreatedItem.toggle(async (ctx) => {
     const treasure: ITreasure = await Treasure.findOne({ _id: session.treasureId, creator: ctx.chat.id });
     return treasure.active ? "Activated" : "Deactivated";
 },
-    'a',
+    'x',
     {
         set: async (ctx, choice) => {
             const treasureId = ctx.match[1];
