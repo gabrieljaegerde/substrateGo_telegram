@@ -218,7 +218,6 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
       },
       parse_mode: "Markdown",
     });
-    return next();
   });
 
   /*
@@ -237,7 +236,6 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
       },
       parse_mode: "Markdown",
     });
-    return next();
   });
 
   //order important! 
@@ -254,8 +252,6 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
   bot.on("callback_query:data", async (ctx: CustomContext, next) => {
     console.log("Unknown button event with payload", ctx.callbackQuery.data);
     await ctx.answerCallbackQuery(); // remove loading animation
-    return next();
-
   });
 
   /*
@@ -282,8 +278,5 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
   });
   const runnerHandle = run(bot);
   console.log(new Date(), "Bot started as", bot);
-  // process.once('SIGINT', () => {
-  //   bot.stop()});
-  // process.once('SIGTERM', () => bot.stop());
   return { runnerHandle, tBot: bot };
 };
