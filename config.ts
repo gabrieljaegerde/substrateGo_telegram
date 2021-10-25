@@ -8,6 +8,7 @@ import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { Bot } from "grammy";
 import { PinataClient } from "@pinata/sdk";
+import { RunnerHandle } from '@grammyjs/runner';
 
 type BotParams = {
   api: ApiPromise,
@@ -15,6 +16,7 @@ type BotParams = {
   account: KeyringPair,
   settings: any,
   bot: Bot,
+  runnerHandle: RunnerHandle,
   pinata: PinataClient;
 };
 
@@ -24,6 +26,7 @@ export const botParams: BotParams = {
   account: null,
   settings: null,
   bot: null,
+  runnerHandle: null,
   pinata: null
 };
 

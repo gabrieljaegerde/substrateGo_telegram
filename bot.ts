@@ -16,9 +16,10 @@ import { accountComposer } from "./src/composers/accountComposer.js";
 import { creatorComposer } from "./src/composers/creatorComposer.js";
 import { finderComposer } from "./src/composers/finderComposer.js";
 import { apiThrottler } from "@grammyjs/transformer-throttler";
-import { run, sequentialize } from "@grammyjs/runner";
+import { run, RunnerHandle, sequentialize } from "@grammyjs/runner";
+import { listUserRewardsMiddleware } from "./src/finder/menus/listUserRewardsMenu.js";
 
-export const start = async (): Promise<Bot> => {
+export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; }> => {
   /*
    *   BOT initialization
    */
@@ -203,47 +204,62 @@ export const start = async (): Promise<Bot> => {
   bot.use(creatorComposer);
 
   /*
-   *   Handle callback query data: could be cancel setup event from router
+   *   Handle callback query cancel setup
    */
-  bot.on("callback_query:data", async (ctx: CustomContext, next) => {
-    if (ctx.update.callback_query.data === "❌ Cancel Setup") {
-      const session = await ctx.session;
-      session.createStep = "";
-      await ctx.answerCallbackQuery();
-      const message = "Setup Canceled";
-      await ctx.reply(message, {
-        reply_markup: {
-          keyboard: (await getKeyboard(ctx)).build(),
-          resize_keyboard: true
-        },
-        parse_mode: "Markdown",
-      });
-    }
-    else if (ctx.update.callback_query.data === "❌ Cancel Collection") {
-      const session = await ctx.session;
-      session.collectStep = "";
-      await ctx.answerCallbackQuery();
-      const message = "Collection Canceled.\n\n" +
-        `_I have saved this treasure for you and you can still claim it within the next 30 days. ` +
-        `To claim it, simply click on '🛍️ My treasures' in the Finder menu._`;
-      await ctx.reply(message, {
-        reply_markup: {
-          keyboard: (await getKeyboard(ctx)).build(),
-          resize_keyboard: true
-        },
-        parse_mode: "Markdown",
-      });
-    }
-    console.log("Unknown button event with payload", ctx.callbackQuery.data);
-    await ctx.answerCallbackQuery(); // remove loading animation
+
+  bot.callbackQuery("❌ Cancel Setup", async (ctx: CustomContext, next) => {
+    const session = await ctx.session;
+    session.createStep = "";
+    await ctx.answerCallbackQuery();
+    const message = "Setup Canceled";
+    await ctx.reply(message, {
+      reply_markup: {
+        keyboard: (await getKeyboard(ctx)).build(),
+        resize_keyboard: true
+      },
+      parse_mode: "Markdown",
+    });
     return next();
   });
+
+  /*
+   *   Handle callback query cancel collection
+   */
+
+  bot.callbackQuery("❌ Cancel Collection", async (ctx: CustomContext, next) => {
+    const session = await ctx.session;
+    session.collectStep = "";
+    await ctx.answerCallbackQuery();
+    const message = "Collection Canceled.\n\n" +
+      `_I have saved this treasure for you and you can still claim it within the next 30 days. ` +
+      `To claim it, simply click on '🛍️ My treasures' in the Finder menu._`;
+    await ctx.reply(message, {
+      reply_markup: {
+        keyboard: (await getKeyboard(ctx)).build(),
+        resize_keyboard: true
+      },
+      parse_mode: "Markdown",
+    });
+    return next();
+  });
+
   //order important! 
   bot.use(createRouter);
 
   bot.use(collectRouter);
 
   bot.use(finderComposer);
+
+  /*
+   *   Handle all unhandled callback queries
+   */
+
+  bot.on("callback_query:data", async (ctx: CustomContext, next) => {
+    console.log("Unknown button event with payload", ctx.callbackQuery.data);
+    await ctx.answerCallbackQuery(); // remove loading animation
+    return next();
+
+  });
 
   /*
    *   Collect and show in console all bot errors
@@ -267,10 +283,10 @@ export const start = async (): Promise<Bot> => {
       console.error("Unknown error:", e);
     }
   });
-  run(bot);
+  const runnerHandle = run(bot);
   console.log(new Date(), "Bot started as", bot);
   // process.once('SIGINT', () => {
   //   bot.stop()});
   // process.once('SIGTERM', () => bot.stop());
-  return bot;
+  return { runnerHandle, tBot: bot };
 };

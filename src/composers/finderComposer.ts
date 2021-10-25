@@ -11,6 +11,8 @@ import { editNameReward } from "../finder/editNameReward.js";
 import { claimNftMiddleware } from "../finder/menus/claimNftMenu.js";
 import { listCollectedMiddleware } from "../finder/menus/listCollectedMenu.js";
 import { listNonCollectedMiddleware } from "../finder/menus/listNonCollectedMenu.js";
+import { postCollectionMiddleware } from "../finder/menus/postCollectionMenu.js";
+import Reward, { IReward } from "../models/reward.js";
 
 export const finderComposer = new Composer<CustomContext>();
 
@@ -155,15 +157,16 @@ finderComposer.on("message:location", async (ctx) => {
     }
 });
 
+finderComposer.use(claimNftMiddleware);
+
+finderComposer.use(postCollectionMiddleware);
+
 finderComposer.use(editNameReward.middleware());
-
-//finderComposer.use(collectTreasure.middleware())
-
-finderComposer.use(listCollectedMiddleware);
 
 finderComposer.use(listUserRewardsMiddleware);
 
+finderComposer.use(listCollectedMiddleware);
+
 finderComposer.use(listNonCollectedMiddleware);
 
-finderComposer.use(claimNftMiddleware);
 

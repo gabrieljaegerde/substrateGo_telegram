@@ -9,7 +9,7 @@ import { IUser } from "../../models/user.js";
 import { CustomContext } from "../../../types/CustomContext.js";
 import { InlineKeyboard, InputFile } from "grammy";
 
-const showCollectedItem = new MenuTemplate(async (ctx: CustomContext) => {
+export const showCollectedItem = new MenuTemplate(async (ctx: CustomContext) => {
   const session = await ctx.session;
   const reward: IReward = await Reward.findOne({ _id: ctx.match[1], finder: ctx.chat.id });
   session.reward = reward;
@@ -22,7 +22,7 @@ const showCollectedItem = new MenuTemplate(async (ctx: CustomContext) => {
   if (collectedTimes) {
     info += `Treasure has been collected by *${collectedTimes - 1}* others.`;
     if (collectedTimes === 1) {
-      info += `\n\nYour are the *ONLY* one that has collected this treasure so far!`;
+      info += `\n\nYou are the *ONLY* one that has collected this treasure so far!`;
     }
   }
   return { text: info, parse_mode: "Markdown" };
@@ -93,7 +93,3 @@ showCollectedItem.interact("📝 Edit name", "ens", {
 });
 
 showCollectedItem.manualRow(createBackMainMenuButtons());
-
-export {
-  showCollectedItem
-};
