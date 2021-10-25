@@ -17,7 +17,6 @@ import { creatorComposer } from "./src/composers/creatorComposer.js";
 import { finderComposer } from "./src/composers/finderComposer.js";
 import { apiThrottler } from "@grammyjs/transformer-throttler";
 import { run, RunnerHandle, sequentialize } from "@grammyjs/runner";
-import { listUserRewardsMiddleware } from "./src/finder/menus/listUserRewardsMenu.js";
 
 export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; }> => {
   /*
