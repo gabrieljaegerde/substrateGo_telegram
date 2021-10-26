@@ -105,7 +105,7 @@ claimNft.interact("Proceed", "sp", {
                     },
                     creator_wallet: {
                         type: "string",
-                        value: creator.wallet && creator.wallet.address ? creator.wallet.address : ""
+                        value: creator.wallet && creator.wallet.linked ? creator.wallet.address : ""
                     },
                     location: {
                         type: "string",
