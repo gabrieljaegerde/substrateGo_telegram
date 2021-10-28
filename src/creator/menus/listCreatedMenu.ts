@@ -3,7 +3,7 @@ import { showCreatedItem } from "./showCreatedItemMenu.js";
 import Treasure, { ITreasure } from "../../models/treasure.js";
 import { CustomContext } from "../../../types/CustomContext.js";
 
-const listCreated = new MenuTemplate(async (ctx: CustomContext) => {
+const listCreated = new MenuTemplate<CustomContext>(async (ctx) => {
   const session = await ctx.session;
   const userCreated: ITreasure[] = await Treasure.find({ creator: ctx.chat.id }).sort({ createdAt: "desc" });
   session.userCreated = userCreated;

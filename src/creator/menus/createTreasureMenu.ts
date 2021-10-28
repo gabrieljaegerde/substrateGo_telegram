@@ -3,7 +3,7 @@ import { generateQr } from "../generateQr.js";
 import { cancelSetupInlineKeyboard } from "../../../config.js";
 import { CustomContext } from "../../../types/CustomContext.js";
 
-const createTreasure = new MenuTemplate(async (ctx: CustomContext) => {
+const createTreasure = new MenuTemplate<CustomContext>(async (ctx) => {
     const session = await ctx.session;
     session.treasure = null;
     const info = "Creating a Treasure involves 3 steps." +

@@ -5,7 +5,7 @@ import _ from "lodash";
 import Reward, { IReward } from "../../models/reward.js";
 import { CustomContext } from "../../../types/CustomContext.js";
 
-const listUserRewards = new MenuTemplate(async (ctx: CustomContext) => {
+const listUserRewards = new MenuTemplate<CustomContext>(async (ctx) => {
   const session = await ctx.session;
   let reply = "";
   const userRewards: IReward[] = await Reward.find({ finder: ctx.chat.id });

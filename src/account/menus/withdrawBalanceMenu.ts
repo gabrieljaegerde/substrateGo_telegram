@@ -13,7 +13,7 @@ import { enterWithdrawAmount } from "../enterWithdrawAmount.js";
 import { CustomContext } from "../../../types/CustomContext.js";
 
 //create submenu for withdrawal
-const withdrawBalance = new MenuTemplate(async (ctx: CustomContext) => {
+const withdrawBalance = new MenuTemplate<CustomContext>(async (ctx) => {
   const session = await ctx.session;
   session.hideWithdrawButtons = false;
   const loadMessage = await botParams.bot.api
