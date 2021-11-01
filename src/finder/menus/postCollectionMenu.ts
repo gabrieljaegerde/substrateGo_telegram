@@ -2,7 +2,7 @@ import { MenuTemplate, MenuMiddleware, deleteMenuFromContext } from "grammy-inli
 import { CustomContext } from "../../../types/CustomContext.js";
 import { listUserRewardsMiddleware } from "./listUserRewardsMenu.js";
 
-const postCollection = new MenuTemplate(async (ctx: CustomContext) => {
+const postCollection = new MenuTemplate<CustomContext>(async (ctx) => {
   const session = await ctx.session;
   return `This treasure has been saved in 'My treasures' under the name: ${session.reward.name}.`;
 });

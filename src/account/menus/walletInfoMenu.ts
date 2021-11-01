@@ -7,7 +7,7 @@ import { linkAddress } from "../linkAddress.js";
 import { CustomContext } from "../../../types/CustomContext.js";
 import { encodeAddress } from "@polkadot/util-crypto";
 
-const walletInfo = new MenuTemplate(async (ctx: CustomContext) => {
+const walletInfo = new MenuTemplate<CustomContext>(async (ctx) => {
   const session = await ctx.session;
   const user: IUser = await User.findOne({ chatId: ctx.chat.id });
   const userWallet: IWallet = user.wallet;

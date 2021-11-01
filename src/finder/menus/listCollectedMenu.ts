@@ -4,7 +4,7 @@ import { showCollectedItem } from "./showCollectedItemMenu.js";
 import Reward, { IReward } from "../../models/reward.js";
 import { CustomContext } from "../../../types/CustomContext.js";
 
-export const listCollected = new MenuTemplate(async (ctx: CustomContext) => {
+export const listCollected = new MenuTemplate<CustomContext>(async (ctx) => {
   const session = await ctx.session;
   const userCollectedRewards: IReward[] = await Reward.find({ finder: ctx.chat.id, collected: true });
   const userCollectedRewardsOrdered = _.orderBy(userCollectedRewards, ["dateCollected"], ["desc"]);

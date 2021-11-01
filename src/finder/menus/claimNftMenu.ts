@@ -15,7 +15,7 @@ import { INftProps } from "../../../types/NftProps.js";
 import { u8aToHex } from "@polkadot/util";
 import { postCollectionMiddleware } from "./postCollectionMenu.js";
 
-const claimNft = new MenuTemplate(async (ctx: CustomContext) => {
+const claimNft = new MenuTemplate<CustomContext>(async (ctx) => {
     const session = await ctx.session;
     session.hideClaimButtons = false;
 

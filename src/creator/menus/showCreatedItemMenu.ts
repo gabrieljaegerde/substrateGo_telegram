@@ -27,7 +27,7 @@ export const renderInfo = async (chatId: number, treasureId: string): Promise<st
     return info;
 };
 
-export const showCreatedItem = new MenuTemplate(async (ctx: CustomContext) => {
+export const showCreatedItem = new MenuTemplate<CustomContext>(async (ctx) => {
     const session = await ctx.session;
     const treasureId = ctx.match[1];
     session.treasureId = treasureId;

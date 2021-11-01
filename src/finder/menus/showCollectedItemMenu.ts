@@ -9,7 +9,7 @@ import { IUser } from "../../models/user.js";
 import { CustomContext } from "../../../types/CustomContext.js";
 import { InlineKeyboard, InputFile } from "grammy";
 
-export const showCollectedItem = new MenuTemplate(async (ctx: CustomContext) => {
+export const showCollectedItem = new MenuTemplate<CustomContext>(async (ctx) => {
   const session = await ctx.session;
   const reward: IReward = await Reward.findOne({ _id: ctx.match[1], finder: ctx.chat.id });
   session.reward = reward;

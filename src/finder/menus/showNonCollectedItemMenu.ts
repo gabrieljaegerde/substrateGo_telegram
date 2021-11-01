@@ -6,7 +6,7 @@ import User, { IUser } from "../../models/user.js";
 import { claimNftMiddleware } from "./claimNftMenu.js";
 import { CustomContext } from "../../../types/CustomContext.js";
 
-export const showNonCollectedItem = new MenuTemplate(async (ctx: CustomContext) => {
+export const showNonCollectedItem = new MenuTemplate<CustomContext>(async (ctx) => {
   const session = await ctx.session;
   const reward: IReward = await Reward.findOne({ _id: ctx.match[1], finder: ctx.chat.id });
   const treasure: ITreasure = await Treasure.findOne({ _id: reward.treasureId });

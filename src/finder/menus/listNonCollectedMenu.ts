@@ -4,7 +4,7 @@ import { showNonCollectedItem } from "./showNonCollectedItemMenu.js";
 import Reward, { IReward } from "../../models/reward.js";
 import { CustomContext } from "../../../types/CustomContext.js";
 
-export const listNonCollected = new MenuTemplate(async (ctx: CustomContext) => {
+export const listNonCollected = new MenuTemplate<CustomContext>(async (ctx) => {
   const session = await ctx.session;
   const userNonCollectedRewards: IReward[] = await Reward.find({
     finder: ctx.chat.id,
@@ -57,11 +57,11 @@ listNonCollected.chooseIntoSubmenu(
     },
     maxRows: 5,
     columns: 1,
-    getCurrentPage: async (ctx) => {
+    getCurrentPage: async (ctx: CustomContext) => {
       const session = await ctx.session;
       return session.nonCollectedRewardsPage;
     },
-    setPage: async (ctx, page) => {
+    setPage: async (ctx: CustomContext, page) => {
       const session = await ctx.session;
       session.nonCollectedRewardsPage = page;
     },

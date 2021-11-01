@@ -6,7 +6,7 @@ import { renderInfo } from "./showCreatedItemMenu.js";
 import { editHint } from "../editHint.js";
 import { CustomContext } from "../../../types/CustomContext.js";
 
-export const editTreasure = new MenuTemplate(async (ctx: CustomContext) => {
+export const editTreasure = new MenuTemplate<CustomContext>(async (ctx) => {
     const session = await ctx.session;
     const text = await renderInfo(ctx.chat.id, session.treasureId);
     return { text, parse_mode: "Markdown" };

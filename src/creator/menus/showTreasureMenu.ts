@@ -9,7 +9,7 @@ import Treasure, { ITreasure } from "../../models/treasure.js";
 import { renderInfo } from "./showCreatedItemMenu.js";
 import { CustomContext } from "../../../types/CustomContext.js";
 
-export const showTreasure = new MenuTemplate(async (ctx: CustomContext) => {
+export const showTreasure = new MenuTemplate<CustomContext>(async (ctx) => {
     const session = await ctx.session;
     const text = await renderInfo(ctx.chat.id, session.treasureId);
     return { text, parse_mode: "Markdown" };
