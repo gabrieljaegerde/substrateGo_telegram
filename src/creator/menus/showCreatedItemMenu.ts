@@ -10,19 +10,31 @@ export const renderInfo = async (chatId: number, treasureId: string): Promise<st
     let info = treasure.name ? `\n_Name_: *${treasure.name}*` : "";
     info += `\n_Created on_: *${treasure.createdAt.toDateString()}*`;
     if (treasure.active) {
-        info += `\n_Status_: *\u2705 (Treasure shown publicly)*`;
+        info += `\n_Status_: *\u2705 (shown publicly, collectable)*`;
     }
     else {
-        info += `\n_Status_: *\uD83D\uDEAB (Treasure NOT shown publicly)*`;
+        info += `\n_Status_: *\uD83D\uDEAB (not shown publicly, non-collectable)*`;
     }
-    info += `\n_Description (seen by treasure collectors)_: *${treasure.description}*`;
-    info += `\n_Hint (seen by everyone)_: *${treasure.hint}*\n\n`;
-    const allRewards: IReward[] = await Reward.find({ treasureId: treasureId, collected: true });
-    if (allRewards.length > 0) {
-        info += `_Treasure has been collected_ *${allRewards.length}* _time(s)._`;
+    info += `\n_Hint_: *${treasure.hint}*`;
+    info += `\n_Description_: *${treasure.description}*\n`;
+    const noCollected = await treasure.howManyCollected();
+    if (treasure.visible && noCollected > 0) {
+        info += `\n*🙉 NFT File is openly viewable* _(Change this in 'Edit treasure')_\n`;
+    }
+    else if (treasure.visible && noCollected === 0 ) {
+        info += `\n*🙉 NFT File is openly viewable* _(⚠️ We recommend you change this in 'Edit treasure' since your ` + 
+        `treasure has not been collected yet. This is to prevent people stealing your art.)_\n`;
     }
     else {
-        info += `_This treasure has not been collected yet._`;
+        info += `\n*🙈 NFT File is only viewable to users that collected this treasure* ` +
+            `_(change this in 'Edit treasure')_\n`;
+    }
+    
+    if (noCollected > 0) {
+        info += `\n_This treasure has been collected_ *${noCollected}* _time(s)._`;
+    }
+    else {
+        info += `\n_This treasure has not been collected yet._`;
     }
     return info;
 };
@@ -37,7 +49,7 @@ export const showCreatedItem = new MenuTemplate<CustomContext>(async (ctx) => {
 
 showCreatedItem.submenu("Edit Treasure", "et", editTreasure);
 
-showCreatedItem.submenu("Show Treasure Details", "std", showTreasure);
+showCreatedItem.submenu("View Treasure Details", "vtd", showTreasure);
 
 showCreatedItem.toggle(async (ctx) => {
     const session = await ctx.session;

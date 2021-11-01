@@ -16,6 +16,7 @@ export interface ITreasure extends Document {
     hint: string;
     description: string;
     file: string;
+    visible: boolean;
     howManyCollected(): Promise<number>;
     checkIfAlreadyCollected(userId: number): Promise<boolean>;
     getCreator(): Promise<IUser>;
@@ -55,6 +56,10 @@ const TreasureSchema = new Schema(
         file: {
             type: String,
             required: true
+        },
+        visible: {
+            type: Boolean,
+            default: false
         }
     },
     { timestamps: true }

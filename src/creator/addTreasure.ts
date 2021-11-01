@@ -43,7 +43,8 @@ export const prepareSetup = async (ctx: CustomContext, code: string, isScan: boo
             active: true,
             hint: botParams.settings.defaultHint,
             description: botParams.settings.defaultDescription,
-            file: botParams.settings.defaultFile
+            file: botParams.settings.defaultFile,
+            visible: false,
         });
         const progressMessage = "_Setup Progress:_\n\n1. QR✔️ -> *2. Send Location* -> 3. Name";
 

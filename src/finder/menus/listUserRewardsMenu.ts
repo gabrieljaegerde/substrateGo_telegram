@@ -12,7 +12,7 @@ const listUserRewards = new MenuTemplate<CustomContext>(async (ctx) => {
   const userCollectedRewards: IReward[] = userRewards.filter((reward: IReward) => reward.collected === true);
   session.userCollectedRewards = userCollectedRewards;
   const userNonCollectedRewards: IReward[] = _.chain(userRewards)
-    .filter((reward: IReward) => reward.collected === false && reward.expiry > new Date())
+    .filter((reward: IReward) => !reward.collected && reward.expiry > new Date())
     .orderBy(["createdAt"], ["asc"]).value();
   session.userNonCollectedRewards = userNonCollectedRewards;
 
