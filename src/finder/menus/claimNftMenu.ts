@@ -49,24 +49,34 @@ const claimNft = new MenuTemplate<CustomContext>(async (ctx) => {
         nftProps.sn,
         nftProps.metadata);
     session.nft = nftProps;
-    const remarks: string[] = [];
+    let remarks: string[] = [];
     remarks.push(nft.mintnft());//user.wallet.address
-    const info = await getTransactionCost(
+    const mintInfo = await getTransactionCost(
         "nft",
-        user.wallet.address,
+        null,
         null,
         remarks
     );
+    // let remarks: string[] = [];
+    // remarks.push(sendRemarkPlaceholder);
+    // const sendInfo = await getTransactionCost(
+    //     "nft",
+    //     null,
+    //     null,
+    //     remarks
+    // );
+    const networkCost = bigNumberArithmetic(mintInfo.partialFee.toString(), 0, "+");
+    const totalCost = bigNumberArithmetic(networkCost, botParams.settings.creatorReward, "+")
     botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id);
     const userBalance = user.getBalance();
     const creator = await treasure.getCreator();
     let message = `You are about to collect...\nTreasure: *${treasure.name}*\n` +
         `Creator: *${creator._id}*\n\n` +
         `Receiving the NFT in your wallet will incur an approximate total ` +
-        `*fee* of _${amountToHumanString(bigNumberArithmetic(info.partialFee.toString(), botParams.settings.creatorReward, "+"))}_\n\n` +
-        `*Network fee (approx.):* _${amountToHumanString(info.partialFee.toString())}_\n*Creator Reward:* _${amountToHumanString(botParams.settings.creatorReward)}_`;
+        `*fee* of _${amountToHumanString(totalCost)}_\n\n` +
+        `*Network fee (approx.):* _${amountToHumanString(networkCost)}_\n*Creator Reward:* _${amountToHumanString(botParams.settings.creatorReward)}_`;
 
-    if (bigNumberComparison(info.partialFee.toString(), userBalance, ">")) {
+    if (bigNumberComparison(totalCost, userBalance, ">")) {
         await ctx.reply(
             message,
             {
