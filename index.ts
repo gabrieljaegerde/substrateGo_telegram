@@ -123,7 +123,6 @@ class SubstrateBot {
     }
     else {
       await createGoCollection();
-      process.exit();
     }
   }
 

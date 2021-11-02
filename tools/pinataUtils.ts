@@ -1,4 +1,4 @@
-import { NFTMetadata } from 'rmrk-tools/dist/classes/nft';
+import { NFTMetadata } from 'rmrk-tools/dist/rmrk1.0.0/classes/nft';
 import pLimit from 'p-limit';
 import { Readable } from 'stream';
 import fs from 'fs';

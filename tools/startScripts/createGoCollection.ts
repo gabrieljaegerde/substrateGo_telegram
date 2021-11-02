@@ -18,14 +18,16 @@ export const createGoCollection = async () => {
       "kusamaGo.png",
       "KusamaGo - Gen1",
       {
-        description: "KusamaGo - Generation One",
-        external_url: botParams.settings.externalUrl,
-        properties: {},
+        description: "KusamaGo is a global NFT Treausre hunt. " +
+          "The NFTs in this collection are all collected treasures. " +
+          `Join the community: ${botParams.settings.telegramGroupLink}`,
+        external_url: botParams.settings.externalUrl
       }
     );
 
     const ItemsCollection = new Collection(
       0,
+      botParams.settings.collectionName,
       0,
       encodeAddress(botParams.account.address, botParams.settings.network.prefix),
       botParams.settings.collectionSymbol,
@@ -34,10 +36,10 @@ export const createGoCollection = async () => {
     );
 
     const { block } = await sendAndFinalize(
-      botParams.api.tx.system.remark(ItemsCollection.create()),
+      botParams.api.tx.system.remark(ItemsCollection.mint()),
       botParams.account
     );
-    console.log("COLLECTION CREATION REMARK: ", ItemsCollection.create());
+    console.log("COLLECTION CREATION REMARK: ", ItemsCollection.mint());
     console.log("Collection created at block: ", block);
 
     return block;

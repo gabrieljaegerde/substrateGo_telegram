@@ -202,7 +202,7 @@ export const mintAndSend = async (remarks: string[],
   }> => {
   const info = await getTransactionCost(
     "nft",
-    user.wallet.address,
+    null,
     null,
     remarks
   );
@@ -215,11 +215,11 @@ export const mintAndSend = async (remarks: string[],
   const allowed = await allowWithdrawal(botParams.api, totalCost, users, user);
   if (!allowed) {
     console.log(`Sth fishy going on!\n\n` +
-      `Account Balances don't add up in NFT claim!!!\n\n` +
+      `Account Balances don't add up in NFT claim (mintAndSend)!!!\n\n` +
       `User: ${user}\n\n` +
       `Total Cost: ${totalCost}\n\n` +
       `Users: ${users}`);
-    await send(botParams.settings.adminChatId, `Account Balances don't add up in NFT claim!!!\n\n` +
+    await send(botParams.settings.adminChatId, `Account Balances don't add up in NFT claim (mintAndSend)!!!\n\n` +
       `User: ${user ? user._id : user}\n\n` +
       `Total Cost: ${totalCost}\n\n` +
       `User Balance: ${user ? user.getBalance() : user}`);
@@ -241,6 +241,92 @@ export const mintAndSend = async (remarks: string[],
     return { success: false };
   }
 };
+
+export const mintNft = async (remarks: string[], user: IUser) => {
+  const info = await getTransactionCost(
+    "nft",
+    null,
+    null,
+    remarks
+  );
+  const totalCost = bigNumberArithmetic(info.partialFee.toString(), botParams.settings.creatorReward, "+");
+  const ableToCover: boolean = user.mintAllowed(totalCost);
+  if (!ableToCover) {
+    return { success: false, topupRequired: true, fee: totalCost };
+  }
+  const users: IUser[] = await User.find({});
+  const allowed = await allowWithdrawal(botParams.api, totalCost, users, user);
+  if (!allowed) {
+    console.log(`Sth fishy going on!\n\n` +
+      `Account Balances don't add up in NFT claim (mintNft)!!!\n\n` +
+      `User: ${user}\n\n` +
+      `Total Cost: ${totalCost}\n\n` +
+      `Users: ${users}`);
+    await send(botParams.settings.adminChatId, `Account Balances don't add up in NFT claim (mintNft)!!!\n\n` +
+      `User: ${user ? user._id : user}\n\n` +
+      `Total Cost: ${totalCost}\n\n` +
+      `User Balance: ${user ? user.getBalance() : user}`);
+    return { success: false };
+  }
+
+  const txs = [];
+  for (const remark of remarks) {
+    txs.push(botParams.api.tx.system.remark(remark));
+  }
+  try {
+    const batch = botParams.api.tx.utility.batchAll(txs);
+    const { block, hash, success } = await sendAndFinalize(batch, botParams.account);
+    return { block, success, hash, fee: info.partialFee.toString() };
+  }
+  catch (error) {
+    //write error to console
+    console.error(error);
+    return { success: false };
+  }
+}
+
+export const sendNft = async (remarks: string[], user: IUser) => {
+  const info = await getTransactionCost(
+    "nft",
+    null,
+    null,
+    remarks
+  );
+  const totalCost = info.partialFee.toString();
+  const ableToCover: boolean = user.mintAllowed(totalCost);
+  if (!ableToCover) {
+    return { success: false, topupRequired: true, fee: totalCost };
+  }
+  const users: IUser[] = await User.find({});
+  const allowed = await allowWithdrawal(botParams.api, totalCost, users, user);
+  if (!allowed) {
+    console.log(`Sth fishy going on!\n\n` +
+      `Account Balances don't add up in NFT claim (sendNft)!!!\n\n` +
+      `User: ${user}\n\n` +
+      `Total Cost: ${totalCost}\n\n` +
+      `Users: ${users}`);
+    await send(botParams.settings.adminChatId, `Account Balances don't add up in NFT claim (sendNft)!!!\n\n` +
+      `User: ${user ? user._id : user}\n\n` +
+      `Total Cost: ${totalCost}\n\n` +
+      `User Balance: ${user ? user.getBalance() : user}`);
+    return { success: false };
+  }
+
+  const txs = [];
+  for (const remark of remarks) {
+    txs.push(botParams.api.tx.system.remark(remark[0]));
+  }
+  try {
+    const batch = botParams.api.tx.utility.batchAll(txs);
+    const { block, hash, success } = await sendAndFinalize(batch, botParams.account);
+    return { block, success, hash, fee: info.partialFee.toString() };
+  }
+  catch (error) {
+    //write error to console
+    console.error(error);
+    return { success: false };
+  }
+}
 
 //pass in if its transfer or remark type
 export const getTransactionCost = async (

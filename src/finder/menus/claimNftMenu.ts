@@ -1,6 +1,6 @@
 import { MenuTemplate, MenuMiddleware, deleteMenuFromContext } from "grammy-inline-menu";
 import { botParams, getKeyboard } from "../../../config.js";
-import { getTransactionCost, mintAndSend } from "../../network/accountHandler.js";
+import { getTransactionCost, mintAndSend, mintNft, sendNft } from "../../network/accountHandler.js";
 import { Collection, NFT } from "rmrk-tools";
 import { amountToHumanString, bigNumberArithmetic, bigNumberComparison } from "../../../tools/utils.js";
 import Treasure, { ITreasure } from "../../models/treasure.js";
@@ -34,17 +34,23 @@ const claimNft = new MenuTemplate<CustomContext>(async (ctx) => {
     );
     const nftProps: INftProps = {
         block: 0,
-        sn: reward._id,
-        owner: encodeAddress(botParams.account.address, botParams.settings.network.prefix),
-        transferable: 1,
-        metadata: botParams.settings.cidPlaceholder, //use this as a placeholder. actual metadata different
         collection: collectionId,
-        symbol: treasure.name,
+        name: treasure.name,
+        instance: user._id,
+        transferable: 1,
+        sn: reward._id,
+        metadata: botParams.settings.cidPlaceholder, //use this as a placeholder. actual metadata different
     };
-    const nft = new NFT(nftProps);
+    const nft = new NFT(nftProps.block,
+        nftProps.collection,
+        nftProps.name,
+        nftProps.instance,
+        nftProps.transferable,
+        nftProps.sn,
+        nftProps.metadata);
     session.nft = nftProps;
     const remarks: string[] = [];
-    remarks.push(nft.mint(user.wallet.address));
+    remarks.push(nft.mintnft());//user.wallet.address
     const info = await getTransactionCost(
         "nft",
         user.wallet.address,
@@ -78,7 +84,7 @@ const claimNft = new MenuTemplate<CustomContext>(async (ctx) => {
             `To claim it, simply click on '🛍️ My treasures' in the Finder menu._`;
         return { text: reply, parse_mode: 'Markdown' };
     }
-    message += `\n\nDo you wish to proceed?`
+    message += `\n\nDo you wish to proceed?`;
     return { text: message, parse_mode: 'Markdown' };
 });
 
@@ -91,43 +97,17 @@ claimNft.interact("Proceed", "sp", {
         const reward: IReward = await Reward.findOne({ finder: user.chatId, treasureId: treasure._id });
         let creator: IUser = await User.findOne({ chatId: treasure.creator });
         try {
+            const nftDescription = `This is a KusamaGo treasure!\n${treasure.description}\n\nCreator: ${creator.id}\n\n` +
+                `Creator Wallet: ${creator.wallet && creator.wallet.address ? creator.wallet.address : ""}\n\n` +
+                `Location: {lat: ${treasure.location.latitude}, lng: ${treasure.location.longitude}}\n\n` +
+                `Hint: ${treasure.hint}\n\n` +
+                `Reward ID: ${reward._id}\n\n` +
+                `Join the community: ${botParams.settings.telegramGroupLink}\n\n` +
+                `Join the hunt: https://t.me/${botParams.settings.botUsername}`;
             const metadataCid = await pinSingleMetadataWithoutFile(treasure.file, `Reward:${reward._id}`, {
-                description: treasure.description,
-                external_url: botParams.settings.externalUrl,
-                properties: {
-                    rarity: {
-                        type: "string",
-                        value: "common",
-                    },
-                    creator: {
-                        type: "string",
-                        value: creator._id
-                    },
-                    creator_wallet: {
-                        type: "string",
-                        value: creator.wallet && creator.wallet.address ? creator.wallet.address : ""
-                    },
-                    location: {
-                        type: "string",
-                        value: `{lat: ${treasure.location.latitude}, lng: ${treasure.location.longitude}}`
-                    },
-                    hint: {
-                        type: "string",
-                        value: treasure.hint
-                    },
-                    description: {
-                        type: "string",
-                        value: treasure.description
-                    },
-                    name: {
-                        type: "string",
-                        value: treasure.name
-                    },
-                    id: {
-                        type: "string",
-                        value: reward._id
-                    }
-                },
+                name: `KusamaGo: ${treasure.name}`,
+                description: nftDescription,
+                external_url: botParams.settings.externalUrl
             });
             if (metadataCid === "") {
                 console.error("empty metadataCid");
@@ -136,49 +116,90 @@ claimNft.interact("Proceed", "sp", {
             session.nft.metadata = metadataCid;
 
             const remarks: string[] = [];
-            const nft = new NFT(session.nft);
-            remarks.push(nft.mint(user.wallet.address));
-            const { block, success, hash, fee, topupRequired } = await mintAndSend(remarks, user);
-            if (success) {
+            let nft = new NFT(session.nft.block,
+                session.nft.collection,
+                session.nft.name,
+                session.nft.instance,
+                session.nft.transferable,
+                session.nft.sn,
+                session.nft.metadata);
+            remarks.push(nft.mintnft());//user.wallet.address
+            let { block: mintBlock, success: mintSuccess, hash, fee: mintFee, topupRequired: mintTopupRequired } = await mintNft(remarks, user);
+            if (mintSuccess) {
                 //find user and decrease balance
-                const totalCost = bigNumberArithmetic(fee, botParams.settings.creatorReward, "+");
+                const totalCost = bigNumberArithmetic(mintFee, botParams.settings.creatorReward, "+");
                 user.subtractFromBalance(totalCost);
                 await user.save();
 
-                //add creator-reward ($) to creator balance
-                //need to fetch creator again in case user = creator. otherwise user.save() overwritten
-                if (user._id.toString() === creator._id.toString())
-                    creator = await User.findOne({ chatId: treasure.creator });
-                creator.addReward();
-                await creator.save();
+                nft = new NFT(mintBlock,
+                    session.nft.collection,
+                    session.nft.name,
+                    session.nft.instance,
+                    session.nft.transferable,
+                    session.nft.sn,
+                    session.nft.metadata);
 
-                //set finder-reward (NFT) as collected
-                reward.setCollected(hash, block, metadataCid);
-                //save all db changes
-                await reward.save();
+                remarks.push(nft.send(user.wallet.address));//user.wallet.address
+                let { block: sendBlock, success: sendSuccess, hash: sendHash, fee: sendFee, topupRequired: sendTopupRequired } = await sendNft(remarks, user);
+                if (sendSuccess) {
+                    //find user and decrease balance
+                    const totalCost = sendFee;
+                    user.subtractFromBalance(totalCost);
+                    await user.save();
 
-                await deleteMenuFromContext(ctx);
+                    //add creator-reward ($) to creator balance
+                    //need to fetch creator again in case user = creator. otherwise user.save() overwritten
+                    if (user._id.toString() === creator._id.toString())
+                        creator = await User.findOne({ chatId: treasure.creator });
+                    creator.addReward();
+                    await creator.save();
 
-                //send message to creator
-                await botParams.bot.api
-                    .sendMessage(creator.chatId, `Treasure '${treasure.name}' was just collected.\n\n` +
-                        `${amountToHumanString(botParams.settings.creatorReward)} credited to your account.`);
-                await botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id);
-                //send message to finder
-                const successMessage = "Success. The NFT has been minted and sent to your wallet.";
-                await ctx.reply(successMessage, {
-                    reply_markup: {
-                        keyboard: (await getKeyboard(ctx)).build(),
-                        resize_keyboard: true
-                    },
-                    parse_mode: "Markdown",
-                });
-                session.reward = reward
-                await postCollectionMiddleware.replyToContext(ctx);
-                return false;
+                    //set finder-reward (NFT) as collected
+                    reward.setCollected(sendHash, sendBlock, metadataCid);
+                    //save all db changes
+                    await reward.save();
+
+                    await deleteMenuFromContext(ctx);
+
+                    //send message to creator
+                    await botParams.bot.api
+                        .sendMessage(creator.chatId, `Treasure '${treasure.name}' was just collected.\n\n` +
+                            `${amountToHumanString(botParams.settings.creatorReward)} credited to your account.`);
+                    await botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id);
+                    //send message to finder
+                    const successMessage = "Success. The NFT has been minted and sent to your wallet.";
+                    await ctx.reply(successMessage, {
+                        reply_markup: {
+                            keyboard: (await getKeyboard(ctx)).build(),
+                            resize_keyboard: true
+                        },
+                        parse_mode: "Markdown",
+                    });
+                    session.reward = reward;
+                    await postCollectionMiddleware.replyToContext(ctx);
+                    return false;
+                }
+                //if cannot cover transaction cost
+                else if (sendTopupRequired) {
+                    const message = "You do not have enough funds to pay for the send transaction.\n\n" +
+                        "Please top up your balance by going to the main menu and " +
+                        "clicking on _'Account Settings'_.\n\n" +
+                        "_I have saved this treasure for you and you can still claim it within the next 30 days. " +
+                        "To claim it, simply click on '🛍️ My treasures' in the Finder menu._";
+                    botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id);
+                    await deleteMenuFromContext(ctx);
+                    await ctx.reply(message, {
+                        reply_markup: {
+                            keyboard: (await getKeyboard(ctx)).build(),
+                            resize_keyboard: true
+                        },
+                        parse_mode: "Markdown",
+                    });
+                    return false;
+                }
             }
             //if cannot cover transaction cost
-            else if (topupRequired) {
+            else if (mintTopupRequired) {
                 await unpin(metadataCid);
                 const message = "You do not have enough funds to pay for this transaction.\n\n" +
                     "Please top up your balance by going to the main menu and " +
