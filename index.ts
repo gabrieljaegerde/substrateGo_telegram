@@ -11,7 +11,7 @@ import dotenv from "dotenv";
 import User, { IUser } from "./src/models/user.js";
 import { Header } from "@polkadot/types/interfaces";
 import * as bot from "./bot.js";
-import { createCharityUser, send } from "./tools/utils.js";
+import { bigNumberArithmetic, createCharityUser, send } from "./tools/utils.js";
 import { initAccount, getApi } from "./tools/substrateUtils.js";
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
@@ -124,6 +124,15 @@ class SubstrateBot {
     else {
       await createGoCollection();
     }
+    const users: IUser[] = await User.find({});
+    let allUsersBalance = "0";
+    for (const user of users) {
+      allUsersBalance = bigNumberArithmetic(allUsersBalance, user.getBalance(), "+");
+    }
+    console.log("totalUserBalance: ", allUsersBalance);
+    const { data: botWalletBalance } = await botParams.api.query.system.account(botParams.account.address);
+    const botStartBalance = bigNumberArithmetic(botWalletBalance.free.toString(), allUsersBalance, "-");
+    console.log("botStartBalance: ", botStartBalance);
   }
 
   async stop() {
