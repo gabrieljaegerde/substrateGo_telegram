@@ -42,12 +42,12 @@ const claimNft = new MenuTemplate<CustomContext>(async (ctx) => {
         botParams.settings.collectionSymbol
     );
     //const mintRemarkPlaceholder = "RMRK::MINTNFT::1.0.0::%7B%22collection%22%3A%22d43593c715a56da27d-HEYHYE%22%2C%22name%22%3A%22Yea%22%2C%22instance%22%3A%22616c37d59e45e3ea3bd51741%22%2C%22transferable%22%3A1%2C%22sn%22%3A%2261815fcf37e9a9e6eada6452%22%2C%22metadata%22%3A%22ipfs%3A%2F%2Fipfs%2Fbafkreiakkgfso7jp4ewgtj6whrtp4nijbamiodicl3ygi5k4vta2p6ntby%22%7D";
-    const sendRemarkPlaceholder = await generateSendRemark(collectionId, user._id, reward._id, user.wallet.address);
+    const sendRemarkPlaceholder = await generateSendRemark(collectionId, treasure._id, reward._id, user.wallet.address);
     const nftProps: INftProps = {
         block: 0,
         collection: collectionId,
         name: treasure.name,
-        instance: user._id,
+        instance: treasure._id,
         transferable: 1,
         sn: reward._id,
         metadata: botParams.settings.cidPlaceholder, //use this as a placeholder. actual metadata different
@@ -116,7 +116,8 @@ claimNft.interact("Proceed", "sp", {
         const reward: IReward = await Reward.findOne({ finder: user.chatId, treasureId: treasure._id });
         let creator: IUser = await User.findOne({ chatId: treasure.creator });
         try {
-            const nftDescription = `This is a KusamaGo treasure!\n${treasure.description}\n\nCreator: ${creator.id}\n\n` +
+            const nftDescription = `This is a KusamaGo treasure!\n${treasure.description}\n\n`+
+                `Treasure ID: ${treasure._id}\n\nCreator: ${creator._id}\n\n` +
                 `Creator Wallet: ${creator.wallet && creator.wallet.address ? creator.wallet.address : ""}\n\n` +
                 `Location: {lat: ${treasure.location.latitude}, lng: ${treasure.location.longitude}}\n\n` +
                 `Hint: ${treasure.hint}\n\n` +
