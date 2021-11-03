@@ -1,5 +1,5 @@
 <h1>
-  <img src="./assets/logo.jpeg" width="50" alt="logo"/>
+  <img src="./assets/logo.png" width="50" alt="logo"/>
   KusamaGo Telegram Bot
 </h1>
 

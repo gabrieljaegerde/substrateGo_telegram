@@ -5,6 +5,7 @@ import { editFile } from "../editFile.js";
 import { renderInfo } from "./showCreatedItemMenu.js";
 import { editHint } from "../editHint.js";
 import { CustomContext } from "../../../types/CustomContext.js";
+import Treasure, { ITreasure } from "../../models/treasure.js";
 
 export const editTreasure = new MenuTemplate<CustomContext>(async (ctx) => {
     const session = await ctx.session;
@@ -22,13 +23,12 @@ editTreasure.interact("🔥 Edit name", "en", {
     joinLastRow: true
 });
 
-editTreasure.interact("✨ Edit Description", "ed", {
+editTreasure.interact("🤷 Edit Hint", "eh", {
     do: async (ctx: CustomContext) => {
         //await deleteMenuFromContext(ctx)
-        const message = `The description is only visible to users that have collected this treasure. ` +
-        `Its content is included in the NFT collected by them.\n\n` +
-        `Please send me the new description.`;
-        editDescription.replyWithMarkdown(ctx, message);
+        const message = `The hint is visible to everyone. Its purpose is to help users ` +
+            `find your treasure.\n\nPlease send me the new hint message.`;
+        editHint.replyWithMarkdown(ctx, message);
         return true;
     },
     joinLastRow: true
@@ -48,16 +48,37 @@ editTreasure.interact("🌈 Edit NFT File", "enf", {
     joinLastRow: false
 });
 
-editTreasure.interact("🤷 Edit Hint", "eh", {
+editTreasure.interact("✨ Edit Description", "ed", {
     do: async (ctx: CustomContext) => {
         //await deleteMenuFromContext(ctx)
-        const message = `The hint is visible to all treasure finders. Its purpose is to help users ` +
-            `find your treasure.\n\nPlease send me the new hint message.`;
-        editHint.replyWithMarkdown(ctx, message);
+        const message = `The description is included in the NFT collected by treasure finders.\n\n` +
+        `Please send me the new description.`;
+        editDescription.replyWithMarkdown(ctx, message);
         return true;
     },
     joinLastRow: true
 });
+
+editTreasure.toggle(async (ctx) => {
+    const session = await ctx.session;
+    const treasure: ITreasure = await Treasure.findOne({ _id: session.treasureId, creator: ctx.chat.id });
+    return treasure.visible ? "File shown" : "File hidden";
+},
+    'y',
+    {
+        set: async (ctx, choice) => {
+            const treasureId = ctx.match[1];
+            const treasure: ITreasure = await Treasure.findOne({ _id: treasureId, creator: ctx.chat.id });
+            treasure.visible = choice;
+            await treasure.save();
+            return true;
+        },
+        isSet: async (ctx) => {
+            const treasureId = ctx.match[1];
+            const treasure: ITreasure = await Treasure.findOne({ _id: treasureId, creator: ctx.chat.id });
+            return treasure.visible === true;
+        }
+    });
 
 editTreasure.manualRow(createBackMainMenuButtons());
 
