@@ -24,7 +24,7 @@ export const deposit = async (record, currentBlock: number): Promise<void> => {
   const value = event.data[2].toString();
   const humanVal = amountToHumanString(value);
   //make sure value is not null/undefined
-  const allUsers: IUser[] = await User.find().exec();
+  const allUsers: IUser[] = await User.find({});
   const users: IUser[] = allUsers.filter(
     (eachUser: IUser) => eachUser.wallet && eachUser.wallet.address === from);
   const verifiedUsers: IUser[] = users.filter(eachUser => eachUser.wallet && eachUser.wallet.linked === true);
@@ -33,6 +33,7 @@ export const deposit = async (record, currentBlock: number): Promise<void> => {
   if (users.length === 1) {
     user = users[0];
   }
+  console.log(`Deposit from: ${from} Value: ${value} Time: `)
   if (user && !user.wallet.linked) {
     //transfer amount matches password && password not expired yet
     const pwordMatch = bigNumberComparison(user.wallet.password, value, "=");
