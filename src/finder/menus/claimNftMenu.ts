@@ -156,7 +156,7 @@ claimNft.interact("Proceed", "sp", {
                     session.nft.transferable,
                     session.nft.sn,
                     session.nft.metadata);
-                    
+
                 const sendRemark = nft.send(user.wallet.address);
                 let { block: sendBlock, success: sendSuccess, hash: sendHash, fee: sendFee, topupRequired: sendTopupRequired } = await sendNft(sendRemark, user);
                 if (sendSuccess) {

@@ -218,7 +218,6 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
       },
       parse_mode: "Markdown",
     });
-    return next();
   });
 
   /*
@@ -229,9 +228,7 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
     const session = await ctx.session;
     session.collectStep = "";
     await ctx.answerCallbackQuery();
-    const message = "Collection Canceled.\n\n" +
-      `_I have saved this treasure for you and you can still claim it within the next 30 days. ` +
-      `To claim it, simply click on '🛍️ My treasures' in the Finder menu._`;
+    const message = "Collection Canceled";
     await ctx.reply(message, {
       reply_markup: {
         keyboard: (await getKeyboard(ctx)).build(),
@@ -239,7 +236,6 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
       },
       parse_mode: "Markdown",
     });
-    return next();
   });
 
   //order important! 
@@ -256,8 +252,6 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
   bot.on("callback_query:data", async (ctx: CustomContext, next) => {
     console.log("Unknown button event with payload", ctx.callbackQuery.data);
     await ctx.answerCallbackQuery(); // remove loading animation
-    return next();
-
   });
 
   /*
@@ -284,8 +278,5 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
   });
   const runnerHandle = run(bot);
   console.log(new Date(), "Bot started as", bot);
-  // process.once('SIGINT', () => {
-  //   bot.stop()});
-  // process.once('SIGTERM', () => bot.stop());
   return { runnerHandle, tBot: bot };
 };
