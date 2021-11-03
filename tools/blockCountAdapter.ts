@@ -8,11 +8,11 @@ export class blockCountAdapter {
 
   public async set(latestBlock: number): Promise<void> {
     this.db.data[this.storageKey] = String(latestBlock);
-    this.db.write();
+    await this.db.write();
   }
 
   public async get(): Promise<number> {
-    this.db.read();
+    await this.db.read();
     const latestBlockString = this.db.data[this.storageKey];
     return latestBlockString ? parseInt(latestBlockString) : 0;
   }

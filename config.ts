@@ -1,4 +1,4 @@
-import { LowSync, JSONFileSync } from 'lowdb';
+import { Low, JSONFile } from 'lowdb';
 import { InlineKeyboard, Keyboard } from "grammy";
 import { amountToHumanString, bigNumberComparison } from "./tools/utils.js";
 import User, { IUser } from "./src/models/user.js";
@@ -12,7 +12,7 @@ import { RunnerHandle } from '@grammyjs/runner';
 
 type BotParams = {
   api: ApiPromise,
-  remarkStorage: LowSync,
+  remarkStorage: Low,
   account: KeyringPair,
   settings: any,
   bot: Bot,
@@ -143,8 +143,8 @@ export const getDb = async (): Promise<void> => {
   }
 };
 
-export const getRemarkStorage = (): LowSync => {
-  const db = new LowSync(new JSONFileSync(process.env.REMARK_STORAGE_DB_FILE_PATH));
+export const getRemarkStorage = (): Low => {
+  const db = new Low(new JSONFile(process.env.REMARK_STORAGE_DB_FILE_PATH));
   return db;
 };
 

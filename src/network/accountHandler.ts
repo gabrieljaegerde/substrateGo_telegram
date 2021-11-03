@@ -242,12 +242,12 @@ export const mintAndSend = async (remarks: string[],
   }
 };
 
-export const mintNft = async (remarks: string[], user: IUser) => {
-  const info = await getTransactionCost(
+export const mintNft = async (remark: string, user: IUser) => {
+  const info = await getTransactionCostSingle(
     "nft",
     null,
     null,
-    remarks
+    remark
   );
   const totalCost = bigNumberArithmetic(info.partialFee.toString(), botParams.settings.creatorReward, "+");
   const ableToCover: boolean = user.mintAllowed(totalCost);
@@ -260,22 +260,20 @@ export const mintNft = async (remarks: string[], user: IUser) => {
     console.log(`Sth fishy going on!\n\n` +
       `Account Balances don't add up in NFT claim (mintNft)!!!\n\n` +
       `User: ${user}\n\n` +
+      `Remark: ${remark}\n\n` +
       `Total Cost: ${totalCost}\n\n` +
       `Users: ${users}`);
     await send(botParams.settings.adminChatId, `Account Balances don't add up in NFT claim (mintNft)!!!\n\n` +
       `User: ${user ? user._id : user}\n\n` +
+      `Remark: ${remark}\n\n` +
       `Total Cost: ${totalCost}\n\n` +
       `User Balance: ${user ? user.getBalance() : user}`);
     return { success: false };
   }
 
-  const txs = [];
-  for (const remark of remarks) {
-    txs.push(botParams.api.tx.system.remark(remark));
-  }
   try {
-    const batch = botParams.api.tx.utility.batchAll(txs);
-    const { block, hash, success } = await sendAndFinalize(batch, botParams.account);
+    const tx = botParams.api.tx.system.remark(remark);
+    const { block, hash, success } = await sendAndFinalize(tx, botParams.account);
     return { block, success, hash, fee: info.partialFee.toString() };
   }
   catch (error) {
@@ -283,14 +281,14 @@ export const mintNft = async (remarks: string[], user: IUser) => {
     console.error(error);
     return { success: false };
   }
-}
+};
 
-export const sendNft = async (remarks: string[], user: IUser) => {
-  const info = await getTransactionCost(
+export const sendNft = async (remark: string, user: IUser) => {
+  const info = await getTransactionCostSingle(
     "nft",
     null,
     null,
-    remarks
+    remark
   );
   const totalCost = info.partialFee.toString();
   const ableToCover: boolean = user.mintAllowed(totalCost);
@@ -303,22 +301,19 @@ export const sendNft = async (remarks: string[], user: IUser) => {
     console.log(`Sth fishy going on!\n\n` +
       `Account Balances don't add up in NFT claim (sendNft)!!!\n\n` +
       `User: ${user}\n\n` +
+      `Remark: ${remark}\n\n` +
       `Total Cost: ${totalCost}\n\n` +
       `Users: ${users}`);
     await send(botParams.settings.adminChatId, `Account Balances don't add up in NFT claim (sendNft)!!!\n\n` +
       `User: ${user ? user._id : user}\n\n` +
+      `Remark: ${remark}\n\n` +
       `Total Cost: ${totalCost}\n\n` +
       `User Balance: ${user ? user.getBalance() : user}`);
     return { success: false };
   }
-
-  const txs = [];
-  for (const remark of remarks) {
-    txs.push(botParams.api.tx.system.remark(remark[0]));
-  }
   try {
-    const batch = botParams.api.tx.utility.batchAll(txs);
-    const { block, hash, success } = await sendAndFinalize(batch, botParams.account);
+    const tx = botParams.api.tx.system.remark(remark);
+    const { block, hash, success } = await sendAndFinalize(tx, botParams.account);
     return { block, success, hash, fee: info.partialFee.toString() };
   }
   catch (error) {
@@ -326,7 +321,7 @@ export const sendNft = async (remarks: string[], user: IUser) => {
     console.error(error);
     return { success: false };
   }
-}
+};
 
 //pass in if its transfer or remark type
 export const getTransactionCost = async (
@@ -357,6 +352,34 @@ export const getTransactionCost = async (
     }
   }
   catch (error) {
-    console.error(error)
-  } 
+    console.error(error);
+  }
+};
+
+//pass in if its transfer or remark type
+export const getTransactionCostSingle = async (
+  type: string,
+  recipient: string,
+  toSendAmount?: string,
+  toSendRemark?: string): Promise<RuntimeDispatchInfo> => {
+  try {
+    if (type === "transfer") {
+      //estimate fee for transfer back
+      const value = toSendAmount;
+      const info = await botParams.api.tx.balances
+        .transfer(recipient, value)
+        .paymentInfo(botParams.account.address);
+      return info;
+    }
+    else if (type === "nft") {
+      //get mint/send cost      
+      const info = await botParams.api.tx.system
+        .remark(toSendRemark)
+        .paymentInfo(botParams.account.address);
+      return info;
+    }
+  }
+  catch (error) {
+    console.error(error);
+  }
 };

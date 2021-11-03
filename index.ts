@@ -15,7 +15,7 @@ import { createCharityUser, send } from "./tools/utils.js";
 import { initAccount, getApi } from "./tools/substrateUtils.js";
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
-import { LowSync } from "lowdb/lib";
+import { Low } from "lowdb/lib";
 import { createGoCollection } from "./tools/startScripts/createGoCollection.js";
 import mongoose from "mongoose";
 
@@ -25,7 +25,7 @@ class SubstrateBot {
   settings: any;
   api: ApiPromise;
   account: KeyringPair;
-  remarkStorage: LowSync;
+  remarkStorage: Low;
   invalidateCacheInterval: NodeJS.Timer;
   /**
    * Create SubstrateBot instance

@@ -1,6 +1,6 @@
 import { MenuTemplate, MenuMiddleware, deleteMenuFromContext } from "grammy-inline-menu";
 import { botParams, getKeyboard } from "../../../config.js";
-import { getTransactionCost, mintAndSend, mintNft, sendNft } from "../../network/accountHandler.js";
+import { getTransactionCost, getTransactionCostSingle, mintAndSend, mintNft, sendNft } from "../../network/accountHandler.js";
 import { Collection, NFT } from "rmrk-tools";
 import { amountToHumanString, bigNumberArithmetic, bigNumberComparison } from "../../../tools/utils.js";
 import Treasure, { ITreasure } from "../../models/treasure.js";
@@ -14,6 +14,15 @@ import { CustomContext } from "../../../types/CustomContext.js";
 import { INftProps } from "../../../types/NftProps.js";
 import { u8aToHex } from "@polkadot/util";
 import { postCollectionMiddleware } from "./postCollectionMenu.js";
+
+const generateSendRemark = async (collectionId: string,
+    instance: string,
+    sn: string,
+    userWallet: string) => {
+    const lastHeader = await botParams.api.rpc.chain.getHeader();
+    return `RMRK::SEND::1.0.0::${lastHeader.number}-${collectionId}-` +
+        `${instance}-${sn}::${userWallet}`;
+};
 
 const claimNft = new MenuTemplate<CustomContext>(async (ctx) => {
     const session = await ctx.session;
@@ -32,6 +41,8 @@ const claimNft = new MenuTemplate<CustomContext>(async (ctx) => {
         u8aToHex(botParams.account.publicKey),
         botParams.settings.collectionSymbol
     );
+    //const mintRemarkPlaceholder = "RMRK::MINTNFT::1.0.0::%7B%22collection%22%3A%22d43593c715a56da27d-HEYHYE%22%2C%22name%22%3A%22Yea%22%2C%22instance%22%3A%22616c37d59e45e3ea3bd51741%22%2C%22transferable%22%3A1%2C%22sn%22%3A%2261815fcf37e9a9e6eada6452%22%2C%22metadata%22%3A%22ipfs%3A%2F%2Fipfs%2Fbafkreiakkgfso7jp4ewgtj6whrtp4nijbamiodicl3ygi5k4vta2p6ntby%22%7D";
+    const sendRemarkPlaceholder = await generateSendRemark(collectionId, user._id, reward._id, user.wallet.address);
     const nftProps: INftProps = {
         block: 0,
         collection: collectionId,
@@ -49,24 +60,22 @@ const claimNft = new MenuTemplate<CustomContext>(async (ctx) => {
         nftProps.sn,
         nftProps.metadata);
     session.nft = nftProps;
-    let remarks: string[] = [];
-    remarks.push(nft.mintnft());//user.wallet.address
-    const mintInfo = await getTransactionCost(
+    const mintRemark = nft.mintnft();
+    const mintInfo = await getTransactionCostSingle(
         "nft",
         null,
         null,
-        remarks
+        mintRemark
     );
-    // let remarks: string[] = [];
-    // remarks.push(sendRemarkPlaceholder);
-    // const sendInfo = await getTransactionCost(
-    //     "nft",
-    //     null,
-    //     null,
-    //     remarks
-    // );
-    const networkCost = bigNumberArithmetic(mintInfo.partialFee.toString(), 0, "+");
-    const totalCost = bigNumberArithmetic(networkCost, botParams.settings.creatorReward, "+")
+    const sendRemark = sendRemarkPlaceholder;
+    const sendInfo = await getTransactionCostSingle(
+        "nft",
+        null,
+        null,
+        sendRemark
+    );
+    const networkCost = bigNumberArithmetic(mintInfo.partialFee.toString(), sendInfo.partialFee.toString(), "+");
+    const totalCost = bigNumberArithmetic(networkCost, botParams.settings.creatorReward, "+");
     botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id);
     const userBalance = user.getBalance();
     const creator = await treasure.getCreator();
@@ -125,7 +134,6 @@ claimNft.interact("Proceed", "sp", {
             }
             session.nft.metadata = metadataCid;
 
-            const remarks: string[] = [];
             let nft = new NFT(session.nft.block,
                 session.nft.collection,
                 session.nft.name,
@@ -133,8 +141,8 @@ claimNft.interact("Proceed", "sp", {
                 session.nft.transferable,
                 session.nft.sn,
                 session.nft.metadata);
-            remarks.push(nft.mintnft());//user.wallet.address
-            let { block: mintBlock, success: mintSuccess, hash, fee: mintFee, topupRequired: mintTopupRequired } = await mintNft(remarks, user);
+            const mintRemark = nft.mintnft();
+            let { block: mintBlock, success: mintSuccess, hash, fee: mintFee, topupRequired: mintTopupRequired } = await mintNft(mintRemark, user);
             if (mintSuccess) {
                 //find user and decrease balance
                 const totalCost = bigNumberArithmetic(mintFee, botParams.settings.creatorReward, "+");
@@ -148,9 +156,9 @@ claimNft.interact("Proceed", "sp", {
                     session.nft.transferable,
                     session.nft.sn,
                     session.nft.metadata);
-
-                remarks.push(nft.send(user.wallet.address));//user.wallet.address
-                let { block: sendBlock, success: sendSuccess, hash: sendHash, fee: sendFee, topupRequired: sendTopupRequired } = await sendNft(remarks, user);
+                    
+                const sendRemark = nft.send(user.wallet.address);
+                let { block: sendBlock, success: sendSuccess, hash: sendHash, fee: sendFee, topupRequired: sendTopupRequired } = await sendNft(sendRemark, user);
                 if (sendSuccess) {
                     //find user and decrease balance
                     const totalCost = sendFee;
