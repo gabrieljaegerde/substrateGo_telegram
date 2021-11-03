@@ -7,7 +7,7 @@ const postCollection = new MenuTemplate<CustomContext>(async (ctx) => {
   return `This treasure has been saved in 'My treasures' under the name: ${session.reward.name}.`;
 });
 
-postCollection.interact("View treasure", "vtr", {
+postCollection.interact("View treasures", "vtr", {
   do: async (ctx: CustomContext) => {
     const session = await ctx.session;
     await deleteMenuFromContext(ctx);
