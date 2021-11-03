@@ -124,11 +124,12 @@ export class RemarkStorageAdapter implements IConsolidatorAdapter {
   }
 
   public async updateCollectionMint(collection: CollectionConsolidated): Promise<CollectionConsolidated> {
-    await this.db.read();
-    this.db.data.collections.push(collection);
-    await this.db.write();
-    const collectionDb = await this.getCollectionById(collection.id);
-    return collectionDb;
+    // await this.db.read();
+    // this.db.data.collections.push(collection);
+    // await this.db.write();
+    // const collectionDb = await this.getCollectionById(collection.id);
+    // return collectionDb;
+    return null;
   }
 
   public async updateCollectionIssuer(
