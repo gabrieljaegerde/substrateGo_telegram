@@ -6,6 +6,7 @@ import { renderInfo } from "./showCreatedItemMenu.js";
 import { editHint } from "../editHint.js";
 import { CustomContext } from "../../../types/CustomContext.js";
 import Treasure, { ITreasure } from "../../models/treasure.js";
+import { editLocation } from "../editLocation.js";
 
 export const editTreasure = new MenuTemplate<CustomContext>(async (ctx) => {
     const session = await ctx.session;
@@ -52,11 +53,21 @@ editTreasure.interact("✨ Edit Description", "ed", {
     do: async (ctx: CustomContext) => {
         //await deleteMenuFromContext(ctx)
         const message = `The description is included in the NFT collected by treasure finders.\n\n` +
-        `Please send me the new description.`;
+            `Please send me the new description.`;
         editDescription.replyWithMarkdown(ctx, message);
         return true;
     },
     joinLastRow: true
+});
+
+editTreasure.interact("📍 Edit Location", "el", {
+    do: async (ctx: CustomContext) => {
+        //await deleteMenuFromContext(ctx)
+        const message = `Please send me the new location.`;
+        editLocation.replyWithMarkdown(ctx, message);
+        return true;
+    },
+    joinLastRow: false
 });
 
 editTreasure.toggle(async (ctx) => {
@@ -77,7 +88,8 @@ editTreasure.toggle(async (ctx) => {
             const treasureId = ctx.match[1];
             const treasure: ITreasure = await Treasure.findOne({ _id: treasureId, creator: ctx.chat.id });
             return treasure.visible === true;
-        }
+        },
+        joinLastRow: true
     });
 
 editTreasure.manualRow(createBackMainMenuButtons());

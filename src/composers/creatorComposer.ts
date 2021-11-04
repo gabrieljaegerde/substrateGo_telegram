@@ -14,6 +14,7 @@ import { editFile } from "../creator/editFile.js";
 import { editTreasureMiddleware } from "../creator/menus/editTreasureMenu.js";
 import { showTreasureMiddleware } from "../creator/menus/showTreasureMenu.js";
 import { showCreatedItemMiddleware } from "../creator/menus/showCreatedItemMenu.js";
+import { editLocation } from "../creator/editLocation.js";
 
 export const creatorComposer = new Composer<CustomContext>();
 
@@ -124,6 +125,8 @@ creatorComposer.use(editNameTreasure.middleware());
 creatorComposer.use(editHint.middleware());
 
 creatorComposer.use(editFile.middleware());
+
+creatorComposer.use(editLocation.middleware());
 
 creatorComposer.use(listCreatedMiddleware);
 

@@ -3,19 +3,24 @@ import { getKeyboard } from "../../config.js";
 import { listCreatedMiddleware } from "./menus/listCreatedMenu.js";
 import Treasure, { ITreasure } from "../models/treasure.js";
 import { CustomContext } from "../../types/CustomContext.js";
+import Location from "../models/location.js";
 
-export const editHint = new StatelessQuestion("ehtt", async (ctx: CustomContext) => {
+export const editLocation = new StatelessQuestion("elt", async (ctx: CustomContext) => {
     const session = await ctx.session;
     let message = "";
-    if (ctx.message.text) {
+    if (ctx.message.location) {
         const treasure: ITreasure = await Treasure.findOne({ _id: session.treasureId, creator: ctx.chat.id });
-        treasure.hint = ctx.message.text;
+        const newLocation = new Location({
+            latitude: ctx.message.location.latitude.toString(),
+            longitude: ctx.message.location.longitude.toString()
+        });
+        treasure.location = newLocation;
         await treasure.save();
-        message = "Hint updated";
+        message = "Location updated";
     }
     else {
-        message = "I was not able to edit the hint. Please try sending me a text message again.";
-        return editHint.replyWithMarkdown(ctx, message);
+        message = "I was not able to edit the location. Please try sending me a location message again.";
+        return editLocation.replyWithMarkdown(ctx, message);
     }
 
     await ctx.reply(message, {
