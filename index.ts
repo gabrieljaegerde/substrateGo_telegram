@@ -131,7 +131,7 @@ class SubstrateBot {
     }
     console.log("totalUserBalance: ", allUsersBalance);
     const { data: botWalletBalance } = await botParams.api.query.system.account(botParams.account.address);
-    console.log("botBalance: ", botWalletBalance);
+    console.log("botBalance: ", botWalletBalance.free.toString());
     const botStartBalance = bigNumberArithmetic(botWalletBalance.free.toString(), allUsersBalance, "-");
     console.log("botStartBalance: ", botStartBalance);
   }

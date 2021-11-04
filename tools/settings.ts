@@ -55,7 +55,7 @@ export const getSettings = () => {
     adminChatId: parseInt(process.env.ADMIN_CHATID),
     telegramGroupLink: "https://t.me/kusamaGo",
     defaultHint: "If you look hard enough, you will find it.",
-    defaultDescription: "This is a treasure from the global NFT treasure hunt game. Join us: t.me/kusamaGo",
+    defaultDescription: "This is a treasure from the global NFT treasure hunt game. Join us: https://t.me/kusamaGo",
     externalUrl: "https://substrateGo.com/kusama"
   };
   return settings;
