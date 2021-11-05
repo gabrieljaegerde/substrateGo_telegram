@@ -6,7 +6,6 @@ import User, { IUser } from "../models/user.js";
 import Treasure, { ITreasure } from "../models/treasure.js";
 import { resetSession, amountToHumanString } from "../../tools/utils.js";
 import { listCreatedMiddleware } from "../creator/menus/listCreatedMenu.js";
-import { createTreasureMiddleware } from "../creator/menus/createTreasureMenu.js";
 import { editNameTreasure } from "../creator/editNameTreasure.js";
 import { editHint } from "../creator/editHint.js";
 import { editDescription } from "../creator/editDescription.js";
@@ -15,6 +14,7 @@ import { editTreasureMiddleware } from "../creator/menus/editTreasureMenu.js";
 import { showTreasureMiddleware } from "../creator/menus/showTreasureMenu.js";
 import { showCreatedItemMiddleware } from "../creator/menus/showCreatedItemMenu.js";
 import { editLocation } from "../creator/editLocation.js";
+import { createTreasure } from "../creator/createTreasure.js";
 
 export const creatorComposer = new Composer<CustomContext>();
 
@@ -73,7 +73,8 @@ creatorComposer.hears("🚦 View stats", async (ctx: CustomContext) => {
 creatorComposer.hears("🗞️ Create treasure 🗞️", async (ctx: CustomContext) => {
     if (ctx.chat.type == "private") {
         await resetSession(ctx);
-        createTreasureMiddleware.replyToContext(ctx);
+        const message = `What would you like to call this new treasure?\n\nPlease send me the name.`;
+        createTreasure.replyWithMarkdown(ctx, message);
     }
 });
 
@@ -116,7 +117,7 @@ creatorComposer.hears("🧙🏻‍♀️ Creator Mode", async (ctx: CustomContex
     }
 });
 
-creatorComposer.use(createTreasureMiddleware);
+creatorComposer.use(createTreasure.middleware());
 
 creatorComposer.use(editDescription.middleware());
 

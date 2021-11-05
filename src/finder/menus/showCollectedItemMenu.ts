@@ -37,7 +37,7 @@ showCollectedItem.interact("🌈 Show NFT", "sn", {
     const response: Response = await fetch(session.reward.file.replace('ipfs://', 'https://ipfs.io/'));
     const json: any = await response.json();
     await botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id);
-    const message = `Reward ${session.reward.name}'s NFT:`;
+    const message = `${session.reward.name}'s NFT:`;
     await ctx.reply(message, {
       reply_markup: {
         keyboard: (await getKeyboard(ctx)).build(),

@@ -4,14 +4,11 @@ import { botParams, getKeyboard } from "./config.js";
 import { claimNftMiddleware } from "./src/finder/menus/claimNftMenu.js";
 import { prepareCollection, router as collectRouter } from "./src/finder/collectTreasure.js";
 import User, { IUser } from "./src/models/user.js";
-import Treasure from "./src/models/treasure.js";
-import Qr from "./src/models/qr.js";
 import mongoose from "mongoose";
 import { resetSession } from "./tools/utils.js";
 import { sessionAdapter } from "./tools/sessionAdapter.js";
 import type { CustomContext } from './types/CustomContext';
 import type { SessionData } from './types/SessionData';
-import { prepareSetup, router as createRouter } from './src/creator/addTreasure.js';
 import { accountComposer } from "./src/composers/accountComposer.js";
 import { creatorComposer } from "./src/composers/creatorComposer.js";
 import { finderComposer } from "./src/composers/finderComposer.js";
@@ -54,7 +51,6 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
           code: null,
           nft: null,
           hideClaimButtons: null,
-          createStep: "",
           collectStep: ""
         };
       },
@@ -118,22 +114,11 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
           //the QR code id is sent in with the /start command.
           //seperate the id out
           const code = ctx.message.text.replace("/start", "").replace(/\s/g, "");
-          const userIsCreator: boolean = await Qr.exists({ code: code, creator: ctx.chat.id });
-          const treasureExists: boolean = await Treasure.exists({ code: code });
-          //trying to create a treasure
-          if (userIsCreator && !treasureExists) {
-            const { treasure, createStep } = await prepareSetup(ctx, code, false);
-            session.treasure = treasure;
-            session.createStep = createStep;
-            return;
-          }
-          else {
-            const { treasure, collectStep } = await prepareCollection(ctx, code, false);
-            session.treasure = treasure;
-            session.collectStep = collectStep;
-            if (treasure)
-              await claimNftMiddleware.replyToContext(ctx);
-          }
+          const { treasure, collectStep } = await prepareCollection(ctx, code, false);
+          session.treasure = treasure;
+          session.collectStep = collectStep;
+          if (treasure)
+            await claimNftMiddleware.replyToContext(ctx);
         }
       }
     }
@@ -203,24 +188,6 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
   bot.use(creatorComposer);
 
   /*
-   *   Handle callback query cancel setup
-   */
-
-  bot.callbackQuery("❌ Cancel Setup", async (ctx: CustomContext, next) => {
-    const session = await ctx.session;
-    session.createStep = "";
-    await ctx.answerCallbackQuery();
-    const message = "Setup Canceled";
-    await ctx.reply(message, {
-      reply_markup: {
-        keyboard: (await getKeyboard(ctx)).build(),
-        resize_keyboard: true
-      },
-      parse_mode: "Markdown",
-    });
-  });
-
-  /*
    *   Handle callback query cancel collection
    */
 
@@ -239,8 +206,6 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
   });
 
   //order important! 
-  bot.use(createRouter);
-
   bot.use(collectRouter);
 
   bot.use(finderComposer);

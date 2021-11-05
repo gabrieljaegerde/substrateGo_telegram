@@ -23,6 +23,5 @@ export interface SessionData {
   code: string;
   nft: INftProps;
   hideClaimButtons: boolean;
-  createStep: string;
   wallet: IWallet;
 }

@@ -110,7 +110,7 @@ const claimNft = new MenuTemplate<CustomContext>(async (ctx) => {
 claimNft.interact("Proceed", "sp", {
     do: async (ctx: CustomContext) => {
         const session = await ctx.session;
-        const loadMessage = await botParams.bot.api.sendMessage(ctx.chat.id, "Loading...");
+        const loadMessage = await botParams.bot.api.sendMessage(ctx.chat.id, "Loading... (this can take a minute)");
         const user: IUser = await User.findOne({ chatId: ctx.chat.id });
         const treasure: ITreasure = session.treasure;
         const reward: IReward = await Reward.findOne({ finder: user.chatId, treasureId: treasure._id });
@@ -119,8 +119,8 @@ claimNft.interact("Proceed", "sp", {
             const nftDescription = `This is a KusamaGo treasure!\n${treasure.description}\n\n`+
                 `Treasure ID: ${treasure._id}\n\nCreator: ${creator._id}\n\n` +
                 `Creator Wallet: ${creator.wallet && creator.wallet.address ? creator.wallet.address : ""}\n\n` +
-                `Location: {lat: ${treasure.location.latitude}, lng: ${treasure.location.longitude}}\n\n` +
-                `Hint: ${treasure.hint}\n\n` +
+                `${treasure.location ? "Location: {lat: " + treasure.location.latitude + ", lng: " + 
+                treasure.location.longitude + "}\n\nHint: " + treasure.hint + "\n\n" : ""}` +
                 `Reward ID: ${reward._id}\n\n` +
                 `Join the community: ${botParams.settings.telegramGroupLink}\n\n` +
                 `Join the hunt: https://t.me/${botParams.settings.botUsername}`;

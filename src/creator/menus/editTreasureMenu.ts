@@ -32,6 +32,13 @@ editTreasure.interact("🤷 Edit Hint", "eh", {
         editHint.replyWithMarkdown(ctx, message);
         return true;
     },
+    hide: async (ctx) => {
+        const session = await ctx.session;
+        const treasure: ITreasure = await Treasure.findOne({ _id: session.treasureId, creator: ctx.chat.id });
+        if (treasure.location)
+            return false;
+        return true;
+    },
     joinLastRow: true
 });
 
@@ -60,10 +67,20 @@ editTreasure.interact("✨ Edit Description", "ed", {
     joinLastRow: true
 });
 
-editTreasure.interact("📍 Edit Location", "el", {
+editTreasure.interact(async (ctx) => {
+    const session = await ctx.session;
+    const treasure: ITreasure = await Treasure.findOne({ _id: session.treasureId, creator: ctx.chat.id });
+    return treasure.location ? `📍 Edit Location` : `📍 Add Location`;
+}, "el", {
     do: async (ctx: CustomContext) => {
         //await deleteMenuFromContext(ctx)
-        const message = `Please send me the new location.`;
+        const session = await ctx.session;
+        const treasure: ITreasure = await Treasure.findOne({ _id: session.treasureId, creator: ctx.chat.id });
+        let message = `Please send me the treasure's location.`;
+        if (treasure.location) {
+            message = `Please send me the new location.\n\n_Send me a message with the text "delete" ` +
+                `if you would like to delete this treasure's location and remove it from our maps._`;
+        }
         editLocation.replyWithMarkdown(ctx, message);
         return true;
     },
@@ -89,7 +106,14 @@ editTreasure.toggle(async (ctx) => {
             const treasure: ITreasure = await Treasure.findOne({ _id: treasureId, creator: ctx.chat.id });
             return treasure.visible === true;
         },
-        joinLastRow: true
+        joinLastRow: true,
+        hide: async (ctx) => {
+            const treasureId = ctx.match[1];
+            const treasure: ITreasure = await Treasure.findOne({ _id: treasureId, creator: ctx.chat.id });
+            if (treasure.location)
+                return false;
+            return true;
+        }
     });
 
 editTreasure.manualRow(createBackMainMenuButtons());
