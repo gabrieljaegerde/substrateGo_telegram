@@ -2,32 +2,42 @@ import { MenuTemplate, createBackMainMenuButtons, MenuMiddleware } from "grammy-
 import { editTreasure } from "./editTreasureMenu.js";
 import { showTreasure } from "./showTreasureMenu.js";
 import Treasure, { ITreasure } from "../../models/treasure.js";
-import Reward, { IReward } from "../../models/reward.js";
 import { CustomContext } from "../../../types/CustomContext.js";
 
 export const renderInfo = async (chatId: number, treasureId: string): Promise<string> => {
     const treasure: ITreasure = await Treasure.findOne({ _id: treasureId, creator: chatId });
     let info = treasure.name ? `\n_Name_: *${treasure.name}*` : "";
     info += `\n_Created on_: *${treasure.createdAt.toDateString()}*`;
-    if (treasure.active) {
-        info += `\n_Status_: *\u2705 (shown publicly, collectable)*`;
+    if (treasure.active && treasure.location) {
+        info += `\n_Status_: *\u2705 (collectable, shown on map)*`;
+    }
+    else if (treasure.active && !treasure.location) {
+        info += `\n_Status_: *\u2705 (collectable)*`;
+    }
+    else if (!treasure.active && treasure.location) {
+        info += `\n_Status_: *\uD83D\uDEAB (non-collectable, not shown on map)*`;
     }
     else {
-        info += `\n_Status_: *\uD83D\uDEAB (not shown publicly, non-collectable)*`;
+        info += `\n_Status_: *\uD83D\uDEAB (non-collectable)*`;
     }
-    info += `\n_Hint_: *${treasure.hint}*`;
-    info += `\n_Description_: *${treasure.description}*\n`;
+    info += `\n_Description_: *${treasure.description}*`;
+    if (treasure.location) {
+        info += `\n_Hint_: *${treasure.hint}*\n`;
+    }
     const noCollected = await treasure.howManyCollected();
-    if (treasure.visible && noCollected > 0) {
-        info += `\n*🙉 NFT File is openly viewable* _(Change this in 'Edit treasure')_\n`;
+    if (treasure.visible && noCollected > 0 && treasure.location) {
+        info += `\n*🙉 NFT File is viewable (prior to collection) on www.substratego.com* _(Change this in 'Edit treasure')_\n`;
     }
-    else if (treasure.visible && noCollected === 0 ) {
-        info += `\n*🙉 NFT File is openly viewable* _(⚠️ We recommend you change this in 'Edit treasure' since your ` + 
-        `treasure has not been collected yet. This is to prevent people stealing your art.)_\n`;
+    else if (treasure.visible && noCollected === 0 && treasure.location ) {
+        info += `\n*🙉 NFT File will be viewable on www.substratego.com as soon as the treasure was collected once* _(This is to prevent people stealing your art.)_\n`;
     }
-    else {
-        info += `\n*🙈 NFT File is only viewable to users that collected this treasure* ` +
+    if (!treasure.visible && treasure.location){
+        info += `\n*🙈 NFT File is not viewable (prior to collection) on www.substratego.com* ` +
             `_(change this in 'Edit treasure')_\n`;
+    }
+
+    if (!treasure.location){
+        info += `\nThis treasure does not have a location set.\n`
     }
     
     if (noCollected > 0) {

@@ -89,6 +89,13 @@ showTreasure.interact("🌍 Show location", "eP", {
         listCreatedMiddleware.replyToContext(ctx, `lc/i:${session.treasureId}/`);
         return false;
     },
+    hide: async (ctx) => {
+        const session = await ctx.session;
+        const treasure: ITreasure = await Treasure.findOne({ _id: session.treasureId, creator: ctx.chat.id });
+        if (treasure.location)
+            return false;
+        return true;
+    },
     joinLastRow: false
 });
 

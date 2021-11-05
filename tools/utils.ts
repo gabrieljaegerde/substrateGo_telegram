@@ -159,7 +159,6 @@ export const resetSession = async (ctx: CustomContext): Promise<void> => {
   session.treasureId = null;
   session.code = null;
   session.collectStep = "";
-  session.createStep = "";
 };
 
 export const createCharityUser = async (): Promise<void> => {

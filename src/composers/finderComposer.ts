@@ -86,45 +86,17 @@ finderComposer.hears("🕵🏾‍♂️ Finder Mode", async (ctx: CustomContext)
 finderComposer.on("message:location", async (ctx) => {
     if (ctx.chat.type == "private") {
         const session = await ctx.session;
-        if (session.createStep !== "location") {
-            if (ctx.message.location) {
-                const loadMessage = await botParams.bot.api.sendMessage(ctx.chat.id, "Loading...");
-                const allTreasures: ITreasure[] = await Treasure.find({ active: true });
+        if (ctx.message.location) {
+            const loadMessage = await botParams.bot.api.sendMessage(ctx.chat.id, "Loading...");
+            const allTreasures: ITreasure[] = await Treasure.find({ active: true, location: { $ne: null } });
 
+            const nonCollected: ITreasure[] = await asyncFilter(allTreasures, async (treasure: ITreasure) => {
+                const collected: boolean = await treasure.checkIfAlreadyCollected(ctx.chat.id);
+                return !collected;
+            });
 
-                const nonCollected: ITreasure[] = await asyncFilter(allTreasures, async (treasure: ITreasure) => {
-                    const collected: boolean = await treasure.checkIfAlreadyCollected(ctx.chat.id);
-                    return !collected;
-                });
-
-                if (nonCollected.length < 1) {
-                    const message = "You have collected all existing Treasures already!";
-                    await ctx.reply(
-                        message,
-                        {
-                            reply_markup: {
-                                keyboard: (await getKeyboard(ctx)).build(),
-                                resize_keyboard: true
-                            },
-                            parse_mode: "Markdown",
-                        }
-                    );
-                    await botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id);
-                    return;
-                }
-                const userLocation: ILocation = new Location(ctx.message.location);
-                const nearest: ITreasure = nonCollected.reduce(function (prev, curr) {
-                    const prevDistance = distance(userLocation, prev.location, "K"),
-                        currDistance = distance(userLocation, curr.location, "K");
-                    return (prevDistance < currDistance) ? prev : curr;
-                });
-                const creator = await nearest.getCreator();
-                const message = `The closest treasure (that has not been collected by you yet) is ` +
-                    `*${Math.round(distance(userLocation, nearest.location, "K") * 100) / 100}km* away.\n\n` +
-                    `This treasure has been collected by *${await nearest.howManyCollected()}* others so far.\n\n` +
-                    `Hint: *${nearest.hint}*\n\n` +
-                    `Creator: *${creator._id}*\n\n` +
-                    `Treasure *${nearest.name}'s* location:`;
+            if (nonCollected.length < 1) {
+                const message = "You have collected all existing Treasures already!";
                 await ctx.reply(
                     message,
                     {
@@ -136,23 +108,48 @@ finderComposer.on("message:location", async (ctx) => {
                     }
                 );
                 await botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id);
-                await botParams.bot.api.sendLocation(ctx.chat.id, nearest.location.latitude, nearest.location.longitude);
-            }
-            else {
-                const message = "The location you sent me was invalid. " +
-                    "Please try again.";
-                await ctx.reply(
-                    message,
-                    {
-                        reply_markup: {
-                            keyboard: (await getKeyboard(ctx)).build(),
-                            resize_keyboard: true
-                        },
-                        parse_mode: "Markdown",
-                    }
-                );
                 return;
             }
+            const userLocation: ILocation = new Location(ctx.message.location);
+            const nearest: ITreasure = nonCollected.reduce(function (prev, curr) {
+                const prevDistance = distance(userLocation, prev.location, "K"),
+                    currDistance = distance(userLocation, curr.location, "K");
+                return (prevDistance < currDistance) ? prev : curr;
+            });
+            const creator = await nearest.getCreator();
+            const message = `The closest treasure (that has not been collected by you yet) is ` +
+                `*${Math.round(distance(userLocation, nearest.location, "K") * 100) / 100}km* away.\n\n` +
+                `This treasure has been collected by *${await nearest.howManyCollected()}* others so far.\n\n` +
+                `Hint: *${nearest.hint}*\n\n` +
+                `Creator: *${creator._id}*\n\n` +
+                `Treasure *${nearest.name}'s* location:`;
+            await ctx.reply(
+                message,
+                {
+                    reply_markup: {
+                        keyboard: (await getKeyboard(ctx)).build(),
+                        resize_keyboard: true
+                    },
+                    parse_mode: "Markdown",
+                }
+            );
+            await botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id);
+            await botParams.bot.api.sendLocation(ctx.chat.id, nearest.location.latitude, nearest.location.longitude);
+        }
+        else {
+            const message = "The location you sent me was invalid. " +
+                "Please try again.";
+            await ctx.reply(
+                message,
+                {
+                    reply_markup: {
+                        keyboard: (await getKeyboard(ctx)).build(),
+                        resize_keyboard: true
+                    },
+                    parse_mode: "Markdown",
+                }
+            );
+            return;
         }
     }
 });

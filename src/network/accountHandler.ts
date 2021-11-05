@@ -33,7 +33,7 @@ export const deposit = async (record, currentBlock: number): Promise<void> => {
   if (users.length === 1) {
     user = users[0];
   }
-  console.log(`Deposit from: ${from} Value: ${value} Time: `)
+  console.log(`Deposit from: ${from} Value: ${value} Time: ${new Date()}`)
   if (user && !user.wallet.linked) {
     //transfer amount matches password && password not expired yet
     const pwordMatch = bigNumberComparison(user.wallet.password, value, "=");
@@ -44,7 +44,7 @@ export const deposit = async (record, currentBlock: number): Promise<void> => {
         "Any deposits you make from that wallet to the deposit address of this bot will now automatically " +
         "be credited to this account. When collecting treasures, the respective NFTs will also be sent " +
         "to the linked wallet.\n\n" +
-        "_As a precaution, please still always check your wallet's status *BEFORE* depositing to ensure " +
+        "_As a precaution, please still always check your wallet's status_ *BEFORE* _depositing to ensure " +
         "your wallet is still linked to your account!_\n\nYou can now use the bot to *create* " +
         "and *collect* treasures! *Have fun.*\n\n";
     }
@@ -89,7 +89,7 @@ export const deposit = async (record, currentBlock: number): Promise<void> => {
         "Any deposits you make from that wallet to the deposit address of this bot will now automatically " +
         "be credited to this account. When collecting treasures, the respective NFTs will also be sent " +
         "to the linked wallet.\n\n" +
-        "_As a precaution, please still always check your wallet's status *BEFORE* depositing to ensure " +
+        "_As a precaution, please still always check your wallet's status_ *BEFORE* _depositing to ensure " +
         "your wallet is still linked to your account!_\n\nYou can now use the bot to *create* " +
         "and *collect* treasures! *Have fun.*\n\n";
     }

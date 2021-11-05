@@ -18,8 +18,14 @@ export const editLocation = new StatelessQuestion("elt", async (ctx: CustomConte
         await treasure.save();
         message = "Location updated";
     }
+    else if (ctx.message.text === "delete") {
+        const treasure: ITreasure = await Treasure.findOne({ _id: session.treasureId, creator: ctx.chat.id });
+        treasure.location = null;
+        await treasure.save();
+        message = "Location deleted. This treasure is no longer findable through our maps.";
+    }
     else {
-        message = "I was not able to edit the location. Please try sending me a location message again.";
+        message = "I was not able to edit the location. Please try sending me a location message again. (or 'delete')";
         return editLocation.replyWithMarkdown(ctx, message);
     }
 
