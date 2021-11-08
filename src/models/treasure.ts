@@ -1,7 +1,6 @@
 import mongoose, { Document } from "mongoose";
 import Reward from "./reward.js";
-import { LocationSchema } from "./location.js";
-import { ILocation } from "./location.js";
+import { ILocation, LocationSchema } from "./location.js";
 import { IReward } from "./reward.js";
 import User, { IUser } from "./user.js";
 

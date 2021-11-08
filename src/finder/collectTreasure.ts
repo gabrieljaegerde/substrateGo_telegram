@@ -66,6 +66,7 @@ export const prepareCollection = async (ctx: CustomContext, code: string, isScan
             const newReward: IReward = new Reward({
                 treasureId: treasure._id,
                 finder: ctx.chat.id,
+                location: treasure.location,
                 collected: false,
                 name: treasure.name,
                 expiry: thirtyAfter,

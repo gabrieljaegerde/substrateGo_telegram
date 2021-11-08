@@ -6,13 +6,12 @@ import User, { IUser } from "../models/user.js";
 import Treasure, { ITreasure } from "../models/treasure.js";
 import { resetSession, amountToHumanString } from "../../tools/utils.js";
 import { listCreatedMiddleware } from "../creator/menus/listCreatedMenu.js";
-import { editNameTreasure } from "../creator/editNameTreasure.js";
+import { editName } from "../creator/editName.js";
 import { editHint } from "../creator/editHint.js";
 import { editDescription } from "../creator/editDescription.js";
 import { editFile } from "../creator/editFile.js";
 import { editTreasureMiddleware } from "../creator/menus/editTreasureMenu.js";
 import { showTreasureMiddleware } from "../creator/menus/showTreasureMenu.js";
-import { showCreatedItemMiddleware } from "../creator/menus/showCreatedItemMenu.js";
 import { editLocation } from "../creator/editLocation.js";
 import { createTreasure } from "../creator/createTreasure.js";
 
@@ -121,7 +120,7 @@ creatorComposer.use(createTreasure.middleware());
 
 creatorComposer.use(editDescription.middleware());
 
-creatorComposer.use(editNameTreasure.middleware());
+creatorComposer.use(editName.middleware());
 
 creatorComposer.use(editHint.middleware());
 
@@ -135,4 +134,3 @@ creatorComposer.use(editTreasureMiddleware);
 
 creatorComposer.use(showTreasureMiddleware);
 
-creatorComposer.use(showCreatedItemMiddleware);

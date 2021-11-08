@@ -2,7 +2,6 @@ import { MenuTemplate, createBackMainMenuButtons, deleteMenuFromContext } from "
 import { botParams, getKeyboard } from "../../../config.js";
 import fetch, { Response } from 'node-fetch';
 import { listUserRewardsMiddleware } from "./listUserRewardsMenu.js";
-import { editNameReward } from "../editNameReward.js";
 import Reward, { IReward } from "../../models/reward.js";
 import Treasure, { ITreasure } from "../../models/treasure.js";
 import { IUser } from "../../models/user.js";
@@ -14,7 +13,7 @@ export const showCollectedItem = new MenuTemplate<CustomContext>(async (ctx) => 
   const reward: IReward = await Reward.findOne({ _id: ctx.match[1], finder: ctx.chat.id });
   session.reward = reward;
   const treasure: ITreasure = await Treasure.findOne({ _id: reward.treasureId });
-  const creator: IUser = await treasure.getCreator()
+  const creator: IUser = await treasure.getCreator();
   const collectedTimes = await treasure.howManyCollected();
   let info = `_Name_: *${reward.name}*\n\n_Creator_: *${creator._id}*\n\nYou collected this ` +
     `treasure on *${reward.dateCollected.toDateString()}*.\n\n` +
@@ -82,12 +81,33 @@ showCollectedItem.interact("🔗 Show blockchain transaction", "sbt", {
   joinLastRow: false
 });
 
-showCollectedItem.interact("📝 Edit name", "ens", {
+showCollectedItem.interact("🌍 Show collected location", "slr", {
   do: async (ctx: CustomContext) => {
+    const session = await ctx.session;
     await deleteMenuFromContext(ctx);
-    const message = `Please send me the new name.`;
-    editNameReward.replyWithMarkdown(ctx, message);
+    const reward: IReward = await Reward.findOne({ _id: session.reward._id, finder: ctx.chat.id });
+    const message = `This is the location you collected this treasure ` +
+      `(it might not be there anymore):`;
+    await ctx.reply(
+      message,
+      {
+        reply_markup: {
+          keyboard: (await getKeyboard(ctx)).build(),
+          resize_keyboard: true
+        },
+        parse_mode: "Markdown",
+      }
+    );
+    await botParams.bot.api.sendLocation(ctx.chat.id, reward.location.latitude, reward.location.longitude);
+    listUserRewardsMiddleware.replyToContext(ctx, `lur/lco/a:${session.reward._id}/`);
     return false;
+  },
+  hide: async (ctx) => {
+    const session = await ctx.session;
+    const reward: IReward = await Reward.findOne({ _id: session.reward._id, finder: ctx.chat.id });
+    if (reward.location)
+      return false;
+    return true;
   },
   joinLastRow: false
 });

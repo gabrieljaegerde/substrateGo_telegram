@@ -28,18 +28,18 @@ export const renderInfo = async (chatId: number, treasureId: string): Promise<st
     if (treasure.visible && noCollected > 0 && treasure.location) {
         info += `\n*🙉 NFT File is viewable (prior to collection) on www.substratego.com* _(Change this in 'Edit treasure')_\n`;
     }
-    else if (treasure.visible && noCollected === 0 && treasure.location ) {
+    else if (treasure.visible && noCollected === 0 && treasure.location) {
         info += `\n*🙉 NFT File will be viewable on www.substratego.com as soon as the treasure was collected once* _(This is to prevent people stealing your art.)_\n`;
     }
-    if (!treasure.visible && treasure.location){
+    if (!treasure.visible && treasure.location) {
         info += `\n*🙈 NFT File is not viewable (prior to collection) on www.substratego.com* ` +
             `_(change this in 'Edit treasure')_\n`;
     }
 
-    if (!treasure.location){
-        info += `\nThis treasure does not have a location set.\n`
+    if (!treasure.location) {
+        info += `\nThis treasure does not have a location set.\n`;
     }
-    
+
     if (noCollected > 0) {
         info += `\n_This treasure has been collected_ *${noCollected}* _time(s)._`;
     }
@@ -83,6 +83,3 @@ showCreatedItem.toggle(async (ctx) => {
     });
 
 showCreatedItem.manualRow(createBackMainMenuButtons());
-
-export const showCreatedItemMiddleware = new MenuMiddleware('scri/', showCreatedItem);
-

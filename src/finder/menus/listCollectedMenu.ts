@@ -26,17 +26,6 @@ listCollected.chooseIntoSubmenu(
   },
   showCollectedItem,
   {
-    hide: async (ctx) => {
-      const session = await ctx.session;
-      if (
-        !session ||
-        !session.userCollectedRewards ||
-        session.userCollectedRewards.length == 0
-      ) {
-        return true;
-      }
-      return false;
-    },
     maxRows: 5,
     columns: 1,
     buttonText: async (ctx, key) => {
@@ -54,6 +43,7 @@ listCollected.chooseIntoSubmenu(
       const session = await ctx.session;
       session.collectedRewardsPage = page;
     },
+    disableChoiceExistsCheck: true
   }
 );
 
