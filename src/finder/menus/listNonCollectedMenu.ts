@@ -30,16 +30,6 @@ listNonCollected.chooseIntoSubmenu(
   },
   showNonCollectedItem,
   {
-    hide: async (ctx: CustomContext) => {
-      const session = await ctx.session;
-      if (
-        !session ||
-        !session.userNonCollectedRewards ||
-        session.userNonCollectedRewards.length === 0
-      )
-        return true;
-      return false;
-    },
     buttonText: async (ctx: CustomContext, key) => {
       const session = await ctx.session;
       if (key === "")
@@ -65,6 +55,7 @@ listNonCollected.chooseIntoSubmenu(
       const session = await ctx.session;
       session.nonCollectedRewardsPage = page;
     },
+    disableChoiceExistsCheck: true
   }
 );
 

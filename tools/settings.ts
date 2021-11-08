@@ -40,7 +40,7 @@ export const getSettings = () => {
     pwordLower: 10000, //0.001wmd
     pwordUpper: 11000, //0.0011wmd
     pwordDigitsToAdd: "5",
-    creatorReward: "100000000", //0.0001ksm
+    creatorReward: "400000000", //0.0004ksm
     //upload a default file to pinata manually first, then paste the cid here
     defaultFile: process.env.DEFAULT_FILE.toString(),
     //only the length has to match. actual content irrelevant

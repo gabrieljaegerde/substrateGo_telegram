@@ -1,6 +1,6 @@
 import { MenuTemplate, createBackMainMenuButtons, MenuMiddleware } from "grammy-inline-menu";
 import { editDescription } from "../editDescription.js";
-import { editNameTreasure } from "../editNameTreasure.js";
+import { editName } from "../editName.js";
 import { editFile } from "../editFile.js";
 import { renderInfo } from "./showCreatedItemMenu.js";
 import { editHint } from "../editHint.js";
@@ -18,7 +18,7 @@ editTreasure.interact("🔥 Edit name", "en", {
     do: async (ctx: CustomContext) => {
         //await deleteMenuFromContext(ctx)
         const message = `Please send me the new name.`;
-        editNameTreasure.replyWithMarkdown(ctx, message);
+        editName.replyWithMarkdown(ctx, message);
         return true;
     },
     joinLastRow: true

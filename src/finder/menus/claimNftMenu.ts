@@ -1,15 +1,12 @@
 import { MenuTemplate, MenuMiddleware, deleteMenuFromContext } from "grammy-inline-menu";
 import { botParams, getKeyboard } from "../../../config.js";
-import { getTransactionCost, getTransactionCostSingle, mintAndSend, mintNft, sendNft } from "../../network/accountHandler.js";
+import { getTransactionCostSingle, mintNft, sendNft } from "../../network/accountHandler.js";
 import { Collection, NFT } from "rmrk-tools";
 import { amountToHumanString, bigNumberArithmetic, bigNumberComparison } from "../../../tools/utils.js";
-import Treasure, { ITreasure } from "../../models/treasure.js";
+import { ITreasure } from "../../models/treasure.js";
 import Reward, { IReward } from "../../models/reward.js";
 import User, { IUser } from "../../models/user.js";
-import fetch, { Response } from "node-fetch";
-import { encodeAddress } from "@polkadot/util-crypto";
 import { pinSingleMetadataWithoutFile, unpin } from "../../../tools/pinataUtils.js";
-import { InlineKeyboard, InputFile } from "grammy";
 import { CustomContext } from "../../../types/CustomContext.js";
 import { INftProps } from "../../../types/NftProps.js";
 import { u8aToHex } from "@polkadot/util";
@@ -41,7 +38,6 @@ const claimNft = new MenuTemplate<CustomContext>(async (ctx) => {
         u8aToHex(botParams.account.publicKey),
         botParams.settings.collectionSymbol
     );
-    //const mintRemarkPlaceholder = "RMRK::MINTNFT::1.0.0::%7B%22collection%22%3A%22d43593c715a56da27d-HEYHYE%22%2C%22name%22%3A%22Yea%22%2C%22instance%22%3A%22616c37d59e45e3ea3bd51741%22%2C%22transferable%22%3A1%2C%22sn%22%3A%2261815fcf37e9a9e6eada6452%22%2C%22metadata%22%3A%22ipfs%3A%2F%2Fipfs%2Fbafkreiakkgfso7jp4ewgtj6whrtp4nijbamiodicl3ygi5k4vta2p6ntby%22%7D";
     const sendRemarkPlaceholder = await generateSendRemark(collectionId, treasure._id, reward._id, user.wallet.address);
     const nftProps: INftProps = {
         block: 0,
@@ -116,11 +112,11 @@ claimNft.interact("Proceed", "sp", {
         const reward: IReward = await Reward.findOne({ finder: user.chatId, treasureId: treasure._id });
         let creator: IUser = await User.findOne({ chatId: treasure.creator });
         try {
-            const nftDescription = `This is a KusamaGo treasure!\n${treasure.description}\n\n`+
+            const nftDescription = `This is a KusamaGo treasure!\n${treasure.description}\n\n` +
                 `Treasure ID: ${treasure._id}\n\nCreator: ${creator._id}\n\n` +
                 `Creator Wallet: ${creator.wallet && creator.wallet.address ? creator.wallet.address : ""}\n\n` +
-                `${treasure.location ? "Location: {lat: " + treasure.location.latitude + ", lng: " + 
-                treasure.location.longitude + "}\n\nHint: " + treasure.hint + "\n\n" : ""}` +
+                `${treasure.location ? "Location: {lat: " + treasure.location.latitude + ", lng: " +
+                    treasure.location.longitude + "}\n\nHint: " + treasure.hint + "\n\n" : ""}` +
                 `Reward ID: ${reward._id}\n\n` +
                 `Join the community: ${botParams.settings.telegramGroupLink}\n\n` +
                 `Join the hunt: https://t.me/${botParams.settings.botUsername}`;
@@ -129,6 +125,8 @@ claimNft.interact("Proceed", "sp", {
                 description: nftDescription,
                 external_url: botParams.settings.externalUrl
             });
+            reward.name = treasure.name;
+            reward.location = treasure.location;
             if (metadataCid === "") {
                 console.error("empty metadataCid");
                 throw Error;

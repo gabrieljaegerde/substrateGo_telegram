@@ -26,16 +26,6 @@ listCreated.chooseIntoSubmenu(
   },
   showCreatedItem,
   {
-    hide: async (ctx: CustomContext) => {
-      const session = await ctx.session;
-      if (
-        !session ||
-        !session.userCreated ||
-        session.userCreated.length === 0
-      )
-        return true;
-      return false;
-    },
     buttonText: async (ctx: CustomContext, key) => {
       const session = await ctx.session;
       if (key === "")
@@ -45,14 +35,15 @@ listCreated.chooseIntoSubmenu(
     },
     maxRows: 5,
     columns: 1,
-    getCurrentPage: async (ctx) => {
+    getCurrentPage: async (ctx: CustomContext) => {
       const session = await ctx.session;
       return session.createdPage;
     },
-    setPage: async (ctx, page) => {
+    setPage: async (ctx: CustomContext, page) => {
       const session = await ctx.session;
       session.createdPage = page;
     },
+    disableChoiceExistsCheck: true
   }
 );
 

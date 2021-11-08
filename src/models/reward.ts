@@ -1,9 +1,11 @@
 import mongoose, { Types, Document } from "mongoose";
+import { ILocation, LocationSchema } from "./location.js";
 
 export interface IReward extends Document {
     createdAt: Date;
     treasureId: Types.ObjectId;
     finder: number;
+    location: ILocation;
     collected: boolean;
     name?: string;
     expiry: Date;
@@ -25,6 +27,10 @@ const RewardSchema = new Schema(
         finder: {
             type: Number,
             required: true
+        },
+        location: {
+            type: LocationSchema,
+            required: false
         },
         collected: {
             type: Boolean,

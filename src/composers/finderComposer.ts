@@ -7,7 +7,6 @@ import { resetSession, asyncFilter, distance } from "../../tools/utils.js";
 //import { collectTreasure } from "../finder/collectTreasure.js"
 import { listUserRewardsMiddleware } from "../finder/menus/listUserRewardsMenu.js";
 import Location, { ILocation } from "../models/location.js";
-import { editNameReward } from "../finder/editNameReward.js";
 import { claimNftMiddleware } from "../finder/menus/claimNftMenu.js";
 import { listCollectedMiddleware } from "../finder/menus/listCollectedMenu.js";
 import { listNonCollectedMiddleware } from "../finder/menus/listNonCollectedMenu.js";
@@ -65,7 +64,8 @@ finderComposer.hears("🕵🏾‍♂️ Finder Mode", async (ctx: CustomContext)
             "• *find* treasures 🔍\n• and *view* your found treasures 🛍️\n\n_Each time you collect a treasure, " +
             `an NFT gets created on the ${botParams.settings.network.name} blockchain. These prove your ownership of ` +
             "the treasures and can be freely traded on the open market._\n\n" +
-            `Join ${botParams.settings.telegramGroupLink} to meet other treasure hunters!`;
+            `Join ${botParams.settings.telegramGroupLink} to meet other treasure hunters!\n\n` +
+            `🌏 World map of treasures: www.substratego.com`;
         await ctx.reply(
             message,
             {
@@ -157,8 +157,6 @@ finderComposer.on("message:location", async (ctx) => {
 finderComposer.use(claimNftMiddleware);
 
 finderComposer.use(postCollectionMiddleware);
-
-finderComposer.use(editNameReward.middleware());
 
 finderComposer.use(listUserRewardsMiddleware);
 

@@ -4,7 +4,7 @@ import { listCreatedMiddleware } from "./menus/listCreatedMenu.js";
 import Treasure, { ITreasure } from "../models/treasure.js";
 import { CustomContext } from "../../types/CustomContext.js";
 
-const editNameTreasure = new StatelessQuestion("ent", async (ctx: CustomContext) => {
+const editName = new StatelessQuestion("ent", async (ctx: CustomContext) => {
     const session = await ctx.session;
     let message = "";
     if (ctx.message.text) {
@@ -15,7 +15,7 @@ const editNameTreasure = new StatelessQuestion("ent", async (ctx: CustomContext)
     }
     else {
         message = "I was not able to edit the name. Please try sending me a text message again.";
-        return editNameTreasure.replyWithMarkdown(ctx, message);
+        return editName.replyWithMarkdown(ctx, message);
     }
 
     await ctx.reply(message, {
@@ -28,5 +28,5 @@ const editNameTreasure = new StatelessQuestion("ent", async (ctx: CustomContext)
 });
 
 export {
-    editNameTreasure
+    editName
 };

@@ -96,7 +96,8 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
           "for lost, stolen or misdirected funds. Please use the bot with caution " +
           "and only ever transfer small amounts to the bots deposit wallet._\n\n" +
           "This bot is currently running in BETA mode!!! Do not expect it to be bug free. Kindly " +
-          `report any bugs to an admin in ${botParams.settings.telegramGroupLink}`;
+          `report any bugs to an admin in ${botParams.settings.telegramGroupLink}.\n\n` +
+          `World map of treasures: www.substratego.com`;
         await ctx.reply(
           message,
           {
