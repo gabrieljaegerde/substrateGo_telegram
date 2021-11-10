@@ -16,6 +16,7 @@ import { Low } from "lowdb/lib";
 import { createGoCollection } from "./tools/startScripts/createGoCollection.js";
 import mongoose from "mongoose";
 import { TransactionListener } from "./src/network/transactionListener.js";
+import { uploadDefaultNftFile } from "./tools/startScripts/uploadDefaultNftFile.js";
 
 dotenv.config();
 
@@ -108,7 +109,8 @@ class SubstrateBot {
       console.log(err);
     }
     if (process.env.SETUP_COMPLETE !== "true") {
-      await createGoCollection();
+      //await createGoCollection();
+      await uploadDefaultNftFile();
     }
     const users: IUser[] = await User.find({});
     let allUsersBalance = "0";

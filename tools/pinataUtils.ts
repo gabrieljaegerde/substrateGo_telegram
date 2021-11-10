@@ -114,13 +114,14 @@ export const pinSingleMetadataWithoutFile = async (
 export const pinSingleFile = async (
     buffer: Buffer,
     name: string,
+    path?: string 
 ): Promise<string> => {
     try {
         if (!buffer) {
             throw new Error('No image file');
         }
         const stream: StreamPinata = Readable.from(buffer);
-        stream.path = "treasure_file.png";
+        stream.path = path ? path : "treasure_file.png";
         const imageCid = await pinFileStreamToIpfs(stream, name);
         console.log(`NFT ${name} IMAGE CID: `, imageCid);
         return imageCid;
