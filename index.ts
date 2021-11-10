@@ -1,6 +1,4 @@
 import { botParams, getDb, getRemarkStorage } from "./config.js";
-import { newHeaderHandler } from "./src/network/blockHandler.js";
-import { alreadyReceived } from "./src/network/accountHandler.js";
 import { getSettings } from "./tools/settings.js";
 //import prom from "./metrics.js"
 import { Consolidator, RemarkListener } from "rmrk-tools";
@@ -9,7 +7,6 @@ import { RemarkStorageAdapter } from "./tools/remarkStorageAdapter.js";
 import pinataSDK from "@pinata/sdk";
 import dotenv from "dotenv";
 import User, { IUser } from "./src/models/user.js";
-import { Header } from "@polkadot/types/interfaces";
 import * as bot from "./bot.js";
 import { bigNumberArithmetic, createCharityUser, send } from "./tools/utils.js";
 import { initAccount, getApi } from "./tools/substrateUtils.js";
@@ -18,6 +15,7 @@ import { KeyringPair } from "@polkadot/keyring/types";
 import { Low } from "lowdb/lib";
 import { createGoCollection } from "./tools/startScripts/createGoCollection.js";
 import mongoose from "mongoose";
+import { TransactionListener } from "./src/network/transactionListener.js";
 
 dotenv.config();
 
@@ -26,7 +24,6 @@ class SubstrateBot {
   api: ApiPromise;
   account: KeyringPair;
   remarkStorage: Low;
-  invalidateCacheInterval: NodeJS.Timer;
   /**
    * Create SubstrateBot instance
    * @param config - SubstrateBot config
@@ -68,11 +65,14 @@ class SubstrateBot {
     botParams.settings = this.settings;
     await createCharityUser();
 
-    //setup block listener for transaction listener
-    await this.api.rpc.chain.subscribeNewHeads(async (header: Header) =>
-      newHeaderHandler(header, new blockCountAdapter(botParams.remarkStorage, "headerBlock"))
-    );
 
+    if (process.env.SETUP_COMPLETE === "true") {
+      const { runnerHandle, tBot } = await bot.start();
+      botParams.bot = tBot;
+      botParams.runnerHandle = runnerHandle;
+      new TransactionListener(botParams.api,
+        new blockCountAdapter(botParams.remarkStorage, "headerBlock"));
+    }
     //setup remark listener for minting listener
     const consolidateFunction = async (remarks) => {
       const consolidator = new Consolidator(2, new RemarkStorageAdapter(botParams.remarkStorage));
@@ -107,21 +107,7 @@ class SubstrateBot {
       //handle error here
       console.log(err);
     }
-    this.invalidateCacheInterval = setInterval(() => {
-      [...alreadyReceived.entries()].forEach(key => {
-        const dateMinuteAgo = new Date();
-        dateMinuteAgo.setSeconds(dateMinuteAgo.getSeconds() - 60);
-        if (alreadyReceived.get(key[0]) < dateMinuteAgo) {
-          alreadyReceived.delete(key[0]);
-        }
-      });
-    }, 60000);
-    if (process.env.SETUP_COMPLETE === "true") {
-      const { runnerHandle, tBot } = await bot.start();
-      botParams.bot = tBot;
-      botParams.runnerHandle = runnerHandle;
-    }
-    else {
+    if (process.env.SETUP_COMPLETE !== "true") {
       await createGoCollection();
     }
     const users: IUser[] = await User.find({});
@@ -137,19 +123,20 @@ class SubstrateBot {
   }
 
   async stop() {
-    clearInterval(this.invalidateCacheInterval);
     const users: IUser[] = await User.find({});
     const alert = `🚧🚧🚧🚧🚧🚧🚧🚧🚧\nThe bot will be down for an undetermined amount of time for *maintenance*.\n\n` +
       `👷🏽‍♀️👷🏻We are working hard to get the bot running again soon and ` +
       `you will be notified when it comes back online.\n\n*Sorry for the inconvenience!*\n\n_Please ` +
       `refrain from depositing to the bot wallet until the bot is running again._\n🚧🚧🚧🚧🚧🚧🚧🚧🚧`;
-    for (const user of users) {
-      if (user.chatId !== botParams.settings.charityChatId && !user.blocked) {
-        await send(user.chatId, alert);
+    if (process.env.SETUP_COMPLETE === "true") {
+      for (const user of users) {
+        if (user.chatId !== botParams.settings.charityChatId && !user.blocked) {
+          await send(user.chatId, alert);
+        }
       }
+      await botParams.runnerHandle.stop();
+      console.log("bot stopped.");
     }
-    await botParams.runnerHandle.stop();
-    console.log("bot stopped.");
     await mongoose.connection.close(false);
     console.log('MongoDb connection closed.');
     process.exit(0);
@@ -169,9 +156,11 @@ async function main() {
   await substrateBot.run();
   const users: IUser[] = await User.find({});
   const alert = `🚨The bot is back *online*!🚨`;
-  for (const user of users) {
-    if (user.chatId !== botParams.settings.charityChatId && !user.blocked) {
-      await send(user.chatId, alert);
+  if (process.env.SETUP_COMPLETE === "true") {
+    for (const user of users) {
+      if (user.chatId !== botParams.settings.charityChatId && !user.blocked) {
+        await send(user.chatId, alert);
+      }
     }
   }
   process.once('SIGINT', () => {

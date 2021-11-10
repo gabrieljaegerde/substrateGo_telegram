@@ -1,4 +1,6 @@
-export class blockCountAdapter {
+import { IStorageProvider } from "rmrk-tools/dist/listener";
+
+export class blockCountAdapter implements IStorageProvider {
   readonly storageKey: string;
   private db: any;
   public constructor(db: any, storageKey?: string) {

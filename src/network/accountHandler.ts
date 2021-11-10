@@ -8,17 +8,6 @@ import { RuntimeDispatchInfo } from "@polkadot/types/interfaces";
 export const alreadyReceived = new Map();
 
 export const deposit = async (record, currentBlock: number): Promise<void> => {
-  if (
-    alreadyReceived.get(
-      record.hash.toHuman ? record.hash.toHuman() : record.hash.toJSON()
-    )
-  ) {
-    alreadyReceived.set(
-      record.hash.toHuman ? record.hash.toHuman() : record.hash.toJSON(),
-      new Date()
-    );
-    return;
-  }
   const { event, phase } = record;
   const from = event.data[0].toString();
   const value = event.data[2].toString();
@@ -33,7 +22,7 @@ export const deposit = async (record, currentBlock: number): Promise<void> => {
   if (users.length === 1) {
     user = users[0];
   }
-  console.log(`Deposit from: ${from} Value: ${value} Time: ${new Date()}`)
+  console.log(`${new Date()} Deposit from: ${from} Value: ${value}`);
   if (user && !user.wallet.linked) {
     //transfer amount matches password && password not expired yet
     const pwordMatch = bigNumberComparison(user.wallet.password, value, "=");

@@ -127,6 +127,7 @@ claimNft.interact("Proceed", "sp", {
             });
             reward.name = treasure.name;
             reward.location = treasure.location;
+            reward.description = treasure.description;
             if (metadataCid === "") {
                 console.error("empty metadataCid");
                 throw Error;
