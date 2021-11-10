@@ -125,6 +125,7 @@ claimNft.interact("Proceed", "sp", {
                 description: nftDescription,
                 external_url: botParams.settings.externalUrl
             });
+            //update these fields
             reward.name = treasure.name;
             reward.location = treasure.location;
             reward.description = treasure.description;
@@ -164,18 +165,20 @@ claimNft.interact("Proceed", "sp", {
                     const totalCost = sendFee;
                     user.subtractFromBalance(totalCost);
                     await user.save();
-
+                    console.log(`user new balance: ${user.getBalance()}`);
                     //add creator-reward ($) to creator balance
                     //need to fetch creator again in case user = creator. otherwise user.save() overwritten
                     if (user._id.toString() === creator._id.toString())
                         creator = await User.findOne({ chatId: treasure.creator });
                     creator.addReward();
                     await creator.save();
+                    console.log(`new creator balance: ${creator.getBalance()}`);
 
                     //set finder-reward (NFT) as collected
                     reward.setCollected(sendHash, sendBlock, metadataCid);
                     //save all db changes
                     await reward.save();
+                    console.log(`reward ${reward._id} set collected`);
 
                     await deleteMenuFromContext(ctx);
 
