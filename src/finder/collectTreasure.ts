@@ -117,7 +117,7 @@ export const router = new Router<CustomContext>(async (ctx: CustomContext) => {
 router.route("qr", async (ctx: CustomContext) => {
     const session = await ctx.session;
     let message: string;
-    if (ctx.message.photo || ctx.message.text) {
+    if (ctx.message && (ctx.message.photo || ctx.message.text)) {
         let code: string;
         if (ctx.message.photo) {
             const photo = ctx.message.photo[ctx.message.photo.length - 1];

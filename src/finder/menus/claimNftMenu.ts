@@ -220,6 +220,7 @@ claimNft.interact("Proceed", "sp", {
             }
             //if cannot cover transaction cost
             else if (mintTopupRequired) {
+                console.log(`unpinning metadata with CID: ${metadataCid}`)
                 await unpin(metadataCid);
                 const message = "You do not have enough funds to pay for this transaction.\n\n" +
                     "Please top up your balance by going to the main menu and " +

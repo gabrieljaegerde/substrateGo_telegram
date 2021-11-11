@@ -248,7 +248,7 @@ export const withdraw = async (recipientAddress: string, value: string, recipien
 // };
 
 export const mintNft = async (remark: string, user: IUser) => {
-  console.log(`${user._id} attempting to mint ${remark}`);
+  console.log(`${new Date()} ${user._id} attempting to mint ${remark}`);
   const info = await getTransactionCostSingle(
     "nft",
     null,
@@ -293,7 +293,7 @@ export const mintNft = async (remark: string, user: IUser) => {
 };
 
 export const sendNft = async (remark: string, user: IUser) => {
-  console.log(`${user._id} attempting to send ${remark}`);
+  console.log(`${new Date()} ${user._id} attempting to send ${remark}`);
   const info = await getTransactionCostSingle(
     "nft",
     null,

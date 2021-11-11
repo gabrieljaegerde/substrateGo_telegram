@@ -33,6 +33,7 @@ export const sendAndFinalize = async (
   finalized: any[];
 }> => {
   return new Promise(async (resolve) => {
+    console.log(`${new Date()} in sendAndFinalize`);
     let success = false;
     let included = [];
     let finalized = [];
@@ -51,7 +52,7 @@ export const sendAndFinalize = async (
           block = signedBlock.block.header.number.toNumber();
           included = [...events];
         } else if (status.isBroadcast) {
-          console.log(`${new Date()}🚀 Transaction broadcasted.`);
+          console.log(`🚀 Transaction broadcasted.`);
         } else if (status.isFinalized) {
           console.log(
             `💯 Transaction ${tx.meta.name}(..) Finalized at blockHash ${status.asFinalized}`

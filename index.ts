@@ -131,11 +131,11 @@ class SubstrateBot {
       `you will be notified when it comes back online.\n\n*Sorry for the inconvenience!*\n\n_Please ` +
       `refrain from depositing to the bot wallet until the bot is running again._\n🚧🚧🚧🚧🚧🚧🚧🚧🚧`;
     if (process.env.SETUP_COMPLETE === "true") {
-      for (const user of users) {
-        if (user.chatId !== botParams.settings.charityChatId && !user.blocked) {
-          await send(user.chatId, alert);
-        }
-      }
+      // for (const user of users) {
+      //   if (user.chatId !== botParams.settings.charityChatId && !user.blocked) {
+      //     await send(user.chatId, alert);
+      //   }
+      // }
       await botParams.runnerHandle.stop();
       console.log("bot stopped.");
     }
@@ -159,11 +159,11 @@ async function main() {
   const users: IUser[] = await User.find({});
   const alert = `🚨The bot is back *online*!🚨`;
   if (process.env.SETUP_COMPLETE === "true") {
-    for (const user of users) {
-      if (user.chatId !== botParams.settings.charityChatId && !user.blocked) {
-        await send(user.chatId, alert);
-      }
-    }
+    // for (const user of users) {
+    //   if (user.chatId !== botParams.settings.charityChatId && !user.blocked) {
+    //     await send(user.chatId, alert);
+    //   }
+    // }
   }
   process.once('SIGINT', () => {
     substrateBot.stop();
