@@ -51,7 +51,7 @@ export const sendAndFinalize = async (
           block = signedBlock.block.header.number.toNumber();
           included = [...events];
         } else if (status.isBroadcast) {
-          console.log(`🚀 Transaction broadcasted.`);
+          console.log(`${new Date()}🚀 Transaction broadcasted.`);
         } else if (status.isFinalized) {
           console.log(
             `💯 Transaction ${tx.meta.name}(..) Finalized at blockHash ${status.asFinalized}`

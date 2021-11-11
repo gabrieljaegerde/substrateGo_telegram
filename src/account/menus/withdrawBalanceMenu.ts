@@ -144,7 +144,7 @@ const withdrawFunds = async (ctx: CustomContext) => {
   }
   user.subtractFromBalance(session.withdrawAmount);
   await user.save();
-  console.log(`user new balance: ${user.getBalance()}`);
+  console.log(`user ${user._id} new balance: ${user.getBalance()}`);
   const reply = `${amountToHumanString(session.withdrawAmount)} were sent to wallet with ` +
     `address:\n${user.wallet.address}`;
   session.withdrawAmount = null;

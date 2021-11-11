@@ -105,6 +105,7 @@ const claimNft = new MenuTemplate<CustomContext>(async (ctx) => {
 
 claimNft.interact("Proceed", "sp", {
     do: async (ctx: CustomContext) => {
+        await deleteMenuFromContext(ctx);
         const session = await ctx.session;
         const loadMessage = await botParams.bot.api.sendMessage(ctx.chat.id, "Loading... (this can take a minute)");
         const user: IUser = await User.findOne({ chatId: ctx.chat.id });
@@ -165,22 +166,20 @@ claimNft.interact("Proceed", "sp", {
                     const totalCost = sendFee;
                     user.subtractFromBalance(totalCost);
                     await user.save();
-                    console.log(`user new balance: ${user.getBalance()}`);
+                    console.log(`user ${user._id} new balance: ${user.getBalance()}`);
                     //add creator-reward ($) to creator balance
                     //need to fetch creator again in case user = creator. otherwise user.save() overwritten
                     if (user._id.toString() === creator._id.toString())
                         creator = await User.findOne({ chatId: treasure.creator });
                     creator.addReward();
                     await creator.save();
-                    console.log(`new creator balance: ${creator.getBalance()}`);
+                    console.log(`new creator ${creator._id} balance: ${creator.getBalance()}`);
 
                     //set finder-reward (NFT) as collected
                     reward.setCollected(sendHash, sendBlock, metadataCid);
                     //save all db changes
                     await reward.save();
                     console.log(`reward ${reward._id} set collected`);
-
-                    await deleteMenuFromContext(ctx);
 
                     //send message to creator
                     await botParams.bot.api
