@@ -7,7 +7,7 @@ export const uploadDefaultNftFile = async () => {
     const path = "defaultNFTFile.png";
     const imageFile = await fs.promises.readFile(`${process.cwd()}${dir}/${path}`);
     const fileCid = await pinSingleFile(imageFile, `DefaultFile`, "defaultNFTFile.png");
-    console.log("defaultCid", fileCid);
+    console.log("Default file pinned. CID: ", fileCid);
   } catch (error: any) {
     console.error(error);
   }

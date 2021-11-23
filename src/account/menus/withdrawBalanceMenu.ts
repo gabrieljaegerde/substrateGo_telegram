@@ -69,20 +69,17 @@ const withdrawBalance = new MenuTemplate<CustomContext>(async (ctx) => {
 
 withdrawBalance.interact("Proceed", "pr", {
   do: async (ctx: CustomContext) => {
+    await deleteMenuFromContext(ctx);
     const loadMessage = await botParams.bot.api
       .sendMessage(ctx.chat.id, "Loading...");
     const success = await withdrawFunds(ctx);
     if (success) {
-      await deleteMenuFromContext(ctx);
       botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id);
       return false;
-      //show a certain menu or non...
     }
     else {
-      //await deleteMenuFromContext(ctx)
       botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id);
       return false;
-      //show a certain menu
     }
   },
   joinLastRow: true,

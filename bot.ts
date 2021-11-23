@@ -68,6 +68,7 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
       let message: string;
       //normal start
       if (!user) {
+        console.log("new user");
         await new User({
           firstName: ctx.chat.first_name,
           username: ctx.chat.username,
@@ -235,11 +236,11 @@ export const start = async (): Promise<{ runnerHandle: RunnerHandle, tBot: Bot; 
         console.log(new Date(), `Bot was blocked by user with chatid ${e.payload.chat_id}`);
         return;
       }
-      console.error("Error in request:", e.description);
+      console.error(new Date(), `Error in request: ${e.description}`);
     } else if (e instanceof HttpError) {
-      console.error("Could not contact Telegram:", e);
+      console.error(new Date(), `Could not contact Telegram: ${e}`);
     } else {
-      console.error("Unknown error:", e);
+      console.error(new Date(), `Unknown error: ${e}`);
     }
   });
   const runnerHandle = run(bot);
