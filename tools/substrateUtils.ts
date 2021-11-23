@@ -33,6 +33,7 @@ export const sendAndFinalize = async (
   finalized: any[];
 }> => {
   return new Promise(async (resolve) => {
+    console.log(`${new Date()} in sendAndFinalize`);
     let success = false;
     let included = [];
     let finalized = [];
@@ -70,25 +71,19 @@ export const sendAndFinalize = async (
   });
 };
 
-export const allowWithdrawal = async (api: ApiPromise,
-  amount: string,
-  users: IUser[],
-  withdrawer: IUser): Promise<boolean> => {
+export const checkBalances = async (api: ApiPromise,
+  users: IUser[]): Promise<boolean> => {
   let allUsersBalance = "0";
   for (const user of users) {
-    if (!withdrawer || user._id.toString() !== withdrawer._id.toString()) {
-      allUsersBalance = bigNumberArithmetic(allUsersBalance, user.getBalance(), "+");
-    }
+    allUsersBalance = bigNumberArithmetic(allUsersBalance, user.getBalance(), "+");
   }
   //in case there was a start balance on the wallet
   allUsersBalance = bigNumberArithmetic(allUsersBalance, botParams.settings.walletStartFunds, "+");
   const { data: botWalletBalance } = await api.query.system.account(botParams.account.address);
-  const botBalanceAfterWithdrawal = bigNumberArithmetic(botWalletBalance.free.toString(), amount, "-");
   console.log("botWalletBalance", botWalletBalance.free.toString());
   console.log("allUsersBalance", allUsersBalance);
-  console.log("botBalanceAfterWithdrawal", botBalanceAfterWithdrawal);
-  //user can only max withdraw their balance
-  const everythingAddsUp = bigNumberComparison(botBalanceAfterWithdrawal, allUsersBalance, ">=");
+  const everythingAddsUp = bigNumberComparison(botWalletBalance.free.toString(), allUsersBalance, ">=");
+  console.log("everythingAddsUp: ", everythingAddsUp);
   return everythingAddsUp;
 };
 

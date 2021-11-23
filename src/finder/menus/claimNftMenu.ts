@@ -105,6 +105,7 @@ const claimNft = new MenuTemplate<CustomContext>(async (ctx) => {
 
 claimNft.interact("Proceed", "sp", {
     do: async (ctx: CustomContext) => {
+        await deleteMenuFromContext(ctx);
         const session = await ctx.session;
         const loadMessage = await botParams.bot.api.sendMessage(ctx.chat.id, "Loading... (this can take a minute)");
         const user: IUser = await User.findOne({ chatId: ctx.chat.id });
@@ -125,6 +126,7 @@ claimNft.interact("Proceed", "sp", {
                 description: nftDescription,
                 external_url: botParams.settings.externalUrl
             });
+            //update these fields
             reward.name = treasure.name;
             reward.location = treasure.location;
             reward.description = treasure.description;
@@ -164,20 +166,20 @@ claimNft.interact("Proceed", "sp", {
                     const totalCost = sendFee;
                     user.subtractFromBalance(totalCost);
                     await user.save();
-
+                    console.log(`user ${user._id} new balance: ${user.getBalance()}`);
                     //add creator-reward ($) to creator balance
                     //need to fetch creator again in case user = creator. otherwise user.save() overwritten
                     if (user._id.toString() === creator._id.toString())
                         creator = await User.findOne({ chatId: treasure.creator });
                     creator.addReward();
                     await creator.save();
+                    console.log(`new creator ${creator._id} balance: ${creator.getBalance()}`);
 
                     //set finder-reward (NFT) as collected
                     reward.setCollected(sendHash, sendBlock, metadataCid);
                     //save all db changes
                     await reward.save();
-
-                    await deleteMenuFromContext(ctx);
+                    console.log(`reward ${reward._id} set collected`);
 
                     //send message to creator
                     await botParams.bot.api
@@ -218,6 +220,7 @@ claimNft.interact("Proceed", "sp", {
             }
             //if cannot cover transaction cost
             else if (mintTopupRequired) {
+                console.log(`unpinning metadata with CID: ${metadataCid}`)
                 await unpin(metadataCid);
                 const message = "You do not have enough funds to pay for this transaction.\n\n" +
                     "Please top up your balance by going to the main menu and " +

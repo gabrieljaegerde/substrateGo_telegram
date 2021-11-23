@@ -69,20 +69,17 @@ const withdrawBalance = new MenuTemplate<CustomContext>(async (ctx) => {
 
 withdrawBalance.interact("Proceed", "pr", {
   do: async (ctx: CustomContext) => {
+    await deleteMenuFromContext(ctx);
     const loadMessage = await botParams.bot.api
       .sendMessage(ctx.chat.id, "Loading...");
     const success = await withdrawFunds(ctx);
     if (success) {
-      await deleteMenuFromContext(ctx);
       botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id);
       return false;
-      //show a certain menu or non...
     }
     else {
-      //await deleteMenuFromContext(ctx)
       botParams.bot.api.deleteMessage(loadMessage.chat.id, loadMessage.message_id);
       return false;
-      //show a certain menu
     }
   },
   joinLastRow: true,
@@ -123,6 +120,8 @@ const withdrawFunds = async (ctx: CustomContext) => {
     session.withdrawAmount,
     user);
   if (!success) {
+    console.log(`${new Date()} an error occured with withdrawal of ${session.withdrawAmount} by user ${user._id} ` +
+      `hash: ${hash}`);
     const reply = "An error occured with the withdrawal. Please try again. If this issue persists, " +
       `please contact an admin at ${botParams.settings.telegramGroupLink} on telegram.`;
     const inlineKeyboard = new InlineKeyboard();
@@ -142,6 +141,7 @@ const withdrawFunds = async (ctx: CustomContext) => {
   }
   user.subtractFromBalance(session.withdrawAmount);
   await user.save();
+  console.log(`user ${user._id} new balance: ${user.getBalance()}`);
   const reply = `${amountToHumanString(session.withdrawAmount)} were sent to wallet with ` +
     `address:\n${user.wallet.address}`;
   session.withdrawAmount = null;

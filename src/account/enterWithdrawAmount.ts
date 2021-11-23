@@ -32,8 +32,8 @@ export const enterWithdrawAmount = new StatelessQuestion("amt", async (ctx: Cust
         return;
     }
     const userBalance: string = user.getBalance();
-    console.log("withdrawAmount1", withdrawAmount);
-    console.log("userBalance1", userBalance);
+    console.log(`${new Date()} withdrawAmount ${withdrawAmount}`);
+    console.log(`userBalance ${userBalance}`);
     if (!user.withdrawalAllowed(withdrawAmount, userBalance)) {
         const message = `The amount you entered (${amountToHumanString(withdrawAmount)}) is bigger ` +
             `than your balance of _${amountToHumanString(userBalance)}_.\n\n` +
