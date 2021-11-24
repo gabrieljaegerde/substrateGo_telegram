@@ -4,7 +4,7 @@ import { SubmittableExtrinsic } from "@polkadot/api/types";
 import { ISubmittableResult } from "@polkadot/types/types";
 import { botParams } from "../config.js";
 import { bigNumberArithmetic, bigNumberComparison } from "./utils.js";
-import { IUser } from "../src/models/user.js";
+import User, { IUser } from "../src/models/user.js";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { cryptoWaitReady } from "@polkadot/util-crypto";
 
@@ -71,9 +71,9 @@ export const sendAndFinalize = async (
   });
 };
 
-export const checkBalances = async (api: ApiPromise,
-  users: IUser[]): Promise<boolean> => {
+export const checkBalances = async (api: ApiPromise): Promise<boolean> => {
   let allUsersBalance = "0";
+  const users: IUser[] = await User.find({});
   for (const user of users) {
     allUsersBalance = bigNumberArithmetic(allUsersBalance, user.getBalance(), "+");
   }

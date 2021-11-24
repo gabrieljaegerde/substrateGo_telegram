@@ -153,8 +153,7 @@ export const withdraw = async (recipientAddress: string, value: string, recipien
   //deduct fee from amount to be sent back
   const transferAmount = bigNumberArithmetic(value, info.partialFee.toString(), "-");
 
-  const users: IUser[] = await User.find({});
-  const allowed = await checkBalances(botParams.api, users);
+  const allowed = await checkBalances(botParams.api);
   if (!allowed) {
     console.log(`${new Date()} Sth fishy going on!\n\n` +
       `Account Balances don't add up in withdrawal!!!\n\n` +
@@ -261,8 +260,7 @@ export const mintNft = async (remark: string, user: IUser) => {
     console.log(`user balance: ${user.getBalance()} not enough: ${totalCost}`);
     return { success: false, topupRequired: true, fee: totalCost };
   }
-  const users: IUser[] = await User.find({});
-  const allowed = await checkBalances(botParams.api, users);
+  const allowed = await checkBalances(botParams.api);
   if (!allowed) {
     console.log(`Sth fishy going on!\n\n` +
       `Account Balances don't add up in NFT claim (mintNft)!!!\n\n` +
@@ -306,8 +304,7 @@ export const sendNft = async (remark: string, user: IUser) => {
     console.log(`user balance: ${user.getBalance()} not enough: ${totalCost}`);
     return { success: false, topupRequired: true, fee: totalCost };
   }
-  const users: IUser[] = await User.find({});
-  const allowed = await checkBalances(botParams.api, users);
+  const allowed = await checkBalances(botParams.api);
   if (!allowed) {
     console.log(`Sth fishy going on!\n\n` +
       `Account Balances don't add up in NFT claim (sendNft)!!!\n\n` +
