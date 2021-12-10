@@ -156,15 +156,15 @@ async function main() {
     account
   });
   await substrateBot.run();
-  // const users: IUser[] = await User.find({});
-  // const alert = `🚨The bot is back *online*!🚨`;
-  // if (process.env.SETUP_COMPLETE === "true") {
-  //   for (const user of users) {
-  //     if (user.chatId !== botParams.settings.charityChatId && !user.blocked) {
-  //       await send(user.chatId, alert);
-  //     }
-  //   }
-  // }
+  const users: IUser[] = await User.find({});
+  const alert = `🚨The bot is back *online*!🚨`;
+  if (process.env.SETUP_COMPLETE === "true") {
+    for (const user of users) {
+      if (user.chatId !== botParams.settings.charityChatId && !user.blocked) {
+        await send(user.chatId, alert);
+      }
+    }
+  }
   process.once('SIGINT', () => {
     substrateBot.stop();
   });
