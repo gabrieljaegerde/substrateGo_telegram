@@ -81,35 +81,53 @@ export class TransactionListener {
         const headSubscriber = this.apiPromise.rpc.chain.subscribeFinalizedHeads;
 
         headSubscriber(async (header) => {
-            const blockNumber = header.number.toNumber();
-            if (blockNumber === 0) {
+            const latestFinalisedBlockNum = header.number.toNumber();
+            if (latestFinalisedBlockNum === 0) {
                 console.error(
                     "Unable to retrieve finalized head - returned genesis block"
                 );
             }
-
-            if (!this.missingBlockEventsFetched && !this.missingBlockFetchInitiated) {
-                this.missingBlockFetchInitiated = true;
-                const latestBlock = await this.storageProvider.get();
-                await this.fetchMissingBlockEvents(latestBlock, blockNumber - 1);
-                this.missingBlockEventsFetched = true;
-            }
-
-            this.fetchEventsAtBlock(blockNumber);
-
-            // Update local db latestBlock
-            if (
-                this.missingBlockEventsFetched
-            ) {
-                try {
-                    if (this.currentBlockNumber < blockNumber) this.currentBlockNumber = blockNumber;
-                    await this.storageProvider.set(this.currentBlockNumber);
-                } catch (e: any) {
-                    console.error(e);
+            try {
+                if (!this.missingBlockEventsFetched && !this.missingBlockFetchInitiated) {
+                    this.missingBlockFetchInitiated = true;
+                    const latestBlock = await this.storageProvider.get();
+                    await this.fetchMissingBlockEvents(latestBlock, latestFinalisedBlockNum - 1);
+                    this.missingBlockEventsFetched = true;
                 }
+
+                this.fetchEventsAtBlock(latestFinalisedBlockNum);
+
+                const latestSavedBlock = this.currentBlockNumber;
+                // Compare block sequence order to see if there's a skipped finalised block
+                if (
+                    latestSavedBlock &&
+                    latestSavedBlock + 1 < latestFinalisedBlockNum &&
+                    this.missingBlockEventsFetched
+                ) {
+                    // Fetch all the missing blocks
+                    this.missingBlockEventsFetched = false;
+                    await this.fetchMissingBlockEvents(
+                        latestSavedBlock,
+                        latestFinalisedBlockNum - 1
+                    );
+                    this.missingBlockEventsFetched = true;
+                }
+                this.currentBlockNumber = latestFinalisedBlockNum;
+                // Update local db latestBlock
+                if (
+                    this.missingBlockEventsFetched
+                ) {
+                    try {
+                        await this.storageProvider.set(latestFinalisedBlockNum);
+                    } catch (e: any) {
+                        console.error(e);
+                    }
+                }
+            } catch (e: any) {
+                console.error(e);
+                return;
             }
         });
-
         return;
     }
 }
